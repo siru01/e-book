@@ -1,0 +1,108 @@
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  background: #1e2535;
+  z-index: 100;
+  overflow: hidden;
+  transition: width 0.25s ease, min-width 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-expanded  { width: 240px; min-width: 240px; }
+.sidebar-collapsed { width: 60px;  min-width: 60px;  }
+
+/* Header */
+.sidebar-header {
+  position: relative;
+  height: 66px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #2d3748;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-hamburger {
+  position: absolute;
+  left: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+.sidebar-hamburger:hover { background: rgba(255,255,255,0.08); }
+.sidebar-hamburger span {
+  display: block;
+  width: 16px; height: 2px;
+  background: #94a3b8;
+  border-radius: 2px;
+}
+
+.sidebar-title {
+  position: absolute;
+  left: 50px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: white;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.sidebar-collapsed .sidebar-title { opacity: 0; }
+.sidebar-expanded  .sidebar-title { opacity: 1; }
+
+/* Nav */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+
+.sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 0 0 18px;
+  text-decoration: none;
+  color: #94a3b8;
+  transition: background 0.15s;
+  overflow: hidden;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.06); }
+.sidebar-item-active {
+  background: rgba(255,255,255,0.07);
+  color: white;
+  font-weight: 700;
+}
+.sidebar-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #f97316;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-icon {
+  font-size: 1.15em;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-left: 12px;
+  transition: max-width 0.25s ease, opacity 0.2s ease, margin-left 0.25s ease;
+}
+.sidebar-expanded  .sidebar-label { max-width: 160px; opacity: 1; }
+.sidebar-collapsed .sidebar-label { max-width: 0; opacity: 0; margin-left: 0; }
