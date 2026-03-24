@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-/* ─── Particle canvas (scattered blue dots) ─── */
-function ParticleCanvas() {
+/* ─── Particle canvas ─── */
+function ParticleCanvas({ isDark }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -16,7 +17,6 @@ function ParticleCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    // generate particles once
     const TOTAL = 260;
     const particles = Array.from({ length: TOTAL }, () => ({
       x: Math.random() * window.innerWidth,
@@ -32,7 +32,10 @@ function ParticleCanvas() {
       particles.forEach((p) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(60, 80, 160, ${p.alpha})`;
+        // Change particle color based on theme
+        ctx.fillStyle = isDark 
+          ? `rgba(140, 160, 255, ${p.alpha})` 
+          : `rgba(60, 80, 160, ${p.alpha})`;
         ctx.fill();
         p.x += p.dx;
         p.y += p.dy;
@@ -47,50 +50,62 @@ function ParticleCanvas() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [isDark]); // Re-run when theme changes
 
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: "fixed",
-        inset: 0,
-        pointerEvents: "none",
-        zIndex: 0,
-      }}
+      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
     />
   );
 }
 
 /* ─── Main landing page ─── */
-export default function ShelfLanding() {
+export default function HomePage() {
+  const navigate = useNavigate();
+  const [isDark, setIsDark] = useState(false);
 
+  const toggleDarkMode = () => setIsDark(!isDark);
 
   return (
-    <>
-      {/* Google font */}
+    <div className="shelf-wrapper" data-theme={isDark ? "dark" : "light"}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
-          height: 100%;
-          overflow: hidden;
-          background: #f9f9f6;
+        /* Theme Variables */
+        .shelf-wrapper[data-theme="light"] {
+          --bg: #f9f9f6;
+          --text: #111;
+          --sub-text: #555;
+          --nav-link: #333;
+          --btn-secondary: #ebebea;
+          --btn-secondary-text: #444;
+        }
+
+        .shelf-wrapper[data-theme="dark"] {
+          --bg: #0f0f0e;
+          --text: #f9f9f6;
+          --sub-text: #aaa;
+          --nav-link: #ccc;
+          --btn-secondary: #222;
+          --btn-secondary-text: #eee;
         }
 
         .shelf-root {
           font-family: 'DM Sans', sans-serif;
           height: 100vh;
-          background: #f9f9f6;
+          background: var(--bg);
+          color: var(--text);
           position: relative;
           overflow: hidden;
           display: flex;
           flex-direction: column;
+          transition: background 0.4s ease;
         }
 
-        /* ── Nav ── */
+        /* Nav */
         .shelf-nav {
           position: relative;
           z-index: 10;
@@ -100,11 +115,9 @@ export default function ShelfLanding() {
           padding: 22px 48px;
         }
         .shelf-nav-logo {
-          font-family: 'DM Sans', sans-serif;
           font-weight: 600;
           font-size: 1.1rem;
           letter-spacing: 0.12em;
-          color: #111;
           text-transform: uppercase;
         }
         .shelf-nav-links {
@@ -113,31 +126,28 @@ export default function ShelfLanding() {
           list-style: none;
         }
         .shelf-nav-links a {
-          color: #333;
+          color: var(--nav-link);
           text-decoration: none;
           font-size: 0.92rem;
-          font-weight: 400;
           transition: color 0.2s;
         }
-        .shelf-nav-links a:hover { color: #000; }
+        .shelf-nav-links a:hover { color: var(--text); }
+        
         .shelf-nav-cta {
-          background: #111;
-          color: #fff;
+          background: var(--text);
+          color: var(--bg);
           border: none;
           padding: 10px 22px;
           border-radius: 100px;
           font-family: 'DM Sans', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 500;
+          font-size: 0.75rem;
+          font-weight: 600;
           cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          transition: background 0.2s, transform 0.15s;
+          letter-spacing: 0.05em;
+          transition: transform 0.15s;
         }
-        .shelf-nav-cta:hover { background: #222; transform: translateY(-1px); }
 
-        /* ── Hero ── */
+        /* Hero */
         .shelf-hero {
           position: relative;
           z-index: 5;
@@ -153,7 +163,7 @@ export default function ShelfLanding() {
           font-size: 0.78rem;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #555;
+          color: var(--sub-text);
           margin-bottom: 20px;
           display: flex;
           align-items: center;
@@ -161,80 +171,62 @@ export default function ShelfLanding() {
         }
         .shelf-eyebrow::before {
           content: '';
-          display: inline-block;
           width: 14px;
           height: 1px;
-          background: #555;
+          background: var(--sub-text);
         }
         .shelf-headline {
-          font-family: 'DM Sans', sans-serif;
           font-size: clamp(2.6rem, 6vw, 5rem);
           font-weight: 600;
           line-height: 1.08;
-          color: #111;
           max-width: 740px;
           letter-spacing: -0.02em;
           margin-bottom: 44px;
         }
-        .shelf-actions {
-          display: flex;
-          gap: 14px;
-          flex-wrap: wrap;
-          justify-content: center;
-          margin-bottom: 0;
-        }
         .btn-primary {
-          background: #111;
-          color: #fff;
+          background: var(--text);
+          color: var(--bg);
           border: none;
           padding: 16px 32px;
           border-radius: 100px;
-          font-family: 'DM Sans', sans-serif;
           font-size: 1rem;
           font-weight: 500;
           cursor: pointer;
-          transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+          transition: transform 0.15s, box-shadow 0.2s;
         }
         .btn-primary:hover {
-          background: #222;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.15);
         }
         .btn-secondary {
-          background: #ebebea;
-          color: #444;
+          background: var(--btn-secondary);
+          color: var(--btn-secondary-text);
           border: none;
           padding: 16px 32px;
           border-radius: 100px;
-          font-family: 'DM Sans', sans-serif;
           font-size: 1rem;
-          font-weight: 400;
           cursor: pointer;
-          transition: background 0.2s, transform 0.15s;
+          transition: transform 0.15s;
         }
-        .btn-secondary:hover { background: #e0e0de; transform: translateY(-2px); }
+        .btn-secondary:hover { transform: translateY(-2px); }
 
-        /* ── Fade-in animation ── */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .fade-1 { animation: fadeUp 0.7s ease both 0.1s; }
         .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
         .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
-        .fade-4 { animation: fadeUp 0.7s ease both 0.55s; }
 
         @media (max-width: 640px) {
           .shelf-nav { padding: 18px 20px; }
           .shelf-nav-links { display: none; }
-          .shelf-hero { padding: 60px 16px 40px; }
         }
       `}</style>
 
       <div className="shelf-root">
-        <ParticleCanvas />
+        <ParticleCanvas isDark={isDark} />
 
-        {/* Nav */}
         <nav className="shelf-nav fade-1">
           <span className="shelf-nav-logo">Shelf</span>
           <ul className="shelf-nav-links">
@@ -242,24 +234,24 @@ export default function ShelfLanding() {
             <li><a href="#">My Library</a></li>
             <li><a href="#">About</a></li>
           </ul>
-          <button className="shelf-nav-cta">
-            Download ↓
+          <button className="shelf-nav-cta" onClick={toggleDarkMode}>
+            {isDark ? "LIGHT MODE" : "DARK MODE"}
           </button>
         </nav>
 
-        {/* Hero */}
         <section className="shelf-hero">
           <p className="shelf-eyebrow fade-1">Shelf</p>
           <h1 className="shelf-headline fade-2">
             Explore Unlimited Stories in One Digital Library
           </h1>
           <div className="shelf-actions fade-3">
-            <button className="btn-primary">Get Back To You</button>
+            <button className="btn-primary" onClick={() => navigate("/login")}>
+              Get Back To You
+            </button>
             <button className="btn-secondary">First Time? Let's Get Started</button>
           </div>
-
         </section>
       </div>
-    </>
+    </div>
   );
 }
