@@ -240,7 +240,7 @@ export default function HomePage() {
         </nav>
 
         <section className="shelf-hero">
-          <p className="shelf-eyebrow fade-1">Shelf</p>
+          {/*<p className="shelf-eyebrow fade-1">Shelf</p>*/}
           <h1 className="shelf-headline fade-2">
             Explore Unlimited Stories in One Digital Library
           </h1>

@@ -5,7 +5,8 @@ import DashboardPage from "./pages/DashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import ReaderPage from "./pages/ReaderPage";
-import Login from "./pages/Login";
+import Login from './pages/Login';
+
 
 
 function ProtectedRoute({ children, adminOnly = false }) {
@@ -45,12 +46,12 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/login" element={<Login />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-<Route path="/login" element={<Login />} />
 
 export default function App() {
   return (
