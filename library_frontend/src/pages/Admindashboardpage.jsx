@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/Authcontext";
 import {
   fetchAdminDashboard, fetchBooks,
   addBook, deleteBook,
@@ -98,11 +98,11 @@ export default function AdminDashboardPage() {
 
         {/* Stat cards */}
         <div className="adm-stats-row">
-          <StatCard label="Total Books"  value={stats.total_books || 0}         icon="📚" color="#3b82f6" />
-          <StatCard label="Borrowed"     value={stats.total_borrowed_books || 0} icon="📖" color="#f59e0b" />
-          <StatCard label="Overdue"      value={stats.total_overdue_books || 0}  icon="⏰" color="#ef4444" />
-          <StatCard label="Total Users"  value={stats.total_users || 0}          icon="👥" color="#8b5cf6" />
-          <StatCard label="Available"    value={stats.total_available_copies || 0} icon="✅" color="#22c55e" />
+          <StatCard label="Total Books" value={stats.total_books || 0} icon="📚" color="#3b82f6" />
+          <StatCard label="Borrowed" value={stats.total_borrowed_books || 0} icon="📖" color="#f59e0b" />
+          <StatCard label="Overdue" value={stats.total_overdue_books || 0} icon="⏰" color="#ef4444" />
+          <StatCard label="Total Users" value={stats.total_users || 0} icon="👥" color="#8b5cf6" />
+          <StatCard label="Available" value={stats.total_available_copies || 0} icon="✅" color="#22c55e" />
         </div>
 
         {/* Fine warning */}
@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
 
         {/* Feedback */}
         {success && <div className="adm-success">{success}</div>}
-        {error   && <div className="adm-error">{error}</div>}
+        {error && <div className="adm-error">{error}</div>}
 
         {/* Add book form */}
         <div className="adm-form-card">

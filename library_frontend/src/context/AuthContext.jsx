@@ -1,59 +1,60 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import HomePage from "./pages/HomePage";
-import DashboardPage from "./pages/DashboardPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
-import DiscoverPage from "./pages/DiscoverPage";
-import ReaderPage from "./pages/ReaderPage";
+import { createContext, useContext, useState, useCallback } from "react";
 
-function ProtectedRoute({ children, adminOnly = false }) {
-  const { token, userRole } = useAuth();
-  if (!token) return <Navigate to="/" replace />;
-  if (adminOnly && !["ADMIN", "LIBRARIAN"].includes(userRole))
-    return <Navigate to="/dashboard" replace />;
-  return children;
-}
+const AuthContext = createContext(null);
 
-function AppRoutes() {
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem("shelf_token") || "");
+  const [username, setUsername] = useState(() => localStorage.getItem("shelf_username") || "User");
+  const [userRole, setUserRole] = useState(() => localStorage.getItem("shelf_role") || "");
+
+  const login = useCallback(async (email, password) => {
+    const response = await fetch("http://127.0.0.1:8000/api/token/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `Error ${response.status}`);
+    }
+    const data = await response.json();
+    const access = data.access || "";
+    let role = "STUDENT";
+    let name = email;
+    try {
+      const payload = JSON.parse(atob(access.split(".")[1]));
+      role = payload.role || "STUDENT";
+      name = payload.full_name || payload.email || email;
+    } catch (_) {}
+    setToken(access);
+    setUsername(name);
+    setUserRole(role);
+    localStorage.setItem("shelf_token", access);
+    localStorage.setItem("shelf_username", name);
+    localStorage.setItem("shelf_role", role);
+    if (data.refresh) localStorage.setItem("shelf_refresh", data.refresh);
+    return role;
+  }, []);
+
+  const logout = useCallback(() => {
+    setToken("");
+    setUsername("User");
+    setUserRole("");
+    localStorage.removeItem("shelf_token");
+    localStorage.removeItem("shelf_username");
+    localStorage.removeItem("shelf_role");
+    localStorage.removeItem("shelf_refresh");
+  }, []);
+
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin-dashboard"
-        element={
-          <ProtectedRoute adminOnly>
-            <AdminDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/discover" element={<DiscoverPage />} />
-      <Route
-        path="/read/:gutenbergId"
-        element={
-          <ProtectedRoute>
-            <ReaderPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthContext.Provider value={{ token, username, userRole, login, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
 }

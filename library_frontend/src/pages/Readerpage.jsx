@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/Authcontext";
 import { fetchGutendexBook, fetchBookText, parsePlainTextUrl, saveBookmark, markFinished } from "../api/shelf";
 import "./ReaderPage.css";
 
@@ -145,7 +145,7 @@ export default function ReaderPage() {
           </div>
         ) : error ? (
           <div className="reader-center">
-            <p style={{fontSize:"3em"}}>📚</p>
+            <p style={{ fontSize: "3em" }}>📚</p>
             <p className="reader-error-text">{error}</p>
             <Link to="/dashboard">
               <button className="reader-back-btn">← Back to Dashboard</button>

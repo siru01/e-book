@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { searchOpenLibrary, importBooks } from "../api/shelf";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/Authcontext";
 import "./DiscoverPage.css";
 
 function ResultCard({ book, onImport, importing }) {
