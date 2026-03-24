@@ -1,0 +1,14 @@
+# Ignore the entire virtual environment
+library_backend/venv/
+
+# Ignore the secrets and local database
+library_backend/.env
+library_backend/db.sqlite3
+
+# Ignore compiled python files
+**/__pycache__/
+*.py[cod]
+
+# Ignore frontend dependencies
+library_front*/node_modules/
+library_front*/dist/
