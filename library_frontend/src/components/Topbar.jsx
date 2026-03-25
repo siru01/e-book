@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { searchGutenberg } from "../api/shelf";
+import { useQueryClient } from "@tanstack/react-query"; // ✅ Step 5 - line 1
 import "./Topbar.css";
 
 const PLACEHOLDER_WORDS = ["books", "genres", "mystery", "fantasy", "sci-fi", "biography", "history", "classic literature"];
@@ -9,6 +10,7 @@ const PLACEHOLDER_WORDS = ["books", "genres", "mystery", "fantasy", "sci-fi", "b
 export default function Topbar({ expanded, onSearch, onClearSearch }) {
   const { username, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // ✅ Step 5 - line 2
 
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -60,6 +62,7 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
   }
 
   function handleLogout() {
+    queryClient.clear(); // ✅ Step 5 - line 3: wipes all cached data on logout
     logout();
     navigate("/");
   }

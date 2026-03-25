@@ -1,14 +1,26 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/Authcontext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import HomePage from "./pages/Homepage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import ReaderPage from "./pages/ReaderPage";
-import Login from './pages/Login';
+import Login from "./pages/Login";
 
+// ── React Query client ─────────────────────────────────────────
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime          : 5  * 60 * 1000, // cache fresh for 5 mins
+      cacheTime          : 10 * 60 * 1000, // keep in memory for 10 mins
+      refetchOnWindowFocus: false,          // no re-fetch on tab switch
+      retry              : 1,
+    },
+  },
+});
 
-
+// ── Route guard ────────────────────────────────────────────────
 function ProtectedRoute({ children, adminOnly = false }) {
   const { token, userRole } = useAuth();
   if (!token) return <Navigate to="/" replace />;
@@ -17,6 +29,7 @@ function ProtectedRoute({ children, adminOnly = false }) {
   return children;
 }
 
+// ── All routes ─────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <Routes>
@@ -52,13 +65,15 @@ function AppRoutes() {
   );
 }
 
-
+// ── Root App — single export, no duplicates ────────────────────
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>  {/* ✅ wraps everything */}
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
