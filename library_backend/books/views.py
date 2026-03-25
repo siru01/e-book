@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.http import HttpResponse
 import httpx
 
 
@@ -30,7 +31,6 @@ class BookViewSet(viewsets.ModelViewSet):
     ordering = ["-id"]
 
     def perform_create(self, serializer):
-        # FIX: added_by is now nullable so this is safe even if user is anon
         user = self.request.user if self.request.user.is_authenticated else None
         serializer.save(added_by=user)
 
@@ -108,7 +108,6 @@ class OpenLibraryImport(APIView):
             )
         created = 0
         skipped = 0
-        # FIX: added_by is nullable — safe to pass None
         user = request.user if request.user.is_authenticated else None
         for b in items:
             isbn = b.get("isbn")
@@ -144,11 +143,6 @@ class OpenLibraryImport(APIView):
 # READING HISTORY  —  GET /api/my-history/
 # ─────────────────────────────────────────────
 class MyReadingHistoryView(APIView):
-    """
-    GET  — returns all books the logged-in user has marked as finished.
-    POST — marks a book as finished (or updates rating).
-           body: { "book_id": <int>, "rating": <1-5> }
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -181,13 +175,6 @@ class MyReadingHistoryView(APIView):
 # BOOKMARKS  —  GET/POST/DELETE /api/my-bookmarks/
 # ─────────────────────────────────────────────
 class MyBookmarksView(APIView):
-    """
-    GET    — returns all bookmarks for the logged-in user.
-    POST   — create or update a bookmark.
-             body: { "book_id": <int>, "page": <int>, "note": "<str>" }
-    DELETE — remove a bookmark.
-             body: { "book_id": <int> }
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -232,7 +219,6 @@ class MyBookmarksView(APIView):
 _GUTENBERG_CACHE = {}
 
 def _extract_gutenberg_book(book: dict) -> dict:
-    """Normalise a Gutendex book object into a flat dict for the frontend."""
     formats = book.get("formats", {})
 
     read_url = (
@@ -265,9 +251,6 @@ def _extract_gutenberg_book(book: dict) -> dict:
 
 
 class GutenbergSearchView(APIView):
-    """Proxy search to Gutendex (Project Gutenberg).
-    GET /api/gutenberg/search/?q=<query>&subject=<topic>&page=<n>
-    """
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -308,7 +291,6 @@ class GutenbergSearchView(APIView):
 # GUTENBERG IMPORT  — POST /api/gutenberg/import/
 # ─────────────────────────────────────────────
 class GutenbergImportView(APIView):
-    """Import a Gutenberg book into the local Book DB."""
     permission_classes = [IsAdminOrLibrarianOrReadOnly]
 
     def post(self, request):
@@ -317,10 +299,7 @@ class GutenbergImportView(APIView):
         if not gutenberg_id:
             return Response({"error": "gutenberg_id required"}, status=400)
 
-        # FIX: always use request.user directly — permission class guarantees
-        # only authenticated admin/librarian reaches here
         user = request.user if request.user.is_authenticated else None
-
         synthetic_isbn = f"GUT-{gutenberg_id}"
 
         obj, created = Book.objects.get_or_create(
@@ -341,3 +320,43 @@ class GutenbergImportView(APIView):
             {"created": created, "book_id": obj.id},
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+
+
+# ─────────────────────────────────────────────
+# GUTENBERG PROXY TEXT  — GET /api/gutenberg/proxy-text/
+# Fetches plain text from Gutenberg server-side to avoid CORS block
+# ─────────────────────────────────────────────
+class GutenbergProxyTextView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        url = request.query_params.get("url", "").strip()
+
+        if not url:
+            return Response({"error": "url parameter is required"}, status=400)
+
+        # Only allow requests to Project Gutenberg to prevent abuse
+        allowed = (
+            "gutenberg.org" in url
+            or "gutendex.com" in url
+            or "aleph.gutenberg.org" in url
+        )
+        if not allowed:
+            return Response({"error": "Only Gutenberg URLs are allowed"}, status=400)
+
+        try:
+            print(f"[GutenbergProxy] Fetching: {url}")
+            with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+                r = client.get(url)
+            print(f"[GutenbergProxy] Status: {r.status_code}, Length: {len(r.text)}")
+            r.raise_for_status()
+            return HttpResponse(r.text, content_type="text/plain; charset=utf-8")
+        except httpx.TimeoutException:
+            print(f"[GutenbergProxy] Timeout fetching: {url}")
+            return Response({"error": "Request to Gutenberg timed out"}, status=504)
+        except httpx.ConnectError:
+            print(f"[GutenbergProxy] Connection error fetching: {url}")
+            return Response({"error": "Cannot reach Gutenberg"}, status=502)
+        except Exception as e:
+            print(f"[GutenbergProxy] Error: {e}")
+            return Response({"error": str(e)}, status=500)

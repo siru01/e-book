@@ -17,7 +17,7 @@ export default function ReaderPage() {
   const [finishedSaved, setFinishedSaved] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Load book meta + text — mirrors ReaderState.load_book
+  // Load book meta + text
   useEffect(() => {
     if (!gutenbergId) { setError("No book ID provided."); setLoading(false); return; }
 
@@ -52,14 +52,27 @@ export default function ReaderPage() {
         return;
       }
 
-      // Step 2: fetch plain text content
+      // Step 2: fetch plain text content via backend proxy (avoids CORS block from Gutenberg)
       if (!plainUrl) {
         if (!cancelled) { setError("No plain text version available for this book."); setLoading(false); }
         return;
       }
       try {
-        const res = await fetch(plainUrl);
-        if (!res.ok) throw new Error("Could not load book content.");
+        const res = await fetch(
+          `http://localhost:8000/api/gutenberg/proxy-text/?url=${encodeURIComponent(plainUrl)}`
+        );
+        if (!res.ok) {
+          // Try to get the actual error from the backend
+          let errMsg = `Server error ${res.status}`;
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } catch (_) {
+            const errText = await res.text();
+            if (errText) errMsg = errText;
+          }
+          throw new Error(errMsg);
+        }
         const text = await res.text();
         if (!cancelled) setBookText(text.slice(0, 50000));
       } catch (e) {
