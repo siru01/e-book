@@ -18,18 +18,58 @@
   border-bottom: 1px solid #e0e0e0;
   z-index: 10;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  position: relative;
+  /* needed so absolute center child works */
 }
 
 .reader-toolbar-left {
   display: flex;
   align-items: center;
   gap: 20px;
+  flex: 4;
+  /* pushes center + right apart evenly */
 }
+
 .reader-toolbar-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  /* matches left flex so center stays truly centered */
+  justify-content: flex-end;
+}
+
+/* ── Centered Title ── */
+.reader-toolbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  /* clicks pass through to toolbar buttons */
+  max-width: 45%;
+  /* prevent overflow on narrow screens */
+}
+
+.reader-toolbar-center .reader-book-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+}
+
+.reader-toolbar-center .reader-book-author {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .reader-back-link {
@@ -39,20 +79,9 @@
   font-weight: 500;
   transition: color 0.2s;
 }
-.reader-back-link:hover { color: #000; }
 
-.reader-book-meta {
-  display: flex;
-  flex-direction: column;
-}
-.reader-book-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-.reader-book-author {
-  font-size: 12px;
-  color: #888;
+.reader-back-link:hover {
+  color: #000;
 }
 
 /* Font controls */
@@ -65,6 +94,7 @@
   padding: 4px 12px;
   background: #fafafa;
 }
+
 .reader-font-controls button {
   background: none;
   border: none;
@@ -75,7 +105,11 @@
   padding: 0 4px;
   transition: color 0.2s;
 }
-.reader-font-controls button:hover { color: #000; }
+
+.reader-font-controls button:hover {
+  color: #000;
+}
+
 .reader-font-controls span {
   color: #888;
   font-size: 12px;
@@ -93,17 +127,27 @@
   font-weight: 500;
   transition: all 0.2s;
 }
+
 .reader-btn-outline {
   background: transparent;
   border: 1px solid #ddd;
   color: #444;
 }
-.reader-btn-outline:hover { background: #f5f5f5; border-color: #bbb; }
+
+.reader-btn-outline:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
 .reader-btn-orange {
   background: #f97316;
   color: #fff;
 }
-.reader-btn-orange:hover { background: #ea6c0d; }
+
+.reader-btn-orange:hover {
+  background: #ea6c0d;
+}
+
 .reader-btn-green {
   background: #16a34a;
   color: #fff;
@@ -115,6 +159,7 @@
   background: #e5e5e5;
   flex-shrink: 0;
 }
+
 .reader-progress-fill {
   height: 100%;
   background: #6366f1;
@@ -138,11 +183,13 @@
   width: 100%;
   max-width: 1080px;
 }
+
 .reader-book-wrap.slide-out-left {
   transform: translateX(-80px);
   opacity: 0;
   pointer-events: none;
 }
+
 .reader-book-wrap.slide-out-right {
   transform: translateX(80px);
   opacity: 0;
@@ -156,8 +203,8 @@
   height: calc(100vh - 170px);
   max-height: 760px;
   box-shadow:
-    0 8px 40px rgba(0,0,0,0.18),
-    0 2px 8px rgba(0,0,0,0.08);
+    0 8px 40px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.08);
   border-radius: 4px 8px 8px 4px;
 }
 
@@ -170,16 +217,19 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  /* required for absolute page number positioning */
 }
+
 .reader-page-left {
   border-radius: 4px 0 0 4px;
   border-right: none;
-  box-shadow: inset -4px 0 8px rgba(0,0,0,0.04);
+  box-shadow: inset -4px 0 8px rgba(0, 0, 0, 0.04);
 }
+
 .reader-page-right {
   border-radius: 0 8px 8px 0;
   border-left: none;
-  box-shadow: inset 4px 0 8px rgba(0,0,0,0.04);
+  box-shadow: inset 4px 0 8px rgba(0, 0, 0, 0.04);
 }
 
 /* ── Spine ── */
@@ -187,7 +237,7 @@
   width: 8px;
   flex-shrink: 0;
   background: linear-gradient(to right, #c8c8c8 0%, #e8e8e8 40%, #e8e8e8 60%, #c8c8c8 100%);
-  box-shadow: -1px 0 3px rgba(0,0,0,0.1), 1px 0 3px rgba(0,0,0,0.1);
+  box-shadow: -1px 0 3px rgba(0, 0, 0, 0.1), 1px 0 3px rgba(0, 0, 0, 0.1);
 }
 
 /* ── Page Content ── */
@@ -204,6 +254,7 @@
   margin: 0 0 0.9em 0;
   text-indent: 1.4em;
 }
+
 .reader-page-inner p:first-child {
   text-indent: 0;
 }
@@ -216,14 +267,15 @@
   text-indent: 0 !important;
 }
 
-/* ── Page Numbers ── */
+/* ── Page Number — bottom RIGHT corner of each page ── */
 .reader-page-number {
-  text-align: center;
+  position: absolute;
+  bottom: 18px;
+  right: 24px;
   font-size: 12px;
   color: #bbb;
   letter-spacing: 0.1em;
-  margin-top: 16px;
-  flex-shrink: 0;
+  user-select: none;
 }
 
 /* ── Arrows ── */
@@ -243,19 +295,30 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 5;
   line-height: 1;
 }
+
 .reader-arrow:hover {
   background: #f5f5f5;
   border-color: #bbb;
   color: #000;
   transform: translateY(-50%) scale(1.08);
 }
-.reader-arrow-left  { left: 12px; }
-.reader-arrow-right { right: 12px; }
-.reader-arrow-hidden { opacity: 0; pointer-events: none; }
+
+.reader-arrow-left {
+  left: 12px;
+}
+
+.reader-arrow-right {
+  right: 12px;
+}
+
+.reader-arrow-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* ── Footer ── */
 .reader-footer {
@@ -277,6 +340,7 @@
   align-items: center;
   gap: 16px;
 }
+
 .reader-spinner {
   width: 36px;
   height: 36px;
@@ -285,10 +349,24 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-.reader-loading-text { font-size: 14px; color: #888; }
-.reader-error-text   { color: #ef4444; font-size: 14px; text-align: center; max-width: 400px; }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reader-loading-text {
+  font-size: 14px;
+  color: #888;
+}
+
+.reader-error-text {
+  color: #ef4444;
+  font-size: 14px;
+  text-align: center;
+  max-width: 400px;
+}
 
 .reader-back-btn {
   background: transparent;
@@ -300,18 +378,49 @@
   font-size: 13px;
   transition: all 0.2s;
 }
-.reader-back-btn:hover { background: #f5f5f5; }
+
+.reader-back-btn:hover {
+  background: #f5f5f5;
+}
 
 /* ── Responsive ── */
 @media (max-width: 680px) {
-  .reader-stage { padding: 16px 48px; }
+  .reader-stage {
+    padding: 16px 48px;
+  }
+
   .reader-book {
     flex-direction: column;
     height: auto;
     max-height: none;
     border-radius: 8px;
   }
-  .reader-page-left  { border-radius: 8px 8px 0 0; }
-  .reader-page-right { border-radius: 0 0 8px 8px; }
-  .reader-spine { width: 100%; height: 6px; }
+
+  .reader-page-left {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .reader-page-right {
+    border-radius: 0 0 8px 8px;
+  }
+
+  .reader-spine {
+    width: 100%;
+    height: 6px;
+  }
+
+  /* On mobile, center title via flex instead of absolute */
+  .reader-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .reader-toolbar-center {
+    position: static;
+    transform: none;
+    order: -1;
+    width: 100%;
+    max-width: 100%;
+    pointer-events: auto;
+  }
 }

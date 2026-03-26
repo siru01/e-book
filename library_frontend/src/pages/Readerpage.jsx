@@ -173,17 +173,23 @@ export default function ReaderPage() {
     <div className="reader-root">
       {/* Toolbar */}
       <div className="reader-toolbar">
+
+        {/* LEFT: back link only */}
         <div className="reader-toolbar-left">
           <Link to="/dashboard" className="reader-back-link">
             ← <span>Dashboard</span>
           </Link>
-          {bookMeta && (
-            <div className="reader-book-meta">
-              <span className="reader-book-title">{bookMeta.title}</span>
-              <span className="reader-book-author">{bookMeta.author}</span>
-            </div>
-          )}
         </div>
+
+        {/* CENTER: book title + author — absolutely centered in toolbar */}
+        {bookMeta && (
+          <div className="reader-toolbar-center">
+            <span className="reader-book-title">{bookMeta.title}</span>
+            <span className="reader-book-author">{bookMeta.author}</span>
+          </div>
+        )}
+
+        {/* RIGHT: font controls + buttons */}
         <div className="reader-toolbar-right">
           <div className="reader-font-controls">
             <button onClick={() => setFontSize((s) => Math.max(12, s - 2))}>A−</button>
@@ -237,6 +243,7 @@ export default function ReaderPage() {
 
             <div className={`reader-book-wrap ${sliding === "left" ? "slide-out-left" : sliding === "right" ? "slide-out-right" : ""}`}>
               <div className="reader-book">
+
                 {/* Left page */}
                 <div className="reader-page reader-page-left">
                   <div className="reader-page-inner" style={{ fontSize: `${fontSize}px` }}>
@@ -244,6 +251,7 @@ export default function ReaderPage() {
                       <p key={i}>{para}</p>
                     ))}
                   </div>
+                  {/* Page number — bottom RIGHT corner */}
                   <div className="reader-page-number">{leftPageNum}</div>
                 </div>
 
@@ -257,8 +265,10 @@ export default function ReaderPage() {
                       : <p className="reader-end-text">~ End ~</p>
                     }
                   </div>
+                  {/* Page number — bottom RIGHT corner */}
                   <div className="reader-page-number">{rightPage ? rightPageNum : ""}</div>
                 </div>
+
               </div>
             </div>
 
