@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import Sidebar from "../components/Sidebar";
@@ -12,7 +12,7 @@ import {
   useGutenbergRows,
 } from "../hooks/useDashboardData";
 
-// ── Hero panel cards ──────────────────────────────────────────────
+// ── Constants moved outside component so they are never recreated ──
 const HERO_CARDS = [
   { key: "recent",          label: "Recent Readings", bg: "#eef2ff" },
   { key: "bookmarks",       label: "Bookmarks",       bg: "#fefce8" },
@@ -21,6 +21,35 @@ const HERO_CARDS = [
   { key: "previously_read", label: "Previously Read", bg: "#f0fdf4" },
 ];
 
+const PANEL_LABELS = {
+  recent:          "Recent Readings",
+  bookmarks:       "Bookmarks",
+  calendar:        "Calendar",
+  history:         "History",
+  previously_read: "Previously Read",
+};
+
+const PANEL_ACCENTS = {
+  recent:          "#f59e0b",
+  bookmarks:       "#ec4899",
+  calendar:        "#7c3aed",
+  history:         "#0284c7",
+  previously_read: "#059669",
+};
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// ── Pure helper — outside component, never re-created ─────────
+const stars = (r) => {
+  const n = Math.max(0, Math.min(5, r));
+  return "★".repeat(n) + "☆".repeat(5 - n);
+};
+
+// Safely normalise all API list responses to arrays
+const toArray = (raw) =>
+  Array.isArray(raw) ? raw : raw?.results || [];
+
+// ── Sub-components outside parent — no re-mount on every render ──
 function HeroCard({ panelKey, label, bg, active, onClick }) {
   return (
     <div
@@ -38,7 +67,9 @@ function PanelBookRow({ book, extra }) {
   return (
     <div className="panel-book-row">
       <div className="panel-book-cover">
-        {book.cover_url ? <img src={book.cover_url} alt="" /> : <span>📚</span>}
+        {book.cover_url
+          ? <img src={book.cover_url} alt="" />
+          : <span>📚</span>}
       </div>
       <div className="panel-book-info">
         <span className="panel-book-title">{book.title}</span>
@@ -54,7 +85,9 @@ function GutenbergBookCard({ book }) {
   return (
     <div className="guten-card">
       <div className="guten-card-cover">
-        {book.cover ? <img src={book.cover} alt="" /> : <span>📖</span>}
+        {book.cover
+          ? <img src={book.cover} alt="" />
+          : <span>📖</span>}
         <div className="guten-card-overlay">
           <button
             className="guten-read-btn"
@@ -77,7 +110,9 @@ function SearchResultCard({ book }) {
   return (
     <div className="search-result-card">
       <div className="src-cover">
-        {book.cover ? <img src={book.cover} alt="" /> : <span>📖</span>}
+        {book.cover
+          ? <img src={book.cover} alt="" />
+          : <span>📖</span>}
       </div>
       <div className="src-info">
         <span className="src-title">{book.title}</span>
@@ -93,54 +128,53 @@ function SearchResultCard({ book }) {
   );
 }
 
-// ── Helper ────────────────────────────────────────────────────────
-const stars = (r) =>
-  "★".repeat(Math.max(0, Math.min(5, r))) +
-  "☆".repeat(5 - Math.max(0, Math.min(5, r)));
-
+// ── Main component ─────────────────────────────────────────────
 export default function DashboardPage() {
   const { token } = useAuth();
-  const [expanded, setExpanded]   = useState(true);
+  const [expanded,    setExpanded]    = useState(true);
   const [activePanel, setActivePanel] = useState("");
 
-  // Search state (not cached — always fresh)
+  // Search state — always fresh, not cached
   const [searchQuery,   setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searched,      setSearched]      = useState(false);
 
-  // ── React Query hooks (data cached, no re-fetch on nav back) ──
-  const { data: rawBooks     = [] } = useMyBooks(token);
-  const { data: rawHistory   = [] } = useMyHistory(token);
-  const { data: rawBookmarks = [] } = useMyBookmarks(token);
+  // ── React Query hooks — enabled: !!token prevents firing without login ──
+  const { data: rawBooks      = [] } = useMyBooks(token);
+  const { data: rawHistory    = [] } = useMyHistory(token);
+  const { data: rawBookmarks  = [] } = useMyBookmarks(token);
   const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
 
-  // ── Transform raw API data (only recalculates when raw data changes) ──
-  const recentReadings = useMemo(() => {
-    const books = Array.isArray(rawBooks) ? rawBooks : rawBooks.results || [];
-    return books.map((b) => ({
-      cover_url:    b.book_cover || "",
-      title:        b.book_title || "Unknown",
-      author:       b.book_author || "",
+  // ── Derived data — only recalculates when raw data changes ────
+  const recentReadings = useMemo(() =>
+    toArray(rawBooks).map((b) => ({
+      cover_url:    b.book_cover              || "",
+      title:        b.book_title              || "Unknown",
+      author:       b.book_author             || "",
       last_read:    b.last_read || b.last_borrowed || "Recently",
       progress_pct: `${parseInt(b.progress_percent || b.progress || 0)}%`,
-    }));
-  }, [rawBooks]);
+    })),
+  [rawBooks]);
 
   const calendarEvents = useMemo(() => {
-    const books = Array.isArray(rawBooks) ? rawBooks : rawBooks.results || [];
-    const today    = new Date();
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const events = books.flatMap((b) => {
+    const today  = new Date();
+    const events = toArray(rawBooks).flatMap((b) => {
       if (!b.due_date) return [];
       const due   = new Date(b.due_date);
-      const delta = Math.floor((due - today) / 86400000);
+      const delta = Math.floor((due - today) / 86_400_000);
       const color = delta < 0 ? "#ef4444" : delta <= 3 ? "#f59e0b" : "#6366f1";
       const type  = delta < 0 ? "overdue" : delta <= 3 ? "due soon" : "return";
-      return [{ day_short: dayNames[due.getDay()], day_num: due.getDate(), title: `Return: ${b.book_title}`, type, color }];
+      return [{
+        day_short: DAY_NAMES[due.getDay()],
+        day_num:   due.getDate(),
+        title:     `Return: ${b.book_title}`,
+        type,
+        color,
+      }];
     });
     events.push({
-      day_short: dayNames[today.getDay()],
+      day_short: DAY_NAMES[today.getDay()],
       day_num:   today.getDate(),
       title:     "Reading Goal: Keep it up! 📖",
       type:      "goal",
@@ -149,46 +183,49 @@ export default function DashboardPage() {
     return events;
   }, [rawBooks]);
 
-  const readingHistory = useMemo(() => {
-    const hist = Array.isArray(rawHistory) ? rawHistory : rawHistory.results || [];
-    return hist.map((b) => ({
-      cover_url:      b.book_cover || "",
-      title:          b.book_title || "Unknown",
-      author:         b.book_author || "",
-      completed_date: b.returned_date || b.due_date || "",
+  const readingHistory = useMemo(() =>
+    toArray(rawHistory).map((b) => ({
+      cover_url:      b.book_cover                   || "",
+      title:          b.book_title                   || "Unknown",
+      author:         b.book_author                  || "",
+      completed_date: b.returned_date || b.due_date  || "",
       stars:          stars(b.rating || 4),
-    }));
-  }, [rawHistory]);
+    })),
+  [rawHistory]);
 
-  const previouslyRead = useMemo(() => {
-    const hist = Array.isArray(rawHistory) ? rawHistory : rawHistory.results || [];
-    return hist.map((b) => ({
-      cover_url: b.book_cover || "",
-      title:     b.book_title || "Unknown",
-      author:    b.book_author || "",
-      genre:     b.genre || b.category || "General",
-      read_on:   b.returned_date || b.due_date || "",
+  const previouslyRead = useMemo(() =>
+    toArray(rawHistory).map((b) => ({
+      cover_url: b.book_cover                   || "",
+      title:     b.book_title                   || "Unknown",
+      author:    b.book_author                  || "",
+      genre:     b.genre || b.category          || "General",
+      read_on:   b.returned_date || b.due_date  || "",
       stars:     stars(b.rating || 4),
-    }));
-  }, [rawHistory]);
+    })),
+  [rawHistory]);
 
-  const bookmarkedBooks = useMemo(() => {
-    const bm = Array.isArray(rawBookmarks) ? rawBookmarks : rawBookmarks.results || [];
-    return bm.map((b) => ({
-      cover_url: b.book_cover || "",
-      title:     b.book_title || b.title || "Unknown",
-      author:    b.book_author || b.author || "",
-      page:      String(b.page_number || b.page || "—"),
-      note:      b.note || b.description || "",
-    }));
-  }, [rawBookmarks]);
+  const bookmarkedBooks = useMemo(() =>
+    toArray(rawBookmarks).map((b) => ({
+      cover_url: b.book_cover                    || "",
+      title:     b.book_title || b.title         || "Unknown",
+      author:    b.book_author || b.author       || "",
+      page:      String(b.page_number || b.page  || "—"),
+      note:      b.note || b.description         || "",
+    })),
+  [rawBookmarks]);
 
-  // ── Panel helpers ──────────────────────────────────────────────
-  function handlePanelToggle(key) {
+  // ── Handlers — useCallback so they don't re-create each render ─
+  const handlePanelToggle = useCallback((key) => {
     setActivePanel((p) => (p === key ? "" : key));
-  }
+  }, []);
 
-  async function handleSearch(q) {
+  const handleClearSearch = useCallback(() => {
+    setSearched(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  }, []);
+
+  const handleSearch = useCallback(async (q) => {
     setSearchQuery(q);
     setSearched(true);
     setSearchLoading(true);
@@ -199,14 +236,9 @@ export default function DashboardPage() {
       setSearchResults([]);
     }
     setSearchLoading(false);
-  }
+  }, [token]);
 
-  function handleClearSearch() {
-    setSearched(false);
-    setSearchQuery("");
-    setSearchResults([]);
-  }
-
+  // ── Panel renderer ─────────────────────────────────────────────
   function renderPanel() {
     switch (activePanel) {
       case "recent":
@@ -264,16 +296,19 @@ export default function DashboardPage() {
     }
   }
 
-  const panelLabels  = { recent: "Recent Readings", bookmarks: "Bookmarks", calendar: "Calendar", history: "History", previously_read: "Previously Read" };
-  const panelAccents = { recent: "#f59e0b", bookmarks: "#ec4899", calendar: "#7c3aed", history: "#0284c7", previously_read: "#059669" };
-
   // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="dashboard-root">
       <Sidebar expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
-      <Topbar expanded={expanded} onSearch={handleSearch} onClearSearch={handleClearSearch} />
+      <Topbar
+        expanded={expanded}
+        onSearch={handleSearch}
+        onClearSearch={handleClearSearch}
+      />
 
-      <div className={`dashboard-content ${expanded ? "dashboard-content-expanded" : "dashboard-content-collapsed"}`}>
+      <div className={`dashboard-content ${
+        expanded ? "dashboard-content-expanded" : "dashboard-content-collapsed"
+      }`}>
         <div className="dash-topbar-bg">
           <div className="dash-topbar-inner">
             <h2 className="dash-heading">What would you like to read?</h2>
@@ -295,12 +330,17 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Hero panel */}
+          {/* Active panel */}
           {activePanel && (
             <div className="hero-panel">
               <div className="hero-panel-header">
-                <div className="hero-panel-bar" style={{ background: panelAccents[activePanel] }} />
-                <span className="hero-panel-title">{panelLabels[activePanel]}</span>
+                <div
+                  className="hero-panel-bar"
+                  style={{ background: PANEL_ACCENTS[activePanel] }}
+                />
+                <span className="hero-panel-title">
+                  {PANEL_LABELS[activePanel]}
+                </span>
               </div>
               <div className="hero-panel-content">{renderPanel()}</div>
             </div>
@@ -311,13 +351,17 @@ export default function DashboardPage() {
             <div className="search-section">
               <div className="search-section-header">
                 <h3>Results for "{searchQuery}"</h3>
-                <button className="clear-search-btn" onClick={handleClearSearch}>✕ Clear</button>
+                <button className="clear-search-btn" onClick={handleClearSearch}>
+                  ✕ Clear
+                </button>
               </div>
               {searchLoading ? (
                 <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
               ) : searchResults.length > 0 ? (
                 <div className="search-results-grid">
-                  {searchResults.map((b) => <SearchResultCard key={b.gutenbergId} book={b} />)}
+                  {searchResults.map((b) => (
+                    <SearchResultCard key={b.gutenbergId} book={b} />
+                  ))}
                 </div>
               ) : (
                 <p className="no-results">No results found.</p>

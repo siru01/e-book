@@ -18,9 +18,11 @@ const Login = () => {
     try {
       const role = await login(email, password);
       if (role === 'ADMIN' || role === 'LIBRARIAN') {
-        navigate('/admin-dashboard');
+        // replace: true removes /login from history so back button
+        // cannot return to the login page after a successful login
+        navigate('/admin-dashboard', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -40,8 +42,8 @@ const Login = () => {
           {error && <p style={{ color: 'red', marginBottom: '12px', fontSize: '0.9rem' }}>{error}</p>}
           <div className="input-group">
             <label>Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
@@ -51,8 +53,8 @@ const Login = () => {
 
           <div className="input-group">
             <label>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
