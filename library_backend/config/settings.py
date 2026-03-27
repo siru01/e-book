@@ -108,6 +108,32 @@ else:
     }
 
 
+# ─── Redis Cache ─────────────────────────────────────────────
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None}, # required for Upstash TLS
+        }
+    }
+}
+
+# ─── Cache TTLs (seconds) ────────────────────────────────────
+CACHE_TTL = {
+    "trending":     6 * 60 * 60,    # 6 hours
+    "category":     2 * 60 * 60,    # 2 hours
+    "search":       30 * 60,        # 30 minutes
+    "new_arrivals": 12 * 60 * 60,   # 12 hours
+    "detail":       24 * 60 * 60,   # 24 hours
+}
+
+# ─── Google Books API Key ────────────────────────────────────
+GOOGLE_BOOKS_API_KEY = ""           # add your key here later
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -154,6 +180,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',  # ← change this line
+    ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
@@ -162,8 +191,10 @@ REST_FRAMEWORK = {
 }
 
 
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+
+

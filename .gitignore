@@ -10,6 +10,7 @@ library_backend/venv/
 # Frontend Dependencies and Build files
 library_frontend/node_modules/
 library_frontend/dist/
+library_frontend/.env
 
 # Editor Settings
 **/.vscode/

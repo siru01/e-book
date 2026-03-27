@@ -1,14 +1,14 @@
-from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
+from django.http import HttpResponse
+from .services import aggregator
 from .permissions import IsAdminOrLibrarianOrReadOnly
-from .models import Book, ReadingHistory, Bookmark
+from .models import Book, ReadingHistory, Bookmarks
 from .serializers import BookSerializer, ReadingHistorySerializer, BookmarkSerializer
+from rest_framework import viewsets, status, permissions
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.http import HttpResponse
 import httpx
 
 
@@ -72,15 +72,13 @@ class OpenLibrarySearch(APIView):
                     cover = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
                 elif cover_id:
                     cover = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
-                results.append(
-                    {
-                        "title": d.get("title"),
-                        "author": (d.get("author_name") or [None])[0],
-                        "isbn": isbn,
-                        "cover": cover,
-                        "first_publish_year": d.get("first_publish_year"),
-                    }
-                )
+                results.append({
+                    "title": d.get("title"),
+                    "author": (d.get("author_name") or [None])[0],
+                    "isbn": isbn,
+                    "cover": cover,
+                    "first_publish_year": d.get("first_publish_year"),
+                })
             resp = {"results": results, "num_found": data.get("numFound", 0)}
             try:
                 self._CACHE[q] = resp
@@ -88,9 +86,7 @@ class OpenLibrarySearch(APIView):
                 pass
             return Response(resp)
         except Exception as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ─────────────────────────────────────────────
@@ -103,9 +99,7 @@ class OpenLibraryImport(APIView):
         payload = request.data or {}
         items = payload.get("books") or []
         if not items:
-            return Response(
-                {"error": "books list required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "books list required"}, status=status.HTTP_400_BAD_REQUEST)
         created = 0
         skipped = 0
         user = request.user if request.user.is_authenticated else None
@@ -114,11 +108,7 @@ class OpenLibraryImport(APIView):
             title = b.get("title") or "Untitled"
             author = b.get("author") or "Unknown"
             total = int(b.get("total_copies") or 1)
-            available = int(
-                b.get("available_copies")
-                if b.get("available_copies") is not None
-                else total
-            )
+            available = int(b.get("available_copies") if b.get("available_copies") is not None else total)
             cover = b.get("cover") or ""
             if not isbn:
                 skipped += 1
@@ -140,7 +130,7 @@ class OpenLibraryImport(APIView):
 
 
 # ─────────────────────────────────────────────
-# READING HISTORY  —  GET /api/my-history/
+# READING HISTORY  —  GET/POST /api/my-history/
 # ─────────────────────────────────────────────
 class MyReadingHistoryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -152,17 +142,15 @@ class MyReadingHistoryView(APIView):
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        rating  = int(request.data.get("rating", 4))
+        source  = request.data.get("source", "gutenberg")
 
-        try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return Response({"error": "Book not found"}, status=404)
+        if not book_id:
+            return Response({"error": "book_id required"}, status=400)
 
-        obj, created = ReadingHistory.objects.update_or_create(
+        obj, created = ReadingHistory.objects.get_or_create(
             user=request.user,
-            book=book,
-            defaults={"rating": rating},
+            book_id=book_id,
+            defaults={"source": source},
         )
         serializer = ReadingHistorySerializer(obj)
         return Response(
@@ -178,24 +166,21 @@ class MyBookmarksView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        bookmarks = Bookmark.objects.filter(user=request.user)
+        bookmarks = Bookmarks.objects.filter(user=request.user)
         serializer = BookmarkSerializer(bookmarks, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        page    = int(request.data.get("page", 1))
-        note    = request.data.get("note", "")
+        source  = request.data.get("source", "gutenberg")
 
-        try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return Response({"error": "Book not found"}, status=404)
+        if not book_id:
+            return Response({"error": "book_id required"}, status=400)
 
-        obj, created = Bookmark.objects.update_or_create(
+        obj, created = Bookmarks.objects.get_or_create(
             user=request.user,
-            book=book,
-            defaults={"page": page, "note": note},
+            book_id=book_id,
+            defaults={"source": source},
         )
         serializer = BookmarkSerializer(obj)
         return Response(
@@ -205,7 +190,7 @@ class MyBookmarksView(APIView):
 
     def delete(self, request):
         book_id = request.data.get("book_id")
-        deleted, _ = Bookmark.objects.filter(
+        deleted, _ = Bookmarks.objects.filter(
             user=request.user, book_id=book_id
         ).delete()
         if deleted:
@@ -220,7 +205,6 @@ _GUTENBERG_CACHE = {}
 
 def _extract_gutenberg_book(book: dict) -> dict:
     formats = book.get("formats", {})
-
     read_url = (
         formats.get("text/html")
         or formats.get("text/html; charset=utf-8")
@@ -229,15 +213,11 @@ def _extract_gutenberg_book(book: dict) -> dict:
         or formats.get("text/plain")
         or ""
     )
-
     cover = formats.get("image/jpeg") or ""
-
     authors = book.get("authors", [])
     author_name = authors[0].get("name", "Unknown") if authors else "Unknown"
-
     subjects = book.get("subjects", [])
     genre = subjects[0][:50] if subjects else "General"
-
     return {
         "gutenberg_id":   book.get("id"),
         "title":          book.get("title", "Untitled"),
@@ -324,18 +304,15 @@ class GutenbergImportView(APIView):
 
 # ─────────────────────────────────────────────
 # GUTENBERG PROXY TEXT  — GET /api/gutenberg/proxy-text/
-# Fetches plain text from Gutenberg server-side to avoid CORS block
 # ─────────────────────────────────────────────
 class GutenbergProxyTextView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         url = request.query_params.get("url", "").strip()
-
         if not url:
             return Response({"error": "url parameter is required"}, status=400)
 
-        # Only allow requests to Project Gutenberg to prevent abuse
         allowed = (
             "gutenberg.org" in url
             or "gutendex.com" in url
@@ -345,18 +322,60 @@ class GutenbergProxyTextView(APIView):
             return Response({"error": "Only Gutenberg URLs are allowed"}, status=400)
 
         try:
-            print(f"[GutenbergProxy] Fetching: {url}")
             with httpx.Client(timeout=20.0, follow_redirects=True) as client:
                 r = client.get(url)
-            print(f"[GutenbergProxy] Status: {r.status_code}, Length: {len(r.text)}")
             r.raise_for_status()
             return HttpResponse(r.text, content_type="text/plain; charset=utf-8")
         except httpx.TimeoutException:
-            print(f"[GutenbergProxy] Timeout fetching: {url}")
             return Response({"error": "Request to Gutenberg timed out"}, status=504)
         except httpx.ConnectError:
-            print(f"[GutenbergProxy] Connection error fetching: {url}")
             return Response({"error": "Cannot reach Gutenberg"}, status=502)
         except Exception as e:
-            print(f"[GutenbergProxy] Error: {e}")
             return Response({"error": str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────
+# BFF AGGREGATOR VIEWS
+# ─────────────────────────────────────────────
+class BookSearchView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [] 
+
+    def get(self, request):
+        query   = request.GET.get("q", "").strip()
+        page    = int(request.GET.get("page", 1))
+        sources = request.GET.get("sources", "").split(",") if request.GET.get("sources") else None
+
+        if not query:
+            return Response({"error": "q parameter required"}, status=400)
+
+        results = aggregator.search_all(query, page=page, sources=sources)
+        return Response({"results": results, "page": page, "count": len(results)})
+
+
+class TrendingView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [] 
+
+    def get(self, request):
+        results = aggregator.trending_all()
+        return Response({"results": results, "count": len(results)})
+
+
+class CategoryView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [] 
+
+    def get(self, request):
+        genre   = request.GET.get("genre", "fiction")
+        page    = int(request.GET.get("page", 1))
+        results = aggregator.category_all(genre, page=page)
+        return Response({"results": results, "genre": genre, "page": page, "count": len(results)})
+
+
+class NewArrivalsView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [] 
+    def get(self, request):
+        results = aggregator.new_arrivals_all()
+        return Response({"results": results, "count": len(results)})
