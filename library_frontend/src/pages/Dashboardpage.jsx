@@ -12,7 +12,6 @@ import {
   useGutenbergRows,
 } from "../hooks/useDashboardData";
 
-// ── Constants ──────────────────────────────────────────────────────
 const HERO_CARDS = [
   { key: "recent",          label: "Recent Readings", bg: "#eef2ff" },
   { key: "bookmarks",       label: "Bookmarks",       bg: "#fefce8" },
@@ -37,13 +36,6 @@ const PANEL_ACCENTS = {
   previously_read: "#059669",
 };
 
-const SOURCE_BADGES = {
-  gutenberg:   { label: "Gutenberg", color: "#7c3aed" },
-  openlibrary: { label: "Open Library", color: "#0284c7" },
-  google:      { label: "Google Books", color: "#059669" },
-  archive:     { label: "Archive.org", color: "#d97706" },
-};
-
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const stars = (r) => {
@@ -54,7 +46,6 @@ const stars = (r) => {
 const toArray = (raw) =>
   Array.isArray(raw) ? raw : raw?.results || [];
 
-// ── Sub-components ─────────────────────────────────────────────────
 function HeroCard({ panelKey, label, bg, active, onClick }) {
   return (
     <div
@@ -85,22 +76,9 @@ function PanelBookRow({ book, extra }) {
   );
 }
 
-// ── Book card for shelf rows — supports all 4 sources ─────────────
+// ── Book card — always opens YOUR reader ──────────────────────────
 function BookCard({ book }) {
   const navigate = useNavigate();
-  const badge    = SOURCE_BADGES[book.source] || SOURCE_BADGES.gutenberg;
-
-  const handleRead = () => {
-    // For Gutenberg books navigate to reader; others open external URL
-    if (book.source === "gutenberg") {
-      // gutenbergId is "gutenberg:1234" — extract numeric part
-      const numId = String(book.gutenbergId).replace("gutenberg:", "");
-      navigate(`/read/${numId}`);
-    } else if (book.readUrl) {
-      window.open(book.readUrl, "_blank", "noopener");
-    }
-  };
-
   return (
     <div className="guten-card">
       <div className="guten-card-cover">
@@ -108,19 +86,13 @@ function BookCard({ book }) {
           ? <img src={book.cover} alt={book.title} loading="lazy" />
           : <span>📖</span>}
         <div className="guten-card-overlay">
-          {book.readUrl && (
-            <button className="guten-read-btn" onClick={handleRead}>
-              Read Now
-            </button>
-          )}
+          <button
+            className="guten-read-btn"
+            onClick={() => navigate(`/read/${encodeURIComponent(book.gutenbergId)}`)}
+          >
+            Read Now
+          </button>
         </div>
-        {/* Source badge */}
-        <span
-          className="source-badge"
-          style={{ background: badge.color }}
-        >
-          {badge.label}
-        </span>
       </div>
       <div className="guten-card-meta">
         <span className="guten-card-title">{book.title}</span>
@@ -131,20 +103,9 @@ function BookCard({ book }) {
   );
 }
 
-// ── Search result card — supports all 4 sources ───────────────────
+// ── Search result card — always opens YOUR reader ─────────────────
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
-  const badge    = SOURCE_BADGES[book.source] || SOURCE_BADGES.gutenberg;
-
-  const handleRead = () => {
-    if (book.source === "gutenberg") {
-      const numId = String(book.gutenbergId).replace("gutenberg:", "");
-      navigate(`/read/${numId}`);
-    } else if (book.readUrl) {
-      window.open(book.readUrl, "_blank", "noopener");
-    }
-  };
-
   return (
     <div className="search-result-card">
       <div className="src-cover">
@@ -160,26 +121,22 @@ function SearchResultCard({ book }) {
           <span className="src-desc">{book.description.slice(0, 120)}…</span>
         )}
         <div className="src-footer">
-          <span className="src-badge" style={{ background: badge.color }}>
-            {badge.label}
-          </span>
-          {book.readUrl && (
-            <button className="src-read-btn" onClick={handleRead}>
-              📖 Read Now
-            </button>
-          )}
+          <button
+            className="src-read-btn"
+            onClick={() => navigate(`/read/${encodeURIComponent(book.gutenbergId)}`)}
+          >
+            📖 Read Now
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────
 export default function DashboardPage() {
   const { token } = useAuth();
   const [expanded,    setExpanded]    = useState(true);
   const [activePanel, setActivePanel] = useState("");
-
   const [searchQuery,   setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -190,7 +147,6 @@ export default function DashboardPage() {
   const { data: rawBookmarks  = [] } = useMyBookmarks(token);
   const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
 
-  // ── Derived data ───────────────────────────────────────────────
   const recentReadings = useMemo(() =>
     toArray(rawBooks).map((b) => ({
       cover_url:    b.book_cover || "",
@@ -198,11 +154,10 @@ export default function DashboardPage() {
       author:       b.book_author || "",
       last_read:    b.last_read || b.last_borrowed || "Recently",
       progress_pct: `${parseInt(b.progress_percent || b.progress || 0)}%`,
-    })),
-  [rawBooks]);
+    })), [rawBooks]);
 
   const calendarEvents = useMemo(() => {
-    const today  = new Date();
+    const today = new Date();
     const events = toArray(rawBooks).flatMap((b) => {
       if (!b.due_date) return [];
       const due   = new Date(b.due_date);
@@ -226,8 +181,7 @@ export default function DashboardPage() {
       author:         b.book_author || "",
       completed_date: b.finished_at || b.returned_date || "",
       stars:          stars(b.rating || 4),
-    })),
-  [rawHistory]);
+    })), [rawHistory]);
 
   const previouslyRead = useMemo(() =>
     toArray(rawHistory).map((b) => ({
@@ -237,8 +191,7 @@ export default function DashboardPage() {
       genre:     b.genre || b.source || "General",
       read_on:   b.finished_at || b.returned_date || "",
       stars:     stars(b.rating || 4),
-    })),
-  [rawHistory]);
+    })), [rawHistory]);
 
   const bookmarkedBooks = useMemo(() =>
     toArray(rawBookmarks).map((b) => ({
@@ -247,10 +200,8 @@ export default function DashboardPage() {
       author:    b.book_author || b.author || "",
       source:    b.source || "gutenberg",
       note:      b.note || "",
-    })),
-  [rawBookmarks]);
+    })), [rawBookmarks]);
 
-  // ── Handlers ───────────────────────────────────────────────────
   const handlePanelToggle = useCallback((key) => {
     setActivePanel((p) => (p === key ? "" : key));
   }, []);
@@ -261,20 +212,17 @@ export default function DashboardPage() {
     setSearchResults([]);
   }, []);
 
-  // Search now returns BFF-shaped books (all 4 sources)
   const handleSearch = useCallback(async (q) => {
     setSearchQuery(q);
     setSearched(true);
     setSearchLoading(true);
     try {
       const data = await searchGutenberg(token, q);
-      // BFF returns { results: [...] } — each item already normalised
       setSearchResults((data.results || []).map((b) => ({
         gutenbergId: b.book_id,
         title:       b.title || "Untitled",
         author:      (b.authors || []).join(", ") || "Unknown",
         cover:       b.cover_url || "",
-        readUrl:     b.read_url || "",
         source:      b.source || "gutenberg",
         description: b.description || "",
         year:        b.year || null,
@@ -285,7 +233,6 @@ export default function DashboardPage() {
     setSearchLoading(false);
   }, [token]);
 
-  // ── Panel renderer ─────────────────────────────────────────────
   function renderPanel() {
     switch (activePanel) {
       case "recent":
@@ -299,7 +246,6 @@ export default function DashboardPage() {
               } />
             ))
           : <p className="panel-empty">No recent readings yet.</p>;
-
       case "bookmarks":
         return bookmarkedBooks.length > 0
           ? bookmarkedBooks.map((b, i) => (
@@ -311,7 +257,6 @@ export default function DashboardPage() {
               } />
             ))
           : <p className="panel-empty">No bookmarks yet.</p>;
-
       case "calendar":
         return calendarEvents.map((ev, i) => (
           <div key={i} className="cal-event">
@@ -326,7 +271,6 @@ export default function DashboardPage() {
             </div>
           </div>
         ));
-
       case "history":
         return readingHistory.length > 0
           ? readingHistory.map((b, i) => (
@@ -338,7 +282,6 @@ export default function DashboardPage() {
               } />
             ))
           : <p className="panel-empty">No reading history yet.</p>;
-
       case "previously_read":
         return previouslyRead.length > 0
           ? previouslyRead.map((b, i) => (
@@ -350,13 +293,11 @@ export default function DashboardPage() {
               } />
             ))
           : <p className="panel-empty">Nothing here yet.</p>;
-
       default:
         return null;
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="dashboard-root">
       <Sidebar expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
@@ -365,7 +306,6 @@ export default function DashboardPage() {
         onSearch={handleSearch}
         onClearSearch={handleClearSearch}
       />
-
       <div className={`dashboard-content ${
         expanded ? "dashboard-content-expanded" : "dashboard-content-collapsed"
       }`}>
@@ -374,9 +314,7 @@ export default function DashboardPage() {
             <h2 className="dash-heading">What would you like to read?</h2>
           </div>
         </div>
-
         <div className="dash-body">
-          {/* Hero cards */}
           <div className="hero-cards-row">
             {HERO_CARDS.map((c) => (
               <HeroCard
@@ -389,8 +327,6 @@ export default function DashboardPage() {
               />
             ))}
           </div>
-
-          {/* Active panel */}
           {activePanel && (
             <div className="hero-panel">
               <div className="hero-panel-header">
@@ -400,8 +336,6 @@ export default function DashboardPage() {
               <div className="hero-panel-content">{renderPanel()}</div>
             </div>
           )}
-
-          {/* Search results */}
           {searched && (
             <div className="search-section">
               <div className="search-section-header">
@@ -421,8 +355,6 @@ export default function DashboardPage() {
               )}
             </div>
           )}
-
-          {/* Shelf rows */}
           {!searched && (
             rowsLoading && gutenbergRows.length === 0 ? (
               <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
