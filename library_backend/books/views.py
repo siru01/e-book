@@ -1,10 +1,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
 from .services import aggregator
 from .permissions import IsAdminOrLibrarianOrReadOnly
 from .models import Book, ReadingHistory, Bookmarks
 from .serializers import BookSerializer, ReadingHistorySerializer, BookmarkSerializer
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -62,28 +61,25 @@ class OpenLibrarySearch(APIView):
             docs = data.get("docs", [])
             results = []
             for d in docs:
-                isbn = None
-                isbns = d.get("isbn") or []
+                isbn     = None
+                isbns    = d.get("isbn") or []
                 if isbns:
                     isbn = isbns[0]
                 cover_id = d.get("cover_i")
-                cover = None
+                cover    = None
                 if isbn:
                     cover = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
                 elif cover_id:
                     cover = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
                 results.append({
-                    "title": d.get("title"),
-                    "author": (d.get("author_name") or [None])[0],
-                    "isbn": isbn,
-                    "cover": cover,
+                    "title":              d.get("title"),
+                    "author":             (d.get("author_name") or [None])[0],
+                    "isbn":               isbn,
+                    "cover":              cover,
                     "first_publish_year": d.get("first_publish_year"),
                 })
             resp = {"results": results, "num_found": data.get("numFound", 0)}
-            try:
-                self._CACHE[q] = resp
-            except Exception:
-                pass
+            self._CACHE[q] = resp
             return Response(resp)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -97,31 +93,31 @@ class OpenLibraryImport(APIView):
 
     def post(self, request):
         payload = request.data or {}
-        items = payload.get("books") or []
+        items   = payload.get("books") or []
         if not items:
             return Response({"error": "books list required"}, status=status.HTTP_400_BAD_REQUEST)
         created = 0
         skipped = 0
-        user = request.user if request.user.is_authenticated else None
+        user    = request.user if request.user.is_authenticated else None
         for b in items:
-            isbn = b.get("isbn")
-            title = b.get("title") or "Untitled"
-            author = b.get("author") or "Unknown"
-            total = int(b.get("total_copies") or 1)
+            isbn      = b.get("isbn")
+            title     = b.get("title")     or "Untitled"
+            author    = b.get("author")    or "Unknown"
+            total     = int(b.get("total_copies") or 1)
             available = int(b.get("available_copies") if b.get("available_copies") is not None else total)
-            cover = b.get("cover") or ""
+            cover     = b.get("cover") or ""
             if not isbn:
                 skipped += 1
                 continue
             obj, created_flag = Book.objects.get_or_create(
                 isbn=isbn,
                 defaults={
-                    "title": title,
-                    "author": author,
-                    "total_copies": total,
+                    "title":            title,
+                    "author":           author,
+                    "total_copies":     total,
                     "available_copies": available,
-                    "cover_url": cover,
-                    "added_by": user,
+                    "cover_url":        cover,
+                    "added_by":         user,
                 },
             )
             if created_flag:
@@ -136,17 +132,15 @@ class MyReadingHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        history = ReadingHistory.objects.filter(user=request.user)
+        history    = ReadingHistory.objects.filter(user=request.user)
         serializer = ReadingHistorySerializer(history, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         book_id = request.data.get("book_id")
         source  = request.data.get("source", "gutenberg")
-
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
-
         obj, created = ReadingHistory.objects.get_or_create(
             user=request.user,
             book_id=book_id,
@@ -166,17 +160,15 @@ class MyBookmarksView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        bookmarks = Bookmarks.objects.filter(user=request.user)
+        bookmarks  = Bookmarks.objects.filter(user=request.user)
         serializer = BookmarkSerializer(bookmarks, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         book_id = request.data.get("book_id")
         source  = request.data.get("source", "gutenberg")
-
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
-
         obj, created = Bookmarks.objects.get_or_create(
             user=request.user,
             book_id=book_id,
@@ -189,7 +181,7 @@ class MyBookmarksView(APIView):
         )
 
     def delete(self, request):
-        book_id = request.data.get("book_id")
+        book_id    = request.data.get("book_id")
         deleted, _ = Bookmarks.objects.filter(
             user=request.user, book_id=book_id
         ).delete()
@@ -199,163 +191,25 @@ class MyBookmarksView(APIView):
 
 
 # ─────────────────────────────────────────────
-# GUTENBERG SEARCH  — GET /api/gutenberg/search/
-# ─────────────────────────────────────────────
-_GUTENBERG_CACHE = {}
-
-def _extract_gutenberg_book(book: dict) -> dict:
-    formats = book.get("formats", {})
-    read_url = (
-        formats.get("text/html")
-        or formats.get("text/html; charset=utf-8")
-        or formats.get("text/html; charset=us-ascii")
-        or formats.get("text/plain; charset=utf-8")
-        or formats.get("text/plain")
-        or ""
-    )
-    cover = formats.get("image/jpeg") or ""
-    authors = book.get("authors", [])
-    author_name = authors[0].get("name", "Unknown") if authors else "Unknown"
-    subjects = book.get("subjects", [])
-    genre = subjects[0][:50] if subjects else "General"
-    return {
-        "gutenberg_id":   book.get("id"),
-        "title":          book.get("title", "Untitled"),
-        "author":         author_name,
-        "cover":          cover,
-        "subjects":       subjects[:5],
-        "genre":          genre,
-        "read_url":       read_url,
-        "download_count": book.get("download_count", 0),
-    }
-
-
-class GutenbergSearchView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        q       = request.query_params.get("q", "")
-        subject = request.query_params.get("subject", "")
-        page    = request.query_params.get("page", "1")
-
-        cache_key = f"{q}|{subject}|{page}"
-        if cache_key in _GUTENBERG_CACHE:
-            return Response(_GUTENBERG_CACHE[cache_key])
-
-        params = {"page": page}
-        if q:
-            params["search"] = q
-        if subject:
-            params["topic"] = subject
-
-        try:
-            with httpx.Client(timeout=15.0) as client:
-                r = client.get("https://gutendex.com/books/", params=params)
-            r.raise_for_status()
-            data = r.json()
-            results = [_extract_gutenberg_book(b) for b in data.get("results", [])]
-            resp = {"results": results, "count": data.get("count", 0)}
-            _GUTENBERG_CACHE[cache_key] = resp
-            return Response(resp)
-        except httpx.TimeoutException:
-            return Response({"error": "Gutendex timed out", "results": []}, status=200)
-        except httpx.ConnectError:
-            return Response({"error": "Cannot reach Gutendex", "results": []}, status=200)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return Response({"error": str(e), "results": []}, status=200)
-
-
-# ─────────────────────────────────────────────
-# GUTENBERG IMPORT  — POST /api/gutenberg/import/
-# ─────────────────────────────────────────────
-class GutenbergImportView(APIView):
-    permission_classes = [IsAdminOrLibrarianOrReadOnly]
-
-    def post(self, request):
-        data         = request.data or {}
-        gutenberg_id = data.get("gutenberg_id")
-        if not gutenberg_id:
-            return Response({"error": "gutenberg_id required"}, status=400)
-
-        user = request.user if request.user.is_authenticated else None
-        synthetic_isbn = f"GUT-{gutenberg_id}"
-
-        obj, created = Book.objects.get_or_create(
-            gutenberg_id=gutenberg_id,
-            defaults={
-                "title":            data.get("title", "Untitled"),
-                "author":           data.get("author", "Unknown"),
-                "isbn":             synthetic_isbn,
-                "total_copies":     999,
-                "available_copies": 999,
-                "cover_url":        data.get("cover", ""),
-                "genre":            data.get("genre", "General"),
-                "read_url":         data.get("read_url", ""),
-                "added_by":         user,
-            },
-        )
-        return Response(
-            {"created": created, "book_id": obj.id},
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-
-# ─────────────────────────────────────────────
-# GUTENBERG PROXY TEXT  — GET /api/gutenberg/proxy-text/
-# ─────────────────────────────────────────────
-class GutenbergProxyTextView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        url = request.query_params.get("url", "").strip()
-        if not url:
-            return Response({"error": "url parameter is required"}, status=400)
-
-        allowed = (
-            "gutenberg.org" in url
-            or "gutendex.com" in url
-            or "aleph.gutenberg.org" in url
-        )
-        if not allowed:
-            return Response({"error": "Only Gutenberg URLs are allowed"}, status=400)
-
-        try:
-            with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-                r = client.get(url)
-            r.raise_for_status()
-            return HttpResponse(r.text, content_type="text/plain; charset=utf-8")
-        except httpx.TimeoutException:
-            return Response({"error": "Request to Gutenberg timed out"}, status=504)
-        except httpx.ConnectError:
-            return Response({"error": "Cannot reach Gutenberg"}, status=502)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
-
-
-# ─────────────────────────────────────────────
 # BFF AGGREGATOR VIEWS
 # ─────────────────────────────────────────────
 class BookSearchView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [] 
+    permission_classes     = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         query   = request.GET.get("q", "").strip()
         page    = int(request.GET.get("page", 1))
         sources = request.GET.get("sources", "").split(",") if request.GET.get("sources") else None
-
         if not query:
             return Response({"error": "q parameter required"}, status=400)
-
         results = aggregator.search_all(query, page=page, sources=sources)
         return Response({"results": results, "page": page, "count": len(results)})
 
 
 class TrendingView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [] 
+    permission_classes     = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         results = aggregator.trending_all()
@@ -363,8 +217,8 @@ class TrendingView(APIView):
 
 
 class CategoryView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [] 
+    permission_classes     = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         genre   = request.GET.get("genre", "fiction")
@@ -374,8 +228,200 @@ class CategoryView(APIView):
 
 
 class NewArrivalsView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [] 
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
     def get(self, request):
         results = aggregator.new_arrivals_all()
         return Response({"results": results, "count": len(results)})
+
+
+# ─────────────────────────────────────────────
+# BOOK TEXT PROXY  — GET /api/books/read/
+# Returns { title, author, cover_url, text, source }
+# ─────────────────────────────────────────────
+class BookReadView(APIView):
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        book_id = request.GET.get("book_id", "").strip()
+        if not book_id:
+            return Response({"error": "book_id required"}, status=400)
+
+        if ":" in book_id:
+            source, raw_id = book_id.split(":", 1)
+        else:
+            source = "gutenberg"
+            raw_id = book_id
+
+        try:
+            if source == "gutenberg":
+                return self._fetch_gutenberg(raw_id)
+            elif source == "archive":
+                return self._fetch_archive(raw_id)
+            elif source == "openlibrary":
+                return self._fetch_openlibrary(raw_id)
+            elif source == "google":
+                return self._fetch_google(raw_id)
+            else:
+                return Response({"error": f"Unknown source: {source}"}, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    def _fetch_gutenberg(self, gutenberg_id):
+        r = httpx.get(f"https://gutendex.com/books/{gutenberg_id}", timeout=15)
+        r.raise_for_status()
+        b         = r.json()
+        fmts      = b.get("formats", {})
+        plain_url = (
+            fmts.get("text/plain; charset=utf-8") or
+            fmts.get("text/plain; charset=us-ascii") or
+            fmts.get("text/plain") or ""
+        )
+        cover_url = fmts.get("image/jpeg", "")
+        authors   = b.get("authors", [])
+        author    = authors[0].get("name", "Unknown") if authors else "Unknown"
+
+        if not plain_url:
+            return Response({"error": "No plain text available for this Gutenberg book."}, status=404)
+
+        text_r = httpx.get(plain_url, timeout=20, follow_redirects=True)
+        text_r.raise_for_status()
+        return Response({
+            "title":     b.get("title", "Untitled"),
+            "author":    author,
+            "cover_url": cover_url,
+            "source":    "gutenberg",
+            "text":      text_r.text[:300000],
+        })
+
+    def _fetch_archive(self, identifier):
+        meta_r = httpx.get(f"https://archive.org/metadata/{identifier}", timeout=15)
+        meta_r.raise_for_status()
+        meta      = meta_r.json()
+        m         = meta.get("metadata", {})
+        title     = m.get("title", "Untitled")
+        creator   = m.get("creator", "Unknown")
+        cover_url = f"https://archive.org/services/img/{identifier}"
+
+        files     = meta.get("files", [])
+        text_file = None
+        for f in files:
+            name = f.get("name", "")
+            if name.endswith("_djvu.txt") or name.endswith(".txt"):
+                text_file = name
+                break
+
+        if not text_file:
+            stream_url = f"https://archive.org/stream/{identifier}/{identifier}_djvu.txt"
+            try:
+                text_r = httpx.get(stream_url, timeout=20, follow_redirects=True)
+                text_r.raise_for_status()
+                return Response({
+                    "title": title, "author": creator,
+                    "cover_url": cover_url, "source": "archive",
+                    "text": text_r.text[:300000],
+                })
+            except Exception:
+                return Response({"error": "No readable text found for this Archive.org book."}, status=404)
+
+        text_url = f"https://archive.org/download/{identifier}/{text_file}"
+        text_r   = httpx.get(text_url, timeout=20, follow_redirects=True)
+        text_r.raise_for_status()
+        return Response({
+            "title": title, "author": creator,
+            "cover_url": cover_url, "source": "archive",
+            "text": text_r.text[:300000],
+        })
+
+    def _fetch_openlibrary(self, ol_id):
+        work_r = httpx.get(f"https://openlibrary.org/works/{ol_id}.json", timeout=15)
+        work_r.raise_for_status()
+        work      = work_r.json()
+        title     = work.get("title", "Untitled")
+        cover_id  = work.get("covers", [None])[0]
+        cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg" if cover_id else ""
+
+        author = "Unknown"
+        try:
+            author_key = work.get("authors", [{}])[0].get("author", {}).get("key", "")
+            if author_key:
+                a_r    = httpx.get(f"https://openlibrary.org{author_key}.json", timeout=10)
+                author = a_r.json().get("name", "Unknown")
+        except Exception:
+            pass
+
+        editions_r = httpx.get(
+            f"https://openlibrary.org/works/{ol_id}/editions.json?limit=10",
+            timeout=15
+        )
+        editions_r.raise_for_status()
+        editions = editions_r.json().get("entries", [])
+
+        ia_id = None
+        for ed in editions:
+            ia_ids = ed.get("ocaid") or ed.get("ia") or []
+            if isinstance(ia_ids, str):
+                ia_ids = [ia_ids]
+            if ia_ids:
+                ia_id = ia_ids[0]
+                break
+
+        if not ia_id:
+            return Response({
+                "error": "No free readable version found for this Open Library book.",
+                "title": title, "author": author, "cover_url": cover_url,
+            }, status=404)
+
+        return self._fetch_archive(ia_id)
+
+    def _fetch_google(self, google_id):
+        from django.conf import settings
+        params  = {}
+        api_key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "")
+        if api_key:
+            params["key"] = api_key
+
+        r = httpx.get(
+            f"https://www.googleapis.com/books/v1/volumes/{google_id}",
+            params=params, timeout=15
+        )
+        r.raise_for_status()
+        item      = r.json()
+        info      = item.get("volumeInfo", {})
+        title     = info.get("title", "Untitled")
+        authors   = info.get("authors", ["Unknown"])
+        author    = authors[0] if authors else "Unknown"
+        cover_url = info.get("imageLinks", {}).get("thumbnail", "").replace("http://", "https://")
+        access    = item.get("accessInfo", {})
+
+        download_url = (
+            access.get("epub", {}).get("downloadLink") or
+            access.get("pdf",  {}).get("downloadLink") or ""
+        )
+        if download_url:
+            try:
+                text_r = httpx.get(download_url, timeout=20, follow_redirects=True)
+                text_r.raise_for_status()
+                return Response({
+                    "title": title, "author": author,
+                    "cover_url": cover_url, "source": "google",
+                    "text": text_r.text[:300000],
+                })
+            except Exception:
+                pass
+
+        # Fallback: description as preview
+        description  = info.get("description", "")
+        preview_text = (
+            f"{title}\nby {author}\n\n{'─' * 40}\n\n"
+            f"{description}\n\n{'─' * 40}\n\n"
+            f"Full text not available (may be under copyright).\n"
+            f"Visit: https://books.google.com/books?id={google_id}"
+        )
+        return Response({
+            "title": title, "author": author,
+            "cover_url": cover_url, "source": "google",
+            "text": preview_text,
+        })
