@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from . import gutendex, openlibrary, google_books, archive
 
 ALL_SOURCES = {
-    "gutenberg":   gutendex,
     "openlibrary": openlibrary,
     "google":      google_books,
     "archive":     archive,

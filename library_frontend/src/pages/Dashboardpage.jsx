@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
-import { searchGutenberg, parseGutendexBook } from "../api/shelf";
+import { searchGutenberg } from "../api/shelf";
 import "./DashboardPage.css";
 import {
   useMyBooks,
@@ -12,7 +12,7 @@ import {
   useGutenbergRows,
 } from "../hooks/useDashboardData";
 
-// ── Constants moved outside component so they are never recreated ──
+// ── Constants ──────────────────────────────────────────────────────
 const HERO_CARDS = [
   { key: "recent",          label: "Recent Readings", bg: "#eef2ff" },
   { key: "bookmarks",       label: "Bookmarks",       bg: "#fefce8" },
@@ -37,19 +37,24 @@ const PANEL_ACCENTS = {
   previously_read: "#059669",
 };
 
+const SOURCE_BADGES = {
+  gutenberg:   { label: "Gutenberg", color: "#7c3aed" },
+  openlibrary: { label: "Open Library", color: "#0284c7" },
+  google:      { label: "Google Books", color: "#059669" },
+  archive:     { label: "Archive.org", color: "#d97706" },
+};
+
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-// ── Pure helper — outside component, never re-created ─────────
 const stars = (r) => {
   const n = Math.max(0, Math.min(5, r));
   return "★".repeat(n) + "☆".repeat(5 - n);
 };
 
-// Safely normalise all API list responses to arrays
 const toArray = (raw) =>
   Array.isArray(raw) ? raw : raw?.results || [];
 
-// ── Sub-components outside parent — no re-mount on every render ──
+// ── Sub-components ─────────────────────────────────────────────────
 function HeroCard({ panelKey, label, bg, active, onClick }) {
   return (
     <div
@@ -80,78 +85,117 @@ function PanelBookRow({ book, extra }) {
   );
 }
 
-function GutenbergBookCard({ book }) {
+// ── Book card for shelf rows — supports all 4 sources ─────────────
+function BookCard({ book }) {
   const navigate = useNavigate();
+  const badge    = SOURCE_BADGES[book.source] || SOURCE_BADGES.gutenberg;
+
+  const handleRead = () => {
+    // For Gutenberg books navigate to reader; others open external URL
+    if (book.source === "gutenberg") {
+      // gutenbergId is "gutenberg:1234" — extract numeric part
+      const numId = String(book.gutenbergId).replace("gutenberg:", "");
+      navigate(`/read/${numId}`);
+    } else if (book.readUrl) {
+      window.open(book.readUrl, "_blank", "noopener");
+    }
+  };
+
   return (
     <div className="guten-card">
       <div className="guten-card-cover">
         {book.cover
-          ? <img src={book.cover} alt="" />
+          ? <img src={book.cover} alt={book.title} loading="lazy" />
           : <span>📖</span>}
         <div className="guten-card-overlay">
-          <button
-            className="guten-read-btn"
-            onClick={() => navigate(`/read/${book.gutenbergId}`)}
-          >
-            Read Now
-          </button>
+          {book.readUrl && (
+            <button className="guten-read-btn" onClick={handleRead}>
+              Read Now
+            </button>
+          )}
         </div>
+        {/* Source badge */}
+        <span
+          className="source-badge"
+          style={{ background: badge.color }}
+        >
+          {badge.label}
+        </span>
       </div>
       <div className="guten-card-meta">
         <span className="guten-card-title">{book.title}</span>
         <span className="guten-card-author">{book.author}</span>
+        {book.year && <span className="guten-card-year">{book.year}</span>}
       </div>
     </div>
   );
 }
 
+// ── Search result card — supports all 4 sources ───────────────────
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
+  const badge    = SOURCE_BADGES[book.source] || SOURCE_BADGES.gutenberg;
+
+  const handleRead = () => {
+    if (book.source === "gutenberg") {
+      const numId = String(book.gutenbergId).replace("gutenberg:", "");
+      navigate(`/read/${numId}`);
+    } else if (book.readUrl) {
+      window.open(book.readUrl, "_blank", "noopener");
+    }
+  };
+
   return (
     <div className="search-result-card">
       <div className="src-cover">
         {book.cover
-          ? <img src={book.cover} alt="" />
+          ? <img src={book.cover} alt="" loading="lazy" />
           : <span>📖</span>}
       </div>
       <div className="src-info">
         <span className="src-title">{book.title}</span>
         <span className="src-author">{book.author}</span>
-        <button
-          className="src-read-btn"
-          onClick={() => navigate(`/read/${book.gutenbergId}`)}
-        >
-          📖 Read Now
-        </button>
+        {book.year && <span className="src-year">{book.year}</span>}
+        {book.description && (
+          <span className="src-desc">{book.description.slice(0, 120)}…</span>
+        )}
+        <div className="src-footer">
+          <span className="src-badge" style={{ background: badge.color }}>
+            {badge.label}
+          </span>
+          {book.readUrl && (
+            <button className="src-read-btn" onClick={handleRead}>
+              📖 Read Now
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────
 export default function DashboardPage() {
   const { token } = useAuth();
   const [expanded,    setExpanded]    = useState(true);
   const [activePanel, setActivePanel] = useState("");
 
-  // Search state — always fresh, not cached
   const [searchQuery,   setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searched,      setSearched]      = useState(false);
 
-  // ── React Query hooks — enabled: !!token prevents firing without login ──
   const { data: rawBooks      = [] } = useMyBooks(token);
   const { data: rawHistory    = [] } = useMyHistory(token);
   const { data: rawBookmarks  = [] } = useMyBookmarks(token);
   const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
 
-  // ── Derived data — only recalculates when raw data changes ────
+  // ── Derived data ───────────────────────────────────────────────
   const recentReadings = useMemo(() =>
     toArray(rawBooks).map((b) => ({
-      cover_url:    b.book_cover              || "",
-      title:        b.book_title              || "Unknown",
-      author:       b.book_author             || "",
+      cover_url:    b.book_cover || "",
+      title:        b.book_title || "Unknown",
+      author:       b.book_author || "",
       last_read:    b.last_read || b.last_borrowed || "Recently",
       progress_pct: `${parseInt(b.progress_percent || b.progress || 0)}%`,
     })),
@@ -165,56 +209,48 @@ export default function DashboardPage() {
       const delta = Math.floor((due - today) / 86_400_000);
       const color = delta < 0 ? "#ef4444" : delta <= 3 ? "#f59e0b" : "#6366f1";
       const type  = delta < 0 ? "overdue" : delta <= 3 ? "due soon" : "return";
-      return [{
-        day_short: DAY_NAMES[due.getDay()],
-        day_num:   due.getDate(),
-        title:     `Return: ${b.book_title}`,
-        type,
-        color,
-      }];
+      return [{ day_short: DAY_NAMES[due.getDay()], day_num: due.getDate(),
+                title: `Return: ${b.book_title}`, type, color }];
     });
     events.push({
-      day_short: DAY_NAMES[today.getDay()],
-      day_num:   today.getDate(),
-      title:     "Reading Goal: Keep it up! 📖",
-      type:      "goal",
-      color:     "#8b5cf6",
+      day_short: DAY_NAMES[today.getDay()], day_num: today.getDate(),
+      title: "Reading Goal: Keep it up! 📖", type: "goal", color: "#8b5cf6",
     });
     return events;
   }, [rawBooks]);
 
   const readingHistory = useMemo(() =>
     toArray(rawHistory).map((b) => ({
-      cover_url:      b.book_cover                   || "",
-      title:          b.book_title                   || "Unknown",
-      author:         b.book_author                  || "",
-      completed_date: b.returned_date || b.due_date  || "",
+      cover_url:      b.book_cover || "",
+      title:          b.book_title || "Unknown",
+      author:         b.book_author || "",
+      completed_date: b.finished_at || b.returned_date || "",
       stars:          stars(b.rating || 4),
     })),
   [rawHistory]);
 
   const previouslyRead = useMemo(() =>
     toArray(rawHistory).map((b) => ({
-      cover_url: b.book_cover                   || "",
-      title:     b.book_title                   || "Unknown",
-      author:    b.book_author                  || "",
-      genre:     b.genre || b.category          || "General",
-      read_on:   b.returned_date || b.due_date  || "",
+      cover_url: b.book_cover || "",
+      title:     b.book_title || "Unknown",
+      author:    b.book_author || "",
+      genre:     b.genre || b.source || "General",
+      read_on:   b.finished_at || b.returned_date || "",
       stars:     stars(b.rating || 4),
     })),
   [rawHistory]);
 
   const bookmarkedBooks = useMemo(() =>
     toArray(rawBookmarks).map((b) => ({
-      cover_url: b.book_cover                    || "",
-      title:     b.book_title || b.title         || "Unknown",
-      author:    b.book_author || b.author       || "",
-      page:      String(b.page_number || b.page  || "—"),
-      note:      b.note || b.description         || "",
+      cover_url: b.book_cover || "",
+      title:     b.book_title || b.title || "Unknown",
+      author:    b.book_author || b.author || "",
+      source:    b.source || "gutenberg",
+      note:      b.note || "",
     })),
   [rawBookmarks]);
 
-  // ── Handlers — useCallback so they don't re-create each render ─
+  // ── Handlers ───────────────────────────────────────────────────
   const handlePanelToggle = useCallback((key) => {
     setActivePanel((p) => (p === key ? "" : key));
   }, []);
@@ -225,13 +261,24 @@ export default function DashboardPage() {
     setSearchResults([]);
   }, []);
 
+  // Search now returns BFF-shaped books (all 4 sources)
   const handleSearch = useCallback(async (q) => {
     setSearchQuery(q);
     setSearched(true);
     setSearchLoading(true);
     try {
       const data = await searchGutenberg(token, q);
-      setSearchResults((data.results || []).map(parseGutendexBook));
+      // BFF returns { results: [...] } — each item already normalised
+      setSearchResults((data.results || []).map((b) => ({
+        gutenbergId: b.book_id,
+        title:       b.title || "Untitled",
+        author:      (b.authors || []).join(", ") || "Unknown",
+        cover:       b.cover_url || "",
+        readUrl:     b.read_url || "",
+        source:      b.source || "gutenberg",
+        description: b.description || "",
+        year:        b.year || null,
+      })));
     } catch (_) {
       setSearchResults([]);
     }
@@ -242,23 +289,29 @@ export default function DashboardPage() {
   function renderPanel() {
     switch (activePanel) {
       case "recent":
-        return recentReadings.map((b, i) => (
-          <PanelBookRow key={i} book={b} extra={
-            <div className="panel-row-extra">
-              <span>{b.last_read}</span>
-              <span style={{ color: "#f59e0b", fontWeight: 700 }}>{b.progress_pct}</span>
-            </div>
-          } />
-        ));
+        return recentReadings.length > 0
+          ? recentReadings.map((b, i) => (
+              <PanelBookRow key={i} book={b} extra={
+                <div className="panel-row-extra">
+                  <span>{b.last_read}</span>
+                  <span style={{ color: "#f59e0b", fontWeight: 700 }}>{b.progress_pct}</span>
+                </div>
+              } />
+            ))
+          : <p className="panel-empty">No recent readings yet.</p>;
+
       case "bookmarks":
-        return bookmarkedBooks.map((b, i) => (
-          <PanelBookRow key={i} book={b} extra={
-            <div className="panel-row-extra">
-              <span style={{ color: "#ec4899" }}>Page {b.page}</span>
-              <span style={{ color: "#6b7280", fontStyle: "italic" }}>{b.note}</span>
-            </div>
-          } />
-        ));
+        return bookmarkedBooks.length > 0
+          ? bookmarkedBooks.map((b, i) => (
+              <PanelBookRow key={i} book={b} extra={
+                <div className="panel-row-extra">
+                  <span style={{ color: "#ec4899" }}>{b.source}</span>
+                  <span style={{ color: "#6b7280", fontStyle: "italic" }}>{b.note}</span>
+                </div>
+              } />
+            ))
+          : <p className="panel-empty">No bookmarks yet.</p>;
+
       case "calendar":
         return calendarEvents.map((ev, i) => (
           <div key={i} className="cal-event">
@@ -273,24 +326,31 @@ export default function DashboardPage() {
             </div>
           </div>
         ));
+
       case "history":
-        return readingHistory.map((b, i) => (
-          <PanelBookRow key={i} book={b} extra={
-            <div className="panel-row-extra">
-              <span style={{ color: "#9ca3af" }}>Completed {b.completed_date}</span>
-              <span style={{ color: "#f59e0b" }}>{b.stars}</span>
-            </div>
-          } />
-        ));
+        return readingHistory.length > 0
+          ? readingHistory.map((b, i) => (
+              <PanelBookRow key={i} book={b} extra={
+                <div className="panel-row-extra">
+                  <span style={{ color: "#9ca3af" }}>Completed {b.completed_date}</span>
+                  <span style={{ color: "#f59e0b" }}>{b.stars}</span>
+                </div>
+              } />
+            ))
+          : <p className="panel-empty">No reading history yet.</p>;
+
       case "previously_read":
-        return previouslyRead.map((b, i) => (
-          <PanelBookRow key={i} book={b} extra={
-            <div className="panel-row-extra">
-              <span className="genre-badge">{b.genre}</span>
-              <span style={{ color: "#f59e0b" }}>{b.stars}</span>
-            </div>
-          } />
-        ));
+        return previouslyRead.length > 0
+          ? previouslyRead.map((b, i) => (
+              <PanelBookRow key={i} book={b} extra={
+                <div className="panel-row-extra">
+                  <span className="genre-badge">{b.genre}</span>
+                  <span style={{ color: "#f59e0b" }}>{b.stars}</span>
+                </div>
+              } />
+            ))
+          : <p className="panel-empty">Nothing here yet.</p>;
+
       default:
         return null;
     }
@@ -334,13 +394,8 @@ export default function DashboardPage() {
           {activePanel && (
             <div className="hero-panel">
               <div className="hero-panel-header">
-                <div
-                  className="hero-panel-bar"
-                  style={{ background: PANEL_ACCENTS[activePanel] }}
-                />
-                <span className="hero-panel-title">
-                  {PANEL_LABELS[activePanel]}
-                </span>
+                <div className="hero-panel-bar" style={{ background: PANEL_ACCENTS[activePanel] }} />
+                <span className="hero-panel-title">{PANEL_LABELS[activePanel]}</span>
               </div>
               <div className="hero-panel-content">{renderPanel()}</div>
             </div>
@@ -351,16 +406,14 @@ export default function DashboardPage() {
             <div className="search-section">
               <div className="search-section-header">
                 <h3>Results for "{searchQuery}"</h3>
-                <button className="clear-search-btn" onClick={handleClearSearch}>
-                  ✕ Clear
-                </button>
+                <button className="clear-search-btn" onClick={handleClearSearch}>✕ Clear</button>
               </div>
               {searchLoading ? (
                 <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
               ) : searchResults.length > 0 ? (
                 <div className="search-results-grid">
-                  {searchResults.map((b) => (
-                    <SearchResultCard key={b.gutenbergId} book={b} />
+                  {searchResults.map((b, i) => (
+                    <SearchResultCard key={`${b.gutenbergId}-${i}`} book={b} />
                   ))}
                 </div>
               ) : (
@@ -378,8 +431,8 @@ export default function DashboardPage() {
                 <div key={row.label} className="shelf-row">
                   <h3 className="shelf-row-label">{row.label}</h3>
                   <div className="shelf-row-scroll">
-                    {row.books.map((book) => (
-                      <GutenbergBookCard key={book.gutenbergId} book={book} />
+                    {row.books.map((book, i) => (
+                      <BookCard key={`${book.gutenbergId}-${i}`} book={book} />
                     ))}
                   </div>
                 </div>

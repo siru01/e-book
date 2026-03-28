@@ -18,17 +18,16 @@ from .views import (
 router = DefaultRouter()
 router.register(r"books", BookViewSet)
 
-urlpatterns = router.urls + [
-    path("search/",                BookSearchView.as_view(),         name="search"),
-    path("trending/",              TrendingView.as_view(),           name="trending"),
-    path("category/",              CategoryView.as_view(),           name="category"),
-    path("new-arrivals/",          NewArrivalsView.as_view(),        name="new-arrivals"),
-    path("openlibrary/search/",    OpenLibrarySearch.as_view(),      name="ol-search"),
-    path("openlibrary/import/",    OpenLibraryImport.as_view(),      name="ol-import"),
-    path("my-history/",            MyReadingHistoryView.as_view(),   name="my-history"),
-    path("my-bookmarks/",          MyBookmarksView.as_view(),        name="my-bookmarks"),
-    path("gutenberg/search/",      GutenbergSearchView.as_view(),    name="gutenberg-search"),
-    path("gutenberg/import/",      GutenbergImportView.as_view(),    name="gutenberg-import"),
-    path("gutenberg/proxy-text/",  GutenbergProxyTextView.as_view(), name="gutenberg-proxy-text"),
-]
-    
+urlpatterns = [
+    path("books/search/",       BookSearchView.as_view(),  name="book-search"),
+    path("books/trending/",     TrendingView.as_view(),    name="book-trending"),
+    path("books/category/",     CategoryView.as_view(),    name="book-category"),
+    path("books/new-arrivals/", NewArrivalsView.as_view(), name="book-new-arrivals"),
+    path("openlibrary/search/",   OpenLibrarySearch.as_view(),      name="ol-search"),
+    path("openlibrary/import/",   OpenLibraryImport.as_view(),      name="ol-import"),
+    path("my-history/",           MyReadingHistoryView.as_view(),   name="my-history"),
+    path("my-bookmarks/",         MyBookmarksView.as_view(),        name="my-bookmarks"),
+    path("gutenberg/search/",     GutenbergSearchView.as_view(),    name="gutenberg-search"),
+    path("gutenberg/import/",     GutenbergImportView.as_view(),    name="gutenberg-import"),
+    path("gutenberg/proxy-text/", GutenbergProxyTextView.as_view(), name="gutenberg-proxy-text"),
+] + router.urls   # ← router LAST

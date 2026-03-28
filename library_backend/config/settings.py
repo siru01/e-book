@@ -115,7 +115,9 @@ CACHES = {
         "LOCATION": os.getenv("REDIS_URL"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None}, # required for Upstash TLS
+            "REDIS_CLIENT_KWARGS": {
+                "ssl_cert_reqs": None,   # ← moved here, correct place for newer redis-py
+            },
         }
     }
 }
@@ -181,8 +183,9 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',  # ← change this line
+        'rest_framework.permissions.AllowAny',
     ),
+    'UNAUTHENTICATED_USER': None, 
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],

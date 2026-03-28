@@ -6,15 +6,22 @@ BASE_URL = "https://www.googleapis.com/books/v1"
 
 
 def _normalize(item: dict) -> dict:
-    info = item.get("volumeInfo", {})
-    images = info.get("imageLinks", {})
+    info    = item.get("volumeInfo", {})
+    access  = item.get("accessInfo", {})
+    images  = info.get("imageLinks", {})
     cover_url = images.get("thumbnail", images.get("smallThumbnail", ""))
     cover_url = cover_url.replace("http://", "https://")
-    access = item.get("accessInfo", {})
-    read_url = access.get("webReaderLink", info.get("infoLink", ""))
+
+    # ── Get best available read URL ──────────────────────────
+    epub_url = access.get("epub", {}).get("downloadLink", "")
+    pdf_url  = access.get("pdf",  {}).get("downloadLink", "")
+    preview  = info.get("previewLink", "")
+    read_url = epub_url or pdf_url or preview or ""
+
     description = info.get("description", "")
     if len(description) > 500:
         description = description[:497] + "..."
+
     return {
         "book_id":        f"google:{item['id']}",
         "title":          info.get("title", ""),

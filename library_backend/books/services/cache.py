@@ -10,16 +10,26 @@ def _make_key(prefix: str, **kwargs) -> str:
 
 
 def get_cached(prefix: str, **kwargs):
-    key = _make_key(prefix, **kwargs)
-    return cache.get(key)
+    try:
+        key = _make_key(prefix, **kwargs)
+        return cache.get(key)
+    except Exception as e:
+        print(f"[cache] get failed: {e}")
+        return None          # ← treat cache miss, fetch from API
 
 
 def set_cached(prefix: str, value, **kwargs):
-    key = _make_key(prefix, **kwargs)
-    ttl = settings.CACHE_TTL.get(prefix, 60 * 30)
-    cache.set(key, value, timeout=ttl)
+    try:
+        key = _make_key(prefix, **kwargs)
+        ttl = settings.CACHE_TTL.get(prefix, 60 * 30)
+        cache.set(key, value, timeout=ttl)
+    except Exception as e:
+        print(f"[cache] set failed: {e}")  # ← log but don't crash
 
 
 def invalidate(prefix: str, **kwargs):
-    key = _make_key(prefix, **kwargs)
-    cache.delete(key)
+    try:
+        key = _make_key(prefix, **kwargs)
+        cache.delete(key)
+    except Exception as e:
+        print(f"[cache] invalidate failed: {e}")
