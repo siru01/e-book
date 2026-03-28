@@ -166,3 +166,13 @@
   cursor: pointer; padding: 2px 6px;
 }
 .topbar-logout:hover { color: #374151; }
+
+.topbar-clear-btn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 14px;
+}
+.topbar-clear-btn:hover { color: #fff; }

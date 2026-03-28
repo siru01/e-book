@@ -5,21 +5,16 @@ import { saveBookmark, markFinished } from "../api/shelf";
 import "./ReaderPage.css";
 
 const CHARS_PER_PAGE = 1200;
+const BASE = "http://127.0.0.1:8000/api";
 
 function splitIntoPages(text) {
   let t = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
-  // Try double-newline paragraph split first
   let paragraphs = t.split(/\n{2,}/).map(p => p.replace(/\n/g, " ").trim()).filter(Boolean);
-
-  // If too few paragraphs, the book uses single newlines — treat each line as a unit
   if (paragraphs.length < 10) {
     paragraphs = t.split(/\n/).map(p => p.trim()).filter(Boolean);
   }
-
   const pages = [];
   let current = "";
-
   for (const para of paragraphs) {
     const candidate = current ? current + "\n\n" + para : para;
     if (current && candidate.length > CHARS_PER_PAGE) {
@@ -33,29 +28,52 @@ function splitIntoPages(text) {
   return pages;
 }
 
+// ── Fetch book content from Django BFF ────────────────────────
+// Django handles fetching from the right source and returning plain text
+async function fetchBookContent(bookId) {
+  const res = await fetch(
+    `${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`
+  );
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || `Server error ${res.status}`);
+  }
+  const data = await res.json();
+  return data; // { title, author, cover_url, text, source }
+}
+
 export default function ReaderPage() {
+  // book_id can be "gutenberg:1234", "google:abc", "archive:xyz", "openlibrary:OL123W"
+  // or just a plain number for backwards compatibility with old Gutenberg links
   const { gutenbergId } = useParams();
   const { token } = useAuth();
 
-  const [fontSize, setFontSize] = useState(16);
-  const [bookMeta, setBookMeta] = useState(null);
-  const [pages, setPages] = useState([]);
-  const [spreadIndex, setSpreadIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [fontSize,      setFontSize]      = useState(16);
+  const [bookMeta,      setBookMeta]      = useState(null);
+  const [pages,         setPages]         = useState([]);
+  const [spreadIndex,   setSpreadIndex]   = useState(0);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState("");
   const [bookmarkSaved, setBookmarkSaved] = useState(false);
   const [finishedSaved, setFinishedSaved] = useState(false);
-  const [sliding, setSliding] = useState(null);
+  const [sliding,       setSliding]       = useState(null);
 
   const totalSpreads = Math.ceil(pages.length / 2);
-  const currentSpread = Math.floor(spreadIndex / 2);
-  const leftPage = pages[spreadIndex] || "";
-  const rightPage = pages[spreadIndex + 1] || "";
-  const leftPageNum = spreadIndex + 1;
+  const leftPage     = pages[spreadIndex]     || "";
+  const rightPage    = pages[spreadIndex + 1] || "";
+  const leftPageNum  = spreadIndex + 1;
   const rightPageNum = spreadIndex + 2;
 
+  // ── Normalise book_id ──────────────────────────────────────
+  // Old links use plain number e.g. /read/1234 → treat as gutenberg:1234
+  const bookId = gutenbergId
+    ? (isNaN(gutenbergId) ? decodeURIComponent(gutenbergId) : `gutenberg:${gutenbergId}`)
+    : "";
+
+  const source = bookId.split(":")[0] || "gutenberg";
+
   useEffect(() => {
-    if (!gutenbergId) { setError("No book ID provided."); setLoading(false); return; }
+    if (!bookId) { setError("No book ID provided."); setLoading(false); return; }
 
     let cancelled = false;
     setLoading(true);
@@ -64,55 +82,36 @@ export default function ReaderPage() {
     setSpreadIndex(0);
 
     (async () => {
-      let plainUrl;
       try {
-        const res = await fetch(`https://gutendex.com/books/${gutenbergId}`);
-        if (!res.ok) throw new Error("Could not fetch book details.");
-        const b = await res.json();
-        const fmts = b.formats || {};
-        plainUrl =
-          fmts["text/plain; charset=utf-8"] ||
-          fmts["text/plain; charset=us-ascii"] ||
-          fmts["text/plain"] || "";
-        const authors = b.authors || [];
-        if (!cancelled) setBookMeta({
-          title: b.title || "Untitled",
-          author: authors[0]?.name || "Unknown",
-          cover: fmts["image/jpeg"] || "",
+        const data = await fetchBookContent(bookId);
+
+        if (cancelled) return;
+
+        setBookMeta({
+          title:     data.title     || "Untitled",
+          author:    data.author    || "Unknown",
+          cover_url: data.cover_url || "",
+          source:    data.source    || source,
         });
-      } catch (e) {
-        if (!cancelled) { setError(e.message); setLoading(false); }
-        return;
-      }
 
-      if (!plainUrl) {
-        if (!cancelled) { setError("No plain text version available."); setLoading(false); }
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `http://localhost:8000/api/gutenberg/proxy-text/?url=${encodeURIComponent(plainUrl)}`
-        );
-        if (!res.ok) {
-          let errMsg = `Server error ${res.status}`;
-          try { const d = await res.json(); errMsg = d.error || errMsg; } catch (_) {}
-          throw new Error(errMsg);
+        if (!data.text || data.text.trim().length === 0) {
+          setError("No readable text available for this book.");
+          setLoading(false);
+          return;
         }
-        const text = await res.text();
-        const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-        // Strip Gutenberg header
-        const startMarker = normalized.indexOf("*** START OF");
-        const afterHeader = startMarker !== -1
-          ? normalized.slice(normalized.indexOf("\n", startMarker) + 1)
-          : normalized;
+        // Strip Gutenberg header/footer if present
+        let text = data.text;
+        const startMarker = text.indexOf("*** START OF");
+        if (startMarker !== -1) {
+          text = text.slice(text.indexOf("\n", startMarker) + 1);
+        }
+        const endMarker = text.indexOf("*** END OF");
+        if (endMarker !== -1) {
+          text = text.slice(0, endMarker);
+        }
 
-        // Strip Gutenberg footer
-        const endMarker = afterHeader.indexOf("*** END OF");
-        const finalText = endMarker !== -1 ? afterHeader.slice(0, endMarker) : afterHeader;
-
-        if (!cancelled) setPages(splitIntoPages(finalText));
+        setPages(splitIntoPages(text));
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
@@ -121,30 +120,24 @@ export default function ReaderPage() {
     })();
 
     return () => { cancelled = true; };
-  }, [gutenbergId]);
+  }, [bookId]);
 
   function goNext() {
     if (spreadIndex + 2 >= pages.length || sliding) return;
     setSliding("left");
-    setTimeout(() => {
-      setSpreadIndex((s) => s + 2);
-      setSliding(null);
-    }, 350);
+    setTimeout(() => { setSpreadIndex((s) => s + 2); setSliding(null); }, 350);
   }
 
   function goPrev() {
     if (spreadIndex <= 0 || sliding) return;
     setSliding("right");
-    setTimeout(() => {
-      setSpreadIndex((s) => Math.max(0, s - 2));
-      setSliding(null);
-    }, 350);
+    setTimeout(() => { setSpreadIndex((s) => Math.max(0, s - 2)); setSliding(null); }, 350);
   }
 
   useEffect(() => {
     function onKey(e) {
       if (e.key === "ArrowRight") goNext();
-      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowLeft")  goPrev();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -153,7 +146,7 @@ export default function ReaderPage() {
   async function handleBookmark() {
     if (!token) return;
     try {
-      await saveBookmark(token, parseInt(gutenbergId), leftPageNum, `Reading ${bookMeta?.title || ""}`);
+      await saveBookmark(token, bookId, source);
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
     } catch (e) {}
@@ -162,26 +155,25 @@ export default function ReaderPage() {
   async function handleMarkFinished() {
     if (!token) return;
     try {
-      await markFinished(token, parseInt(gutenbergId));
+      await markFinished(token, bookId, source);
       setFinishedSaved(true);
     } catch (e) {}
   }
 
-  const progressPct = pages.length > 0 ? Math.min(100, ((spreadIndex + 2) / pages.length) * 100) : 0;
+  const progressPct = pages.length > 0
+    ? Math.min(100, ((spreadIndex + 2) / pages.length) * 100)
+    : 0;
 
   return (
     <div className="reader-root">
       {/* Toolbar */}
       <div className="reader-toolbar">
-
-        {/* LEFT: back link only */}
         <div className="reader-toolbar-left">
           <Link to="/dashboard" className="reader-back-link">
             ← <span>Dashboard</span>
           </Link>
         </div>
 
-        {/* CENTER: book title + author — absolutely centered in toolbar */}
         {bookMeta && (
           <div className="reader-toolbar-center">
             <span className="reader-book-title">{bookMeta.title}</span>
@@ -189,7 +181,6 @@ export default function ReaderPage() {
           </div>
         )}
 
-        {/* RIGHT: font controls + buttons */}
         <div className="reader-toolbar-right">
           <div className="reader-font-controls">
             <button onClick={() => setFontSize((s) => Math.max(12, s - 2))}>A−</button>
@@ -241,9 +232,11 @@ export default function ReaderPage() {
               aria-label="Previous pages"
             >‹</button>
 
-            <div className={`reader-book-wrap ${sliding === "left" ? "slide-out-left" : sliding === "right" ? "slide-out-right" : ""}`}>
+            <div className={`reader-book-wrap ${
+              sliding === "left"  ? "slide-out-left"  :
+              sliding === "right" ? "slide-out-right" : ""
+            }`}>
               <div className="reader-book">
-
                 {/* Left page */}
                 <div className="reader-page reader-page-left">
                   <div className="reader-page-inner" style={{ fontSize: `${fontSize}px` }}>
@@ -251,7 +244,6 @@ export default function ReaderPage() {
                       <p key={i}>{para}</p>
                     ))}
                   </div>
-                  {/* Page number — bottom RIGHT corner */}
                   <div className="reader-page-number">{leftPageNum}</div>
                 </div>
 
@@ -265,10 +257,8 @@ export default function ReaderPage() {
                       : <p className="reader-end-text">~ End ~</p>
                     }
                   </div>
-                  {/* Page number — bottom RIGHT corner */}
                   <div className="reader-page-number">{rightPage ? rightPageNum : ""}</div>
                 </div>
-
               </div>
             </div>
 

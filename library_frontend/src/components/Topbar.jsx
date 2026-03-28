@@ -2,24 +2,61 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { searchGutenberg } from "../api/shelf";
-import { useQueryClient } from "@tanstack/react-query"; // ✅ Step 5 - line 1
+import { useQueryClient } from "@tanstack/react-query";
 import "./Topbar.css";
 
 const PLACEHOLDER_WORDS = ["books", "genres", "mystery", "fantasy", "sci-fi", "biography", "history", "classic literature"];
 
 export default function Topbar({ expanded, onSearch, onClearSearch }) {
   const { username, logout } = useAuth();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient(); // ✅ Step 5 - line 2
+  const navigate    = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [query, setQuery] = useState("");
+  const [query,       setQuery]       = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [phIndex, setPhIndex] = useState(0);
-  const [phVisible, setPhVisible] = useState(true);
-  const debounceRef = useRef(null);
-  const taskIdRef = useRef(0);
+  const [phIndex,     setPhIndex]     = useState(0);
+  const [phVisible,   setPhVisible]   = useState(true);
 
-  // Cycle placeholder words
+  const debounceRef  = useRef(null);
+  const taskIdRef    = useRef(0);
+  const wrapperRef   = useRef(null);   // ← ref for click-outside detection
+
+  // ── Close dropdown helper ──────────────────────────────────
+  const closeDropdown = useCallback(() => setSuggestions([]), []);
+
+  // ── 1. Click outside to close ──────────────────────────────
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        closeDropdown();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [closeDropdown]);
+
+  // ── 2. Scroll anywhere to close ───────────────────────────
+  useEffect(() => {
+    function handleScroll() { closeDropdown(); }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Also listen on the main content div which may scroll instead of window
+    document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, [closeDropdown]);
+
+  // ── 3. ESC key to close ────────────────────────────────────
+  useEffect(() => {
+    function handleEsc(e) {
+      if (e.key === "Escape") closeDropdown();
+    }
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [closeDropdown]);
+
+  // ── Cycle placeholder words ────────────────────────────────
   useEffect(() => {
     const interval = setInterval(() => {
       setPhIndex((i) => (i + 1) % PLACEHOLDER_WORDS.length);
@@ -27,7 +64,7 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Debounced suggestions — mirrors handle_search_input background task
+  // ── Debounced suggestions ──────────────────────────────────
   const handleChange = useCallback((e) => {
     const val = e.target.value;
     setQuery(val);
@@ -47,6 +84,7 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
       try {
         const data = await searchGutenberg(null, val.trim());
         if (taskIdRef.current !== myId) return;
+        // Normalise BFF response — each item has book_id, title, authors, cover_url
         setSuggestions((data.results || []).slice(0, 6));
       } catch (_) {
         setSuggestions([]);
@@ -56,21 +94,38 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && query.trim()) {
-      setSuggestions([]);
+      closeDropdown();
       onSearch(query.trim());
     }
   }
 
   function handleLogout() {
-    queryClient.clear(); // ✅ Step 5 - line 3: wipes all cached data on logout
+    queryClient.clear();
     logout();
     navigate("/");
   }
 
+  // ── Navigate to reader from suggestion ────────────────────
+  function handleSuggestionClick(book) {
+    closeDropdown();
+    // book_id e.g. "archive:xyz" or "google:abc" or "openlibrary:OL123W"
+    const source  = book.source || "gutenberg";
+    const bookId  = book.book_id || "";
+
+    if (source === "gutenberg") {
+      const numId = bookId.replace("gutenberg:", "");
+      navigate(`/read/${numId}`);
+    } else {
+      // For non-Gutenberg, navigate with encoded full book_id
+      navigate(`/read/${encodeURIComponent(bookId)}`);
+    }
+  }
+
   return (
     <header className={`topbar ${expanded ? "topbar-expanded" : "topbar-collapsed"}`}>
-      {/* Search pill */}
-      <div className="topbar-search-wrap">
+
+      {/* Search pill — wrapperRef catches clicks inside/outside */}
+      <div className="topbar-search-wrap" ref={wrapperRef}>
         <div className="topbar-search-pill">
           <svg className="topbar-search-icon" width="18" height="18" viewBox="0 0 64 64" fill="none">
             <circle cx="26" cy="26" r="16" stroke="#888" strokeWidth="5" fill="none" strokeLinecap="round"/>
@@ -89,32 +144,45 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
               </span>
             )}
           </div>
+          {/* Clear button — shown when query has text */}
+          {query && (
+            <button
+              className="topbar-clear-btn"
+              onClick={() => {
+                setQuery("");
+                setPhVisible(true);
+                closeDropdown();
+                onClearSearch?.();
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Suggestions dropdown */}
         {suggestions.length > 0 && (
           <div className="topbar-suggestions">
-            {suggestions.map((book) => (
+            {suggestions.map((book, i) => (
               <div
-                key={book.id}
+                key={`${book.book_id}-${i}`}
                 className="topbar-suggestion-item"
-                onClick={() => {
-                  setSuggestions([]);
-                  navigate(`/read/${book.id}`);
-                }}
+                onClick={() => handleSuggestionClick(book)}
               >
                 <div className="topbar-sugg-cover">
-                  {book.formats?.["image/jpeg"]
-                    ? <img src={book.formats["image/jpeg"]} alt="" />
+                  {book.cover_url
+                    ? <img src={book.cover_url} alt="" />
                     : <span>📖</span>}
                 </div>
                 <div className="topbar-sugg-info">
                   <span className="topbar-sugg-title">{book.title}</span>
-                  <span className="topbar-sugg-author">{book.authors?.[0]?.name || "Unknown"}</span>
+                  <span className="topbar-sugg-author">
+                    {(book.authors || []).join(", ") || "Unknown"}
+                  </span>
                 </div>
                 <button
                   className="topbar-sugg-btn"
-                  onClick={(e) => { e.stopPropagation(); navigate(`/read/${book.id}`); }}
+                  onClick={(e) => { e.stopPropagation(); handleSuggestionClick(book); }}
                 >
                   Read
                 </button>
