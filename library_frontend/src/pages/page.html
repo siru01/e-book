@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#ffffff",
+              "primary": "#000000",
+              "tertiary-fixed-dim": "#ebbb8c",
+              "primary-dim": "#222222",
+              "error-container": "#fe8983",
+              "on-error": "#fff7f6",
+              "inverse-surface": "#0d0f0d",
+              "on-primary-fixed-variant": "#5c5b5b",
+              "surface-tint": "#000000",
+              "error": "#9f403d",
+              "secondary-fixed": "#e8e2d9",
+              "background": "#ffffff",
+              "on-secondary": "#fef8ef",
+              "outline": "#777c77",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#5c605c",
+              "inverse-on-surface": "#9d9d9a",
+              "surface-container-low": "#f5f5f5",
+              "on-tertiary-fixed": "#4c2d0a",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed": "#3f3f3f",
+              "on-tertiary-fixed-variant": "#6c4924",
+              "on-tertiary": "#fff7f4",
+              "on-error-container": "#752121",
+              "secondary-dim": "#56534c",
+              "tertiary-fixed": "#fac898",
+              "on-secondary-container": "#55514b",
+              "secondary-container": "#e8e2d9",
+              "primary-container": "#e4e2e1",
+              "secondary-fixed-dim": "#d9d4cb",
+              "surface-container-highest": "#e0e4de",
+              "on-tertiary-container": "#62401c",
+              "outline-variant": "#afb3ae",
+              "surface-bright": "#ffffff",
+              "on-secondary-fixed": "#423f39",
+              "on-surface": "#000000",
+              "on-primary-container": "#525151",
+              "surface-container-high": "#ebebeb",
+              "error-dim": "#4e0309",
+              "surface-dim": "#d6dbd5",
+              "primary-fixed": "#e4e2e1",
+              "tertiary-dim": "#6f4c26",
+              "on-background": "#000000",
+              "secondary": "#625f58",
+              "surface-variant": "#f5f5f5",
+              "inverse-primary": "#ffffff",
+              "surface-container": "#f0f0f0",
+              "on-secondary-fixed-variant": "#5e5b54",
+              "primary-fixed-dim": "#d6d4d3",
+              "tertiary-container": "#fac898",
+              "tertiary": "#7d5731"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        font-size: 20px;
+      }
+      .glass-nav {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+    </style>
+</head>
+<body class="font-body selection:bg-surface-container-high selection:text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-white/80 backdrop-blur-xl docked full-width top-0 sticky z-50 border-b border-f5f5f5">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-black">The Editorial Reader</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-8 font-label text-[13px] tracking-tight">
+<a class="text-black font-semibold transition-colors duration-300" href="#">Library</a>
+<a class="text-black/40 hover:text-black transition-colors duration-300" href="#">Journal</a>
+<a class="text-black/40 hover:text-black transition-colors duration-300" href="#">Store</a>
+</nav>
+<div class="flex items-center gap-4 text-black">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-screen-2xl mx-auto px-8 py-12 pb-32">
+<!-- Prominent Search Section and Hero Heading -->
+<section class="mb-24 flex flex-col items-center text-center">
+<!-- Search bar moved above heading and made pill-shaped -->
+<div class="w-full max-w-2xl relative mb-12">
+<div class="flex items-center bg-[#f5f5f5] px-8 py-4 rounded-full border border-black/5 shadow-sm focus-within:shadow-md transition-shadow duration-300">
+<span class="material-symbols-outlined text-black/60 text-xl mr-4">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-base font-label placeholder:text-black/30 w-full" placeholder="Search your library..." type="text"/>
+</div>
+</div>
+<!-- Heading centered below search bar with clean sans-serif font -->
+<h1 class="font-headline font-bold text-5xl md:text-6xl text-black leading-tight tracking-tight max-w-4xl">
+            What would you like to read?
+        </h1>
+</section>
+<!-- Status Cards Bento-ish Grid -->
+<section class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-24">
+<!-- Recent Readings -->
+<div class="bg-[#f5f5f5] p-8 rounded-2xl flex flex-col items-center text-center min-h-[200px] transition-all hover:bg-[#ebebeb] group cursor-pointer border border-black/5">
+<div class="w-full flex justify-between items-center mb-6">
+<h3 class="font-label text-xs font-semibold uppercase tracking-widest text-black/80">Recent Readings</h3>
+<span class="text-[10px] font-label uppercase tracking-widest text-black/40">08 Books</span>
+</div>
+<div class="flex-grow flex items-center justify-center py-4">
+<span class="material-symbols-outlined text-black group-hover:scale-110 transition-transform !text-5xl">local_library</span>
+</div>
+<p class="text-[11px] text-black/40 mt-4">Continue where you left</p>
+</div>
+<!-- Bookmarks -->
+<div class="bg-[#f5f5f5] p-8 rounded-2xl flex flex-col items-center text-center min-h-[200px] transition-all hover:bg-[#ebebeb] group cursor-pointer border border-black/5">
+<div class="w-full flex justify-between items-center mb-6">
+<h3 class="font-label text-xs font-semibold uppercase tracking-widest text-black/80">Bookmarks</h3>
+<span class="text-[10px] font-label uppercase tracking-widest text-black/40">24 Marks</span>
+</div>
+<div class="flex-grow flex items-center justify-center py-4">
+<span class="material-symbols-outlined text-black group-hover:scale-110 transition-transform !text-5xl">turned_in_not</span>
+</div>
+<p class="text-[11px] text-black/40 mt-4">Your saved excerpts</p>
+</div>
+<!-- Calendar -->
+<div class="bg-[#f5f5f5] p-8 rounded-2xl flex flex-col items-center text-center min-h-[200px] transition-all hover:bg-[#ebebeb] group cursor-pointer border border-black/5">
+<div class="w-full flex justify-between items-center mb-6">
+<h3 class="font-label text-xs font-semibold uppercase tracking-widest text-black/80">Calendar</h3>
+<span class="text-[10px] font-label uppercase tracking-widest text-black/40">Streak 12</span>
+</div>
+<div class="flex-grow flex items-center justify-center py-4">
+<span class="material-symbols-outlined text-black group-hover:scale-110 transition-transform !text-5xl">calendar_today</span>
+</div>
+<p class="text-[11px] text-black/40 mt-4">Daily reading schedule</p>
+</div>
+<!-- History -->
+<div class="bg-[#f5f5f5] p-8 rounded-2xl flex flex-col items-center text-center min-h-[200px] transition-all hover:bg-[#ebebeb] group cursor-pointer border border-black/5">
+<div class="w-full flex justify-between items-center mb-6">
+<h3 class="font-label text-xs font-semibold uppercase tracking-widest text-black/80">History</h3>
+<span class="text-[10px] font-label uppercase tracking-widest text-black/40">Full Log</span>
+</div>
+<div class="flex-grow flex items-center justify-center py-4">
+<span class="material-symbols-outlined text-black group-hover:scale-110 transition-transform !text-5xl">history</span>
+</div>
+<p class="text-[11px] text-black/40 mt-4">Review your journey</p>
+</div>
+<!-- Previously Read -->
+<div class="bg-[#f5f5f5] p-8 rounded-2xl flex flex-col items-center text-center min-h-[200px] transition-all hover:bg-[#ebebeb] group cursor-pointer border border-black/5 col-span-2 md:col-span-1">
+<div class="w-full flex justify-between items-center mb-6">
+<h3 class="font-label text-xs font-semibold uppercase tracking-widest text-black/80">Finished</h3>
+<span class="text-[10px] font-label uppercase tracking-widest text-black/40">142 Done</span>
+</div>
+<div class="flex-grow flex items-center justify-center py-4">
+<span class="material-symbols-outlined text-black group-hover:scale-110 transition-transform !text-5xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="text-[11px] text-black/40 mt-4">Your completed library</p>
+</div>
+</section>
+<!-- Trending Now Section -->
+<section>
+<div class="flex items-baseline justify-between mb-10">
+<h2 class="font-headline font-bold text-3xl text-black">Trending Now</h2>
+<a class="font-label text-[11px] uppercase tracking-widest text-black/60 hover:text-black transition-colors border-b border-transparent hover:border-black pb-0.5" href="#">View All Collection</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-10 gap-y-16">
+<!-- Book 1 -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] mb-6 overflow-hidden rounded-xl shadow-[0_12px_32px_-12px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:-translate-y-2">
+<img alt="Atomic Habits" class="w-full h-full object-cover" data-alt="Modern minimalist book cover titled Atomic Habits with yellow and white geometric patterns on a clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDO740DuYp3hnVPS_fn7wlmPN0ikTdEjLBHO7Vnn7V2SkAOIA1A3YtjdVCIp3lwsyCaJgUzFRrtge981cWyaIDRTeWDWCil7JJobFIv7eCrdQxR9kEm4HvQEQIFjcc6nbyy1wXR4YAStQDLiWyz1cG_Do_Bbwuu3qkziiXqcBt29vUWcHwXgfgPxQI4-XH4Wk4PPeU0zF4KBuySB8X3TRoa7PV_SRqBc0GXaeQs06ztYf0ytLs9ODE9H2ZxIPMFo0TJk2AawriNWAOs"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-label text-[15px] font-semibold text-black leading-tight">Atomic Habits</h4>
+<p class="font-label text-[12px] text-black/60">James Clear</p>
+<p class="font-label text-[11px] text-black/40">2018</p>
+</div>
+</div>
+<!-- Book 2 -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] mb-6 overflow-hidden rounded-xl shadow-[0_12px_32px_-12px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:-translate-y-2">
+<img alt="Harry Potter" class="w-full h-full object-cover" data-alt="Whimsical book cover for Harry Potter featuring deep blues and golden metallic typography of a lightning bolt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbHkOC9roTWjYOZw0M5Nlgymg5-xkxWwHPzqLtzbsYtNQ5hSKL6Hmq1GdBaabcIBEElTfjMF-6iDxHbgZ6V6eVwWzFTE7_gH6H__UN_lgd_fWjnLCkHh3OXDY1aGfvuxVS0YCqDGfmiQuqIs29OcaZVa8Ch_8Ts8TZpUYa8Pikc-abipHUBwaohxi1BOJw-nAj-5DIgGzIRK10d_XfhilTgsbcMqBa7d_Iyr6V_2bAkLgmwhkwwwwJdGDP7eAqvH1hwKN6UZGfesvS"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-label text-[15px] font-semibold text-black leading-tight">Harry Potter</h4>
+<p class="font-label text-[12px] text-black/60">J.K. Rowling</p>
+<p class="font-label text-[11px] text-black/40">1997</p>
+</div>
+</div>
+<!-- Book 3 -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] mb-6 overflow-hidden rounded-xl shadow-[0_12px_32px_-12px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:-translate-y-2">
+<img alt="Rich Dad Poor Dad" class="w-full h-full object-cover" data-alt="Professional financial book cover for Rich Dad Poor Dad with classic serif typography and gold accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACYhYxO3WnqxrXl_DjB0DUjzRvqLBnd2uvblkKH6aJL4nu0oeMAPNfMWvdJoB2Z78d0HFpeMuca1nscRhEqlR1xKnCSx_e7v7exeCJ5o2_uvk-xSKJEFtA560lXIBRgLA-vfV13doyg5WKO-irWd3KBShMCwRFpPQmOdBBU5f3ekxG7pUPo1DXswWRtNi_u_OLh-DzWWcUSnAuuG2sndJsMFOijcHw6rysgAx_7a3gs_zvmniBhGcve2Ay5jc91WsygGP-DRQVm19R"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-label text-[15px] font-semibold text-black leading-tight">Rich Dad Poor Dad</h4>
+<p class="font-label text-[12px] text-black/60">Robert Kiyosaki</p>
+<p class="font-label text-[11px] text-black/40">1997</p>
+</div>
+</div>
+<!-- Book 4 -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] mb-6 overflow-hidden rounded-xl shadow-[0_12px_32px_-12px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:-translate-y-2">
+<img alt="The 48 Laws of Power" class="w-full h-full object-cover" data-alt="Elegant and dark book cover for The 48 Laws of Power with minimalist crimson and black design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI7nBppPLTc-DrKzi3xmV4LL7F6ydrLNwm-n2rdsE0Sbk5MjVSrRVG6KWD1KrEJHh0Fl7DwDS6t64oI_6g4T6TwEKkNkV33vpk-Hl45pdp2NjZSeXezOhCJz-8EQAq3WXLH4L26-rOl8gBbECCDrQN6Lm5XdIJC30vjUZOoPuuTaRWAN24jTYl70QNWnITrklZuwo73z-tT9KnBPdo8HQ9qWzZbw8CT4s1GfDOk2zk0Z-2-EJsbvMmYwOv6MptoPsFK6kFJQOlaqBO"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-label text-[15px] font-semibold text-black leading-tight">The 48 Laws of Power</h4>
+<p class="font-label text-[12px] text-black/60">Robert Greene</p>
+<p class="font-label text-[11px] text-black/40">1998</p>
+</div>
+</div>
+<!-- Book 5 -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] mb-6 overflow-hidden rounded-xl shadow-[0_12px_32px_-12px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:-translate-y-2">
+<img alt="Deep Work" class="w-full h-full object-cover" data-alt="Artistic cover of a journal titled The Editorial Reader with high-end typography on thick textured paper" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBKwV1L8npuqEG4yPA4uzO9rS6T_gmvlrpMFQ9mCSpY4S7vsjGXl_IpEYt14gTpIbZ__tQWhBrRNdT44rEAydsRq9q6YKMilo0ZHCu94tqDpV6m0pSPs8cjNSWswCZGBUHbd--popPONmy9zPxQRq7tlhACY6B-o5gqsUubFGaBpZxejP5xwq3NvdOtbKfcwONc7a4IyYfjZ7Dib6JC-grsbNlkACnuWhD9NKupGJyK097ge2VOSZJSAbQUSzurXM5Fhc6iZkKfXIf"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-label text-[15px] font-semibold text-black leading-tight">Deep Work</h4>
+<p class="font-label text-[12px] text-black/60">Cal Newport</p>
+<p class="font-label text-[11px] text-black/40">2016</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white border-t border-black/5 shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-black relative after:content-[''] after:absolute after:-bottom-1 after:w-1 after:h-1 after:bg-black after:rounded-full scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">local_library</span>
+<span class="font-sans text-[11px] uppercase tracking-widest mt-1">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-black/40 hover:text-black" href="#">
+<span class="material-symbols-outlined">turned_in_not</span>
+<span class="font-sans text-[11px] uppercase tracking-widest mt-1">Bookmarks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-black/40 hover:text-black" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-sans text-[11px] uppercase tracking-widest mt-1">Calendar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-black/40 hover:text-black" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-sans text-[11px] uppercase tracking-widest mt-1">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-black/40 hover:text-black" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-sans text-[11px] uppercase tracking-widest mt-1">Account</span>
+</a>
+</nav>
+</body></html>
