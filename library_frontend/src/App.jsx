@@ -7,6 +7,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import DiscoverPage       from "./pages/DiscoverPage";
 import ReaderPage         from "./pages/ReaderPage";
 import Login              from "./pages/Login";
+import SignUp             from "./pages/SignUp";  // ← ADD THIS IMPORT
 import "./App.css";
 
 // ── React Query client ────────────────────────────────────────────
@@ -45,14 +46,20 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public Routes - accessible without login */}
       <Route path="/"      element={<PublicRoute><HomePage /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />  {/* ← ADD THIS LINE */}
 
+      {/* Protected Routes - require login */}
       <Route path="/dashboard"         element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/admin-dashboard"   element={<ProtectedRoute adminOnly><AdminDashboardPage /></ProtectedRoute>} />
       <Route path="/read/:gutenbergId" element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
 
+      {/* Public but requires no auth protection */}
       <Route path="/discover" element={<DiscoverPage />} />
+      
+      {/* Catch all - redirect to home */}
       <Route path="*"         element={<Navigate to="/" replace />} />
     </Routes>
   );

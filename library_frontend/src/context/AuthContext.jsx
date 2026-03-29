@@ -139,8 +139,52 @@ export function AuthProvider({ children }) {
     return role;
   }, []);
 
+  // ── Sign Up ────────────────────────────────────────────────────
+  const signup = useCallback(async (username, email, password) => {
+    const response = await fetch("http://127.0.0.1:8000/api/register/", {
+      method : "POST",
+      headers: { "Content-Type": "application/json" },
+      body   : JSON.stringify({ username, email, password }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || err.detail || `Error ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // After successful signup, automatically log the user in
+    // You can either:
+    // Option 1: Call login function with email and password
+    const role = await login(email, password);
+    return { role, user: data.user };
+    
+    // Option 2: If your backend returns token directly on signup
+    // const access = data.access || "";
+    // let role = "STUDENT";
+    // let name = username;
+    // 
+    // try {
+    //   const payload = JSON.parse(atob(access.split(".")[1]));
+    //   role = payload.role || "STUDENT";
+    //   name = payload.full_name || username;
+    // } catch (_) {}
+    // 
+    // setToken(access);
+    // setUsername(name);
+    // setUserRole(role);
+    // 
+    // sessionStorage.setItem(KEYS.token, access);
+    // sessionStorage.setItem(KEYS.username, name);
+    // sessionStorage.setItem(KEYS.role, role);
+    // if (data.refresh) sessionStorage.setItem(KEYS.refresh, data.refresh);
+    // 
+    // return role;
+  }, [login]);
+
   return (
-    <AuthContext.Provider value={{ token, username, userRole, login, logout }}>
+    <AuthContext.Provider value={{ token, username, userRole, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -102,14 +102,12 @@
   gap: 0;
   position: relative;
   transition:
-    flex        .32s cubic-bezier(.4,0,.2,1),
-    min-width   .32s cubic-bezier(.4,0,.2,1),
-    max-width   .32s cubic-bezier(.4,0,.2,1),
-    height      .32s cubic-bezier(.4,0,.2,1),
-    border-color .22s ease,
-    box-shadow  .22s ease,
-    opacity     .22s ease,
-    z-index     0s;
+
+    transform 0.4s cubic-bezier(0.2, 0, 0, 1), 
+    box-shadow 0.3s ease, 
+    opacity 0.3s ease,
+    flex 0.3s ease; /* Ensure layout changes don't jitter */
+  transform-origin: center center;
 }
 .hero-card:hover:not(.hero-card--expanded) {
   border-color: #ddd;

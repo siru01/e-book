@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── SignUp Page Layout ── */
+.signup-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+  background-size: 20px 20px;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+}
+
+/* ── Card ── */
+.signup-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Logo ── */
+.signup-card .logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+/* ── Headings ── */
+.signup-card h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111;
+  margin-top: 8px;
+}
+
+.signup-card .subtitle {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+/* ── Error Message ── */
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  border-left: 3px solid #d32f2f;
+}
+
+/* ── Input Group ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-group input {
+  padding: 12px 16px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  color: #111;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.input-group input:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.input-group input::placeholder {
+  color: #aaa;
+}
+
+.input-group input:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+/* ── Submit Button ── */
+.btn-black {
+  width: 100%;
+  padding: 14px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-top: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-black:hover:not(:disabled) {
+  background-color: #222;
+}
+
+.btn-black:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-black:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ── Login Link ── */
+.login-link {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.link-text {
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.link-text:hover {
+  color: #444;
+}
+
+/* ── Responsive Adjustments ── */
+@media (max-width: 480px) {
+  .signup-card {
+    padding: 32px 24px;
+  }
+  
+  .signup-card h2 {
+    font-size: 1.5rem;
+  }
+  
+  .input-group input {
+    padding: 10px 14px;
+  }
+  
+  .btn-black {
+    padding: 12px;
+  }
+}

@@ -7,28 +7,34 @@ function ParticleCanvas({ isDark }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const ctx = canvas.getContext("2d");
     let raf;
+    let particles = [];
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      
+      // Reinitialize particles on resize
+      particles = Array.from({ length: 260 }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 2.2 + 0.5,
+        dx: (Math.random() - 0.5) * 0.18,
+        dy: (Math.random() - 0.5) * 0.18,
+        alpha: Math.random() * 0.55 + 0.2,
+      }));
     };
+    
     resize();
     window.addEventListener("resize", resize);
 
-    const TOTAL = 260;
-    const particles = Array.from({ length: TOTAL }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      r: Math.random() * 2.2 + 0.5,
-      dx: (Math.random() - 0.5) * 0.18,
-      dy: (Math.random() - 0.5) * 0.18,
-      alpha: Math.random() * 0.55 + 0.2,
-    }));
-
     const draw = () => {
+      if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
       particles.forEach((p) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -37,20 +43,24 @@ function ParticleCanvas({ isDark }) {
           ? `rgba(140, 160, 255, ${p.alpha})` 
           : `rgba(60, 80, 160, ${p.alpha})`;
         ctx.fill();
+        
         p.x += p.dx;
         p.y += p.dy;
+        
         if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
       });
+      
       raf = requestAnimationFrame(draw);
     };
+    
     draw();
 
     return () => {
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [isDark]); // Re-run when theme changes
+  }, [isDark]);
 
   return (
     <canvas
@@ -67,6 +77,17 @@ export default function HomePage() {
 
   const toggleDarkMode = () => setIsDark(!isDark);
 
+  // Add keyboard shortcut for dark mode toggle (optional)
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.key === 'd') {
+        toggleDarkMode();
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isDark]);
+
   return (
     <div className="shelf-wrapper" data-theme={isDark ? "dark" : "light"}>
       <style>{`
@@ -82,6 +103,7 @@ export default function HomePage() {
           --nav-link: #333;
           --btn-secondary: #ebebea;
           --btn-secondary-text: #444;
+          --btn-primary-hover: #333;
         }
 
         .shelf-wrapper[data-theme="dark"] {
@@ -91,6 +113,7 @@ export default function HomePage() {
           --nav-link: #ccc;
           --btn-secondary: #222;
           --btn-secondary-text: #eee;
+          --btn-primary-hover: #ddd;
         }
 
         .shelf-root {
@@ -114,23 +137,27 @@ export default function HomePage() {
           justify-content: space-between;
           padding: 22px 48px;
         }
+        
         .shelf-nav-logo {
           font-weight: 600;
           font-size: 1.1rem;
           letter-spacing: 0.12em;
           text-transform: uppercase;
         }
+        
         .shelf-nav-links {
           display: flex;
           gap: 36px;
           list-style: none;
         }
+        
         .shelf-nav-links a {
           color: var(--nav-link);
           text-decoration: none;
           font-size: 0.92rem;
           transition: color 0.2s;
         }
+        
         .shelf-nav-links a:hover { color: var(--text); }
         
         .shelf-nav-cta {
@@ -144,7 +171,11 @@ export default function HomePage() {
           font-weight: 600;
           cursor: pointer;
           letter-spacing: 0.05em;
-          transition: transform 0.15s;
+          transition: transform 0.15s, background 0.3s;
+        }
+        
+        .shelf-nav-cta:hover {
+          transform: scale(1.02);
         }
 
         /* Hero */
@@ -159,6 +190,7 @@ export default function HomePage() {
           text-align: center;
           padding: 0 24px 40px;
         }
+        
         .shelf-eyebrow {
           font-size: 0.78rem;
           letter-spacing: 0.22em;
@@ -169,12 +201,14 @@ export default function HomePage() {
           align-items: center;
           gap: 8px;
         }
+        
         .shelf-eyebrow::before {
           content: '';
           width: 14px;
           height: 1px;
           background: var(--sub-text);
         }
+        
         .shelf-headline {
           font-size: clamp(2.6rem, 6vw, 5rem);
           font-weight: 600;
@@ -183,6 +217,14 @@ export default function HomePage() {
           letter-spacing: -0.02em;
           margin-bottom: 44px;
         }
+        
+        .shelf-actions {
+          display: flex;
+          gap: 20px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        
         .btn-primary {
           background: var(--text);
           color: var(--bg);
@@ -192,12 +234,15 @@ export default function HomePage() {
           font-size: 1rem;
           font-weight: 500;
           cursor: pointer;
-          transition: transform 0.15s, box-shadow 0.2s;
+          transition: transform 0.15s, box-shadow 0.2s, background 0.3s;
         }
+        
         .btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          background: var(--btn-primary-hover);
         }
+        
         .btn-secondary {
           background: var(--btn-secondary);
           color: var(--btn-secondary-text);
@@ -206,14 +251,19 @@ export default function HomePage() {
           border-radius: 100px;
           font-size: 1rem;
           cursor: pointer;
-          transition: transform 0.15s;
+          transition: transform 0.15s, background 0.3s;
         }
-        .btn-secondary:hover { transform: translateY(-2px); }
+        
+        .btn-secondary:hover { 
+          transform: translateY(-2px);
+          opacity: 0.9;
+        }
 
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(28px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        
         .fade-1 { animation: fadeUp 0.7s ease both 0.1s; }
         .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
         .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
@@ -221,6 +271,19 @@ export default function HomePage() {
         @media (max-width: 640px) {
           .shelf-nav { padding: 18px 20px; }
           .shelf-nav-links { display: none; }
+          .shelf-actions {
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 280px;
+          }
+          .btn-primary, .btn-secondary {
+            width: 100%;
+            text-align: center;
+          }
+          .shelf-headline {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+          }
         }
       `}</style>
 
@@ -235,20 +298,27 @@ export default function HomePage() {
             <li><a href="#">About</a></li>
           </ul>
           <button className="shelf-nav-cta" onClick={toggleDarkMode}>
-            {isDark ? "LIGHT MODE" : "DARK MODE"}
+            {isDark ? "☀️ LIGHT MODE" : "🌙 DARK MODE"}
           </button>
         </nav>
 
         <section className="shelf-hero">
-          {/*<p className="shelf-eyebrow fade-1">Shelf</p>*/}
           <h1 className="shelf-headline fade-2">
             Explore Unlimited Stories in One Digital Library
           </h1>
           <div className="shelf-actions fade-3">
-            <button className="btn-primary" onClick={() => navigate("/login")}>
+            <button 
+              className="btn-primary" 
+              onClick={() => navigate("/login")}
+            >
               Get Back To You
             </button>
-            <button className="btn-secondary">First Time? Let's Get Started</button>
+            <button 
+              className="btn-secondary" 
+              onClick={() => navigate("/signup")}
+            >
+              First Time? Let's Get Started →
+            </button>
           </div>
         </section>
       </div>
