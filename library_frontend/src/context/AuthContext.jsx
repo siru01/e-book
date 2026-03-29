@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
     setUsername(name);
     setUserRole(role);
 
-    // Persist to sessionStorage (NOT localStorage)
+    // Persist to sessionStorage
     sessionStorage.setItem(KEYS.token,    access);
     sessionStorage.setItem(KEYS.username, name);
     sessionStorage.setItem(KEYS.role,     role);
@@ -139,49 +139,59 @@ export function AuthProvider({ children }) {
     return role;
   }, []);
 
-  // ── Sign Up ────────────────────────────────────────────────────
+  // ── Sign Up (Optimized - uses tokens directly from response) ──
   const signup = useCallback(async (username, email, password) => {
     const response = await fetch("http://127.0.0.1:8000/api/register/", {
       method : "POST",
       headers: { "Content-Type": "application/json" },
-      body   : JSON.stringify({ username, email, password }),
+      body   : JSON.stringify({ 
+        full_name: username,  // Map to Django's field
+        email: email, 
+        password: password,
+        phone: "",
+        role: "STUDENT"
+      }),
     });
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
+      // Handle different error formats
+      if (err.email) throw new Error(err.email[0]);
+      if (err.full_name) throw new Error(err.full_name[0]);
+      if (err.password) throw new Error(err.password[0]);
       throw new Error(err.message || err.detail || `Error ${response.status}`);
     }
 
     const data = await response.json();
     
-    // After successful signup, automatically log the user in
-    // You can either:
-    // Option 1: Call login function with email and password
-    const role = await login(email, password);
-    return { role, user: data.user };
-    
-    // Option 2: If your backend returns token directly on signup
-    // const access = data.access || "";
-    // let role = "STUDENT";
-    // let name = username;
-    // 
-    // try {
-    //   const payload = JSON.parse(atob(access.split(".")[1]));
-    //   role = payload.role || "STUDENT";
-    //   name = payload.full_name || username;
-    // } catch (_) {}
-    // 
-    // setToken(access);
-    // setUsername(name);
-    // setUserRole(role);
-    // 
-    // sessionStorage.setItem(KEYS.token, access);
-    // sessionStorage.setItem(KEYS.username, name);
-    // sessionStorage.setItem(KEYS.role, role);
-    // if (data.refresh) sessionStorage.setItem(KEYS.refresh, data.refresh);
-    // 
-    // return role;
-  }, [login]);
+    // Extract tokens and user data from response
+    const access = data.access || "";
+    let role = "STUDENT";
+    let name = username;
+
+    try {
+      const payload = JSON.parse(atob(access.split(".")[1]));
+      role = payload.role || data.user?.role || "STUDENT";
+      name = payload.full_name || data.user?.full_name || username;
+    } catch (_) {
+      // If token parsing fails, use data from response
+      role = data.user?.role || "STUDENT";
+      name = data.user?.full_name || username;
+    }
+
+    // Update state
+    setToken(access);
+    setUsername(name);
+    setUserRole(role);
+
+    // Persist to sessionStorage
+    sessionStorage.setItem(KEYS.token, access);
+    sessionStorage.setItem(KEYS.username, name);
+    sessionStorage.setItem(KEYS.role, role);
+    if (data.refresh) sessionStorage.setItem(KEYS.refresh, data.refresh);
+
+    return role;
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, username, userRole, login, signup, logout }}>
