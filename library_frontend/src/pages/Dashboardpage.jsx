@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,6 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
 const stars = (r) => { const n = Math.max(0, Math.min(5, r)); return "★".repeat(n) + "☆".repeat(5 - n); };
 
-// ── SVG Icons ──────────────────────────────────────────────────────
 const IconBook     = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconCal      = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
@@ -26,26 +25,14 @@ const IconBell     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill=
 const IconUser     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 
 const HERO_CARDS = [
-  { key: "recent",          label: "RECENT READINGS", sub: "Continue where you left", icon: <IconBook />,     stat: (c) => `${c.books} BOOKS`  },
-  { key: "bookmarks",       label: "BOOKMARKS",        sub: "Your saved excerpts",    icon: <IconBookmark />, stat: (c) => `${c.marks} MARKS`  },
-  { key: "calendar",        label: "CALENDAR",         sub: "Daily reading schedule", icon: <IconCal />,      stat: (c) => `STREAK ${c.streak}`},
-  { key: "history",         label: "HISTORY",          sub: "Review your journey",    icon: <IconHistory />,  stat: ()  => "FULL LOG"           },
-  { key: "previously_read", label: "FINISHED",         sub: "Your completed library", icon: <IconCheck />,   stat: (c) => `${c.done} DONE`     },
+  { key: "recent",          label: "RECENT READINGS", sub: "Continue where you left", Icon: IconBook,     stat: (c) => `${c.books} BOOKS`   },
+  { key: "bookmarks",       label: "BOOKMARKS",        sub: "Your saved excerpts",    Icon: IconBookmark, stat: (c) => `${c.marks} MARKS`   },
+  { key: "calendar",        label: "CALENDAR",         sub: "Daily reading schedule", Icon: IconCal,      stat: (c) => `STREAK ${c.streak}` },
+  { key: "history",         label: "HISTORY",          sub: "Review your journey",    Icon: IconHistory,  stat: ()  => "FULL LOG"            },
+  { key: "previously_read", label: "FINISHED",         sub: "Your completed library", Icon: IconCheck,    stat: (c) => `${c.done} DONE`      },
 ];
 
-function HeroCard({ card, active, onClick, counts }) {
-  return (
-    <div className={`hero-card ${active ? "hero-card-active" : ""}`} onClick={() => onClick(card.key)}>
-      <div className="hero-card-top">
-        <span className="hero-card-label">{card.label}</span>
-        <span className="hero-card-stat">{card.stat(counts)}</span>
-      </div>
-      <div className="hero-card-icon">{card.icon}</div>
-      <span className="hero-card-sub">{card.sub}</span>
-    </div>
-  );
-}
-
+/* ── Panel book row ─────────────────────────────────────────────── */
 function PanelBookRow({ book, extra }) {
   return (
     <div className="panel-book-row">
@@ -61,14 +48,13 @@ function PanelBookRow({ book, extra }) {
   );
 }
 
+/* ── Book shelf card ────────────────────────────────────────────── */
 function BookCard({ book }) {
   const navigate = useNavigate();
   return (
     <div className="book-card" onClick={() => navigate(`/read/${encodeURIComponent(book.gutenbergId)}`)}>
       <div className="book-card-cover">
-        {book.cover
-          ? <img src={book.cover} alt={book.title} loading="lazy" />
-          : <div className="book-card-placeholder">📖</div>}
+        {book.cover ? <img src={book.cover} alt={book.title} loading="lazy" /> : <div className="book-card-placeholder">📖</div>}
         <div className="book-card-hover"><span>Read Now</span></div>
       </div>
       <div className="book-card-meta">
@@ -80,6 +66,7 @@ function BookCard({ book }) {
   );
 }
 
+/* ── Search result card ─────────────────────────────────────────── */
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
   return (
@@ -92,14 +79,95 @@ function SearchResultCard({ book }) {
         <span className="src-card-author">{book.author}</span>
         {book.year && <span className="src-card-year">{book.year}</span>}
         {book.description && <span className="src-card-desc">{book.description.slice(0, 100)}…</span>}
-        <button className="src-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/read/${encodeURIComponent(book.gutenbergId)}`); }}>
-          Read Now
-        </button>
+        <button className="src-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/read/${encodeURIComponent(book.gutenbergId)}`); }}>Read Now</button>
       </div>
     </div>
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   HeroCard — handles its own expansion in-place
+══════════════════════════════════════════════════════════════════ */
+function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isActive, isOtherActive }) {
+  const cardRef   = useRef(null);
+  const [phase, setPhase] = useState("idle"); // idle | expanding | open | closing
+
+  /* open */
+  const open = () => {
+    if (phase !== "idle") return;
+    onExpand();
+    setPhase("expanding");
+    requestAnimationFrame(() => requestAnimationFrame(() => setPhase("open")));
+  };
+
+  /* close */
+  const close = useCallback(() => {
+    setPhase("closing");
+    setTimeout(() => { setPhase("idle"); onCollapse(); }, 320);
+  }, [onCollapse]);
+
+  /* ESC */
+  useEffect(() => {
+    if (phase !== "open") return;
+    const fn = (e) => { if (e.key === "Escape") close(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [phase, close]);
+
+  const isOpen    = phase === "open";
+  const isExpanded = phase === "expanding" || phase === "open" || phase === "closing";
+
+  return (
+    <>
+      {/* ── backdrop (only for this card's expansion) ── */}
+      {isExpanded && (
+        <div
+          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
+          onMouseDown={close}
+        />
+      )}
+
+      {/* ── the card itself ── */}
+      <div
+        ref={cardRef}
+        className={[
+          "hero-card",
+          isExpanded          ? "hero-card--expanded" : "",
+          isOpen              ? "hero-card--open"     : "",
+          phase === "closing" ? "hero-card--closing"  : "",
+          isOtherActive       ? "hero-card--dimmed"   : "",
+        ].join(" ")}
+        onClick={!isExpanded ? open : undefined}
+      >
+        {/* Top row: label + stat — always visible, reposition on expand */}
+        <div className="hc-top">
+          <span className="hc-label">{card.label}</span>
+          <span className="hc-stat">{card.stat(counts)}</span>
+        </div>
+
+        {/* Book list — fades in when open */}
+        <div className={`hc-content ${isOpen ? "hc-content--visible" : ""}`}>
+          {panelContent}
+        </div>
+
+        {/* Bottom row: sub-text + icon — repositioned on expand */}
+        <div className="hc-bottom">
+          <span className="hc-sub">{card.sub}</span>
+          <div className="hc-icon"><card.Icon /></div>
+        </div>
+
+        {/* Close button — only visible when expanded */}
+        {isExpanded && (
+          <button className="hc-close" onMouseDown={(e) => { e.stopPropagation(); close(); }}>✕</button>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Main page
+══════════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
   const { token, username, logout } = useAuth();
   const navigate    = useNavigate();
@@ -110,19 +178,17 @@ export default function DashboardPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searched,      setSearched]      = useState(false);
-  const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy", "biography", "classics"];
-  const [phIndex, setPhIndex] = useState(0);
 
+  const PLACEHOLDER_WORDS = ["literature","mystery","sci-fi","fantasy","history","philosophy","biography","classics"];
+  const [phIndex, setPhIndex] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPhIndex((i) => (i + 1) % PLACEHOLDER_WORDS.length);
-    }, 2800);
-    return () => clearInterval(interval);
+    const t = setInterval(() => setPhIndex(i => (i + 1) % PLACEHOLDER_WORDS.length), 2800);
+    return () => clearInterval(t);
   }, []);
 
-  const { data: rawBooks     = [] } = useMyBooks(token);
-  const { data: rawHistory   = [] } = useMyHistory(token);
-  const { data: rawBookmarks = [] } = useMyBookmarks(token);
+  const { data: rawBooks      = [] } = useMyBooks(token);
+  const { data: rawHistory    = [] } = useMyHistory(token);
+  const { data: rawBookmarks  = [] } = useMyBookmarks(token);
   const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
 
   const counts = useMemo(() => ({
@@ -132,7 +198,7 @@ export default function DashboardPage() {
     done:   toArray(rawHistory).length,
   }), [rawBooks, rawBookmarks, rawHistory]);
 
-  const recentReadings = useMemo(() => toArray(rawBooks).map((b) => ({
+  const recentReadings = useMemo(() => toArray(rawBooks).map(b => ({
     cover_url: b.book_cover || "", title: b.book_title || "Unknown",
     author: b.book_author || "", last_read: b.last_read || "Recently",
     progress_pct: `${parseInt(b.progress_percent || 0)}%`,
@@ -140,52 +206,65 @@ export default function DashboardPage() {
 
   const calendarEvents = useMemo(() => {
     const today = new Date();
-    const events = toArray(rawBooks).flatMap((b) => {
+    const evts = toArray(rawBooks).flatMap(b => {
       if (!b.due_date) return [];
       const due = new Date(b.due_date);
-      const delta = Math.floor((due - today) / 86_400_000);
+      const delta = Math.floor((due - today) / 86400000);
       const color = delta < 0 ? "#ef4444" : delta <= 3 ? "#f59e0b" : "#6366f1";
       return [{ day_short: DAY_NAMES[due.getDay()], day_num: due.getDate(),
-                title: `Return: ${b.book_title}`, type: delta < 0 ? "overdue" : "return", color }];
+        title: `Return: ${b.book_title}`, type: delta < 0 ? "overdue" : "return", color }];
     });
-    events.push({ day_short: DAY_NAMES[today.getDay()], day_num: today.getDate(),
-                  title: "Reading Goal: Keep it up! 📖", type: "goal", color: "#8b5cf6" });
-    return events;
+    evts.push({ day_short: DAY_NAMES[today.getDay()], day_num: today.getDate(),
+      title: "Reading Goal: Keep it up! 📖", type: "goal", color: "#8b5cf6" });
+    return evts;
   }, [rawBooks]);
 
-  const readingHistory   = useMemo(() => toArray(rawHistory).map((b) => ({ cover_url: b.book_cover || "", title: b.book_title || "Unknown", author: b.book_author || "", completed_date: b.finished_at || "", stars: stars(b.rating || 4) })), [rawHistory]);
-  const bookmarkedBooks  = useMemo(() => toArray(rawBookmarks).map((b) => ({ cover_url: b.book_cover || "", title: b.book_title || "Unknown", author: b.book_author || "", source: b.source || "" })), [rawBookmarks]);
-  const previouslyRead   = useMemo(() => toArray(rawHistory).map((b) => ({ cover_url: b.book_cover || "", title: b.book_title || "Unknown", author: b.book_author || "", genre: b.source || "General", stars: stars(b.rating || 4) })), [rawHistory]);
+  const readingHistory  = useMemo(() => toArray(rawHistory).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", completed_date: b.finished_at||"", stars: stars(b.rating||4) })), [rawHistory]);
+  const bookmarkedBooks = useMemo(() => toArray(rawBookmarks).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", source: b.source||"" })), [rawBookmarks]);
+  const previouslyRead  = useMemo(() => toArray(rawHistory).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", genre: b.source||"General", stars: stars(b.rating||4) })), [rawHistory]);
 
   const handleSearch = useCallback(async (q) => {
     if (!q.trim()) return;
     setSearched(true); setSearchLoading(true);
     try {
       const data = await searchGutenberg(token, q);
-      setSearchResults((data.results || []).map((b) => ({
-        gutenbergId: b.book_id, title: b.title || "Untitled",
-        author: (b.authors || []).join(", ") || "Unknown",
-        cover: b.cover_url || "", description: b.description || "", year: b.year || null,
+      setSearchResults((data.results||[]).map(b => ({
+        gutenbergId: b.book_id, title: b.title||"Untitled",
+        author: (b.authors||[]).join(", ")||"Unknown",
+        cover: b.cover_url||"", description: b.description||"", year: b.year||null,
       })));
-    } catch (_) { setSearchResults([]); }
+    } catch { setSearchResults([]); }
     setSearchLoading(false);
   }, [token]);
 
   const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
   const handleLogout = () => { queryClient.clear(); logout(); navigate("/"); };
 
-  function renderPanel() {
-    switch (activePanel) {
-      case "recent":        return recentReadings.length   > 0 ? recentReadings.map((b,i)   => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{b.progress_pct}</span></div>}/>) : <p className="panel-empty">No recent readings yet.</p>;
-      case "bookmarks":     return bookmarkedBooks.length  > 0 ? bookmarkedBooks.map((b,i)  => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#6b7280"}}>{b.source}</span></div>}/>) : <p className="panel-empty">No bookmarks yet.</p>;
-      case "history":       return readingHistory.length   > 0 ? readingHistory.map((b,i)   => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#9ca3af"}}>{b.completed_date}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>) : <p className="panel-empty">No reading history yet.</p>;
-      case "previously_read": return previouslyRead.length > 0 ? previouslyRead.map((b,i)  => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span className="genre-badge">{b.genre}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>) : <p className="panel-empty">Nothing here yet.</p>;
-      case "calendar":      return calendarEvents.map((ev,i) => (
-        <div key={i} className="cal-event">
-          <div className="cal-date" style={{color:ev.color}}><span className="cal-day-short">{ev.day_short}</span><span className="cal-day-num">{ev.day_num}</span></div>
-          <div className="cal-bar" style={{background:ev.color}}/>
-          <div className="cal-info"><span className="cal-title">{ev.title}</span><span className="cal-type" style={{color:ev.color}}>{ev.type}</span></div>
-        </div>));
+  function getPanelContent(key) {
+    switch (key) {
+      case "recent":
+        return recentReadings.length > 0
+          ? recentReadings.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{b.progress_pct}</span></div>}/>)
+          : <p className="panel-empty">No recent readings yet.</p>;
+      case "bookmarks":
+        return bookmarkedBooks.length > 0
+          ? bookmarkedBooks.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#6b7280"}}>{b.source}</span></div>}/>)
+          : <p className="panel-empty">No bookmarks yet.</p>;
+      case "history":
+        return readingHistory.length > 0
+          ? readingHistory.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#9ca3af"}}>{b.completed_date}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>)
+          : <p className="panel-empty">No reading history yet.</p>;
+      case "previously_read":
+        return previouslyRead.length > 0
+          ? previouslyRead.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span className="genre-badge">{b.genre}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>)
+          : <p className="panel-empty">Nothing here yet.</p>;
+      case "calendar":
+        return calendarEvents.map((ev,i) => (
+          <div key={i} className="cal-event">
+            <div className="cal-date" style={{color:ev.color}}><span className="cal-day-short">{ev.day_short}</span><span className="cal-day-num">{ev.day_num}</span></div>
+            <div className="cal-bar" style={{background:ev.color}}/>
+            <div className="cal-info"><span className="cal-title">{ev.title}</span><span className="cal-type" style={{color:ev.color}}>{ev.type}</span></div>
+          </div>));
       default: return null;
     }
   }
@@ -193,7 +272,6 @@ export default function DashboardPage() {
   return (
     <div className="dash-root">
 
-      {/* ── Navbar ──────────────────────────────────────────────── */}
       <nav className="dash-navbar">
         <span className="dash-brand">SHELF</span>
         <div className="dash-nav-links">
@@ -209,10 +287,8 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      {/* ── Main ────────────────────────────────────────────────── */}
       <main className="dash-main">
 
-        {/* Search bar */}
         <div className="dash-search-bar-wrap">
           <div className="dash-search-bar">
             <IconSearch />
@@ -220,8 +296,8 @@ export default function DashboardPage() {
               className="dash-search-input"
               placeholder={`Search for ${PLACEHOLDER_WORDS[phIndex]}…`}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSearch(searchQuery); if (e.key === "Escape") clearSearch(); }}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleSearch(searchQuery); if (e.key === "Escape") clearSearch(); }}
             />
             {searchQuery && <button className="dash-search-clear" onClick={clearSearch}>✕</button>}
           </div>
@@ -229,26 +305,22 @@ export default function DashboardPage() {
 
         <h1 className="dash-heading">What would you like to read?</h1>
 
-        {/* Hero cards */}
+        {/* ── Hero cards row ── */}
         <div className="dash-hero-cards">
-          {HERO_CARDS.map((card) => (
-            <HeroCard key={card.key} card={card} active={activePanel === card.key}
-              onClick={(k) => setActivePanel((p) => p === k ? "" : k)} counts={counts} />
+          {HERO_CARDS.map(card => (
+            <HeroCard
+              key={card.key}
+              card={card}
+              counts={counts}
+              panelContent={getPanelContent(card.key)}
+              isActive={activePanel === card.key}
+              isOtherActive={activePanel !== "" && activePanel !== card.key}
+              onExpand={() => setActivePanel(card.key)}
+              onCollapse={() => setActivePanel("")}
+            />
           ))}
         </div>
 
-        {/* Active panel */}
-        {activePanel && (
-          <div className="dash-panel">
-            <div className="dash-panel-header">
-              <span className="dash-panel-title">{HERO_CARDS.find(c => c.key === activePanel)?.label}</span>
-              <button className="dash-panel-close" onClick={() => setActivePanel("")}>✕</button>
-            </div>
-            <div className="dash-panel-content">{renderPanel()}</div>
-          </div>
-        )}
-
-        {/* Search results */}
         {searched && (
           <div className="dash-search-results">
             <div className="dash-results-header">
@@ -256,27 +328,27 @@ export default function DashboardPage() {
               <button onClick={clearSearch}>✕ Clear</button>
             </div>
             {searchLoading
-              ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
+              ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
               : searchResults.length > 0
-                ? <div className="dash-src-grid">{searchResults.map((b,i) => <SearchResultCard key={`${b.gutenbergId}-${i}`} book={b} />)}</div>
+                ? <div className="dash-src-grid">{searchResults.map((b,i) => <SearchResultCard key={`${b.gutenbergId}-${i}`} book={b}/>)}</div>
                 : <p className="dash-no-results">No results found.</p>}
           </div>
         )}
 
-        {/* Shelf rows */}
-        {!searched && (rowsLoading && gutenbergRows.length === 0
-          ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
-          : gutenbergRows.map((row) => (
-            <div key={row.label} className="dash-shelf">
-              <div className="dash-shelf-header">
-                <h2 className="dash-shelf-label">{row.label}</h2>
-                <span className="dash-shelf-all">VIEW ALL COLLECTION</span>
-              </div>
-              <div className="dash-shelf-scroll">
-                {row.books.map((book, i) => <BookCard key={`${book.gutenbergId}-${i}`} book={book} />)}
-              </div>
-            </div>
-          ))
+        {!searched && (
+          rowsLoading && gutenbergRows.length === 0
+            ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
+            : gutenbergRows.map(row => (
+                <div key={row.label} className="dash-shelf">
+                  <div className="dash-shelf-header">
+                    <h2 className="dash-shelf-label">{row.label}</h2>
+                    <span className="dash-shelf-all">VIEW ALL COLLECTION</span>
+                  </div>
+                  <div className="dash-shelf-scroll">
+                    {row.books.map((book,i) => <BookCard key={`${book.gutenbergId}-${i}`} book={book}/>)}
+                  </div>
+                </div>
+              ))
         )}
       </main>
     </div>
