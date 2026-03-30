@@ -86,48 +86,43 @@ function SearchResultCard({ book }) {
 ══════════════════════════════════════════════════════════════════ */
 function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherActive }) {
   const cardRef = useRef(null);
-  const [phase, setPhase] = useState("idle"); 
+  const [phase, setPhase] = useState("idle"); // idle | expanding | open | closing
   const [flipStyles, setFlipStyles] = useState({});
+  const [originRect, setOriginRect] = useState(null);
 
   const open = () => {
     if (phase !== "idle") return;
 
-    // 1. FIRST: Capture where the card is right now
+    // 1. Record where we are starting from
     const rect = cardRef.current.getBoundingClientRect();
-    
-    // 2. PREPARE: Calculate the math relative to the screen center
+    setOriginRect(rect);
+
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const targetW = Math.min(560, vw * 0.92);
     const targetH = Math.min(540, vh * 0.82);
 
+    // 2. Initial "Inverted" state (Matches small card exactly)
     const scaleX = rect.width / targetW;
     const scaleY = rect.height / targetH;
-    
-    // Calculate how far the card's center is from the screen's center
     const translateX = (rect.left + rect.width / 2) - (vw / 2);
     const translateY = (rect.top + rect.height / 2) - (vh / 2);
-
-    // 3. INVERT: Instantly move the "Big" card to sit exactly over the "Small" card
-    // We disable transitions here so it doesn't "slide" into place
-    setFlipStyles({
-      transition: 'none',
-      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
-      opacity: 1
-    });
 
     setPhase("expanding");
     onExpand();
 
-    // 4. PLAY: Wait for one frame, then turn transitions back on and grow to (0,0)
+    setFlipStyles({
+      transition: 'none',
+      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
+    });
+
+    // 3. Play the animation
     requestAnimationFrame(() => {
-      // The double requestAnimationFrame ensures the "none" transition is applied first
       requestAnimationFrame(() => {
         setPhase("open");
         setFlipStyles({
           transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s ease',
           transform: `translate(-50%, -50%) scale(1)`,
-          opacity: 1
         });
       });
     });
@@ -135,27 +130,42 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
 
   const close = useCallback((e) => {
     if (e) e.stopPropagation();
-    
-    // Reverse the animation: go back to the small scale at the original position
+    if (!originRect) return;
+
     setPhase("closing");
+
+    // 4. Calculate the reverse trip back to the EXACT origin rect
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetW = Math.min(560, vw * 0.92);
+    const targetH = Math.min(540, vh * 0.82);
+
+    const scaleX = originRect.width / targetW;
+    const scaleY = originRect.height / targetH;
+    const translateX = (originRect.left + originRect.width / 2) - (vw / 2);
+    const translateY = (originRect.top + originRect.height / 2) - (vh / 2);
+
     setFlipStyles({
-        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
-        opacity: 0,
-        transform: 'translate(-50%, -20%) scale(0.8)' // Snappy exit
+      transition: 'transform 0.45s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s ease',
+      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
+      opacity: 0,
     });
 
     setTimeout(() => {
       setPhase("idle");
       setFlipStyles({});
       onCollapse();
-    }, 400);
-  }, [onCollapse]);
+    }, 450);
+  }, [onCollapse, originRect]);
 
+  const isExpanded = phase !== "idle";
   const isOpen = phase === "open";
-  const isExpanded = phase === "expanding" || phase === "open" || phase === "closing";
 
   return (
-    <>
+    <div className="hero-card-wrapper" style={{ flex: 1, minWidth: '190px', position: 'relative' }}>
+      {/* ── GHOST PLACEHOLDER: This holds the space in the flex row so cards don't jump ── */}
+      {isExpanded && <div className="hero-card-ghost" style={{ width: '100%', height: '110px', visibility: 'hidden' }} />}
+
       {isExpanded && <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />}
 
       <div
@@ -165,7 +175,7 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
           isExpanded ? "hero-card--expanded" : "",
           isOtherActive ? "hero-card--dimmed" : "",
         ].join(" ")}
-        style={isExpanded ? flipStyles : {}}
+        style={flipStyles}
         onClick={!isExpanded ? open : undefined}
       >
         <div className="hc-top">
@@ -184,7 +194,7 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
 
         {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
-    </>
+    </div>
   );
 }
 

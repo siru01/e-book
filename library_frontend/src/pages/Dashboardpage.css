@@ -59,7 +59,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   HERO CARDS — The Container Transform
+   HERO CARDS — FLIP & Ghost Logic
 ════════════════════════════════════════════════════════════════ */
 .dash-hero-cards {
   display: flex; gap: 16px;
@@ -69,25 +69,30 @@
 }
 .dash-hero-cards::-webkit-scrollbar { display: none; }
 
+/* Wrapper to hold the "Ghost" space */
+.hero-card-wrapper {
+  flex: 1;
+  min-width: 190px;
+  position: relative;
+}
+
 /* ── Backdrop ── */
 .hc-backdrop {
   position: fixed; inset: 0;
-  background: rgba(255, 255, 255, 0);
+  background: rgba(0, 0, 0, 0);
   backdrop-filter: blur(0px);
   z-index: 300;
   pointer-events: none;
   transition: background 0.4s ease, backdrop-filter 0.4s ease;
 }
 .hc-backdrop--on {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
   pointer-events: all;
 }
 
-/* ── The card ── */
+/* ── The Card ── */
 .hero-card {
-  flex: 1;
-  min-width: 190px;
   background: #fafafa;
   border: 1.5px solid #efefef;
   border-radius: 20px;
@@ -97,13 +102,13 @@
   grid-template-rows: auto 0fr auto;
   gap: 0;
   position: relative;
-  /* CRITICAL: High-performance transform transition */
-  transition: 
-    transform 0.45s cubic-bezier(0.2, 0, 0, 1), 
-    box-shadow 0.4s ease, 
-    opacity 0.4s ease,
-    border-color 0.3s ease;
+  
+  /* GPU Optimized Transitions */
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1), 
+              box-shadow 0.4s ease, 
+              opacity 0.4s ease;
   will-change: transform, opacity;
+  transform-origin: center center;
   z-index: 1;
 }
 
@@ -113,49 +118,41 @@
   transform: translateY(-4px);
 }
 
-/* Container Transform State */
-/* Update this: remove !important from transform and top/left */
+/* Expanded State - Controlled by JS Math */
 .hero-card--expanded {
   position: fixed !important;
-  top: 50%;
-  left: 50%;
-  /* Remove !important from transform so JS can control it */
+  top: 50% !important;
+  left: 50% !important;
+  /* We remove default transform so JS can inject the FLIP math */
   transform: translate(-50%, -50%); 
   
-  width: min(560px, 92vw) !important;
-  height: min(540px, 82vh) !important;
+  /* Fixed dimensions so we only animate SCALE (faster) */
+  width: 560px !important; 
+  height: 540px !important;
+  max-width: 92vw !important;
+  max-height: 82vh !important;
+  
   z-index: 400;
   background: #fff;
   border-radius: 28px;
-  box-shadow: 0 30px 90px rgba(0,0,0,0.22);
+  box-shadow: 0 30px 90px rgba(0,0,0,0.25);
   cursor: default;
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
   padding: 32px;
   
-  /* Remove the CSS transition here; we handle it in JS via flipStyles */
+  /* Transition handled by JS style object during expansion */
   transition: none; 
-}
-
-/* Ensure the base card doesn't jitter when it becomes fixed */
-.hero-card {
-  /* ... rest of your styles ... */
-  will-change: transform, opacity;
-}
-
-.hero-card--closing {
-  opacity: 0;
-  transform: scale(0.9) translate(-50%, -50%) !important;
-  transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .hero-card--dimmed {
   opacity: 0.3;
-  filter: grayscale(0.5);
+  filter: grayscale(0.8);
   pointer-events: none;
+  transform: scale(0.95);
 }
 
-/* ── Content Elements ── */
+/* ── Internal Content ── */
 .hc-top {
   display: flex;
   justify-content: space-between;
@@ -181,8 +178,8 @@
   flex-direction: column;
   gap: 12px;
   opacity: 0;
-  transform: translateY(15px);
-  transition: opacity 0.4s ease 0.25s, transform 0.4s ease 0.25s;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
   padding: 0;
   scrollbar-width: none;
 }
@@ -209,21 +206,19 @@
 .hc-icon { 
   color: #111; 
   opacity: 0.15;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, color 0.3s ease;
 }
 
-/* ── Expanded Adjustments ── */
+/* Expanded Refinements */
 .hero-card--expanded .hc-top {
   border-bottom: 1px solid #f5f5f5;
   padding-bottom: 20px;
   margin-bottom: 10px;
 }
-
 .hero-card--expanded .hc-bottom {
   border-top: 1px solid #f5f5f5;
   padding-top: 20px;
 }
-
 .hero-card--expanded .hc-icon { opacity: 1; color: #6366f1; }
 
 .hc-close {
@@ -243,7 +238,7 @@
   display: flex; align-items: center; gap: 16px;
   padding: 14px; background: #fafafa;
   border-radius: 14px; border: 1px solid #f0f0f0;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 .panel-book-row:hover { transform: scale(1.01); background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
 
@@ -279,7 +274,7 @@
   width: 160px; height: 240px; border-radius: 12px;
   overflow: hidden; position: relative;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 .book-card:hover .book-card-cover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 .book-card-cover img { width: 100%; height: 100%; object-fit: cover; }
@@ -297,6 +292,10 @@
 @media (max-width: 768px) {
   .dash-navbar { padding: 0 20px; }
   .dash-main { padding: 24px 20px; }
-  .hero-card--expanded { width: 95vw !important; height: 85vh !important; padding: 20px; }
+  .hero-card--expanded { 
+    width: 92vw !important; 
+    height: 85vh !important; 
+    padding: 24px; 
+  }
   .dash-nav-links { display: none; }
 }
