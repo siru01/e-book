@@ -8,7 +8,16 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.core.cache import cache
 import httpx
+
+# ─────────────────────────────────────────────
+# SHELF CACHE TTL — 24 hours
+# Matches frontend staleTime so the 4 dashboard
+# shelf rows are only fetched from the external
+# APIs (Open Library / Google Books) once per day.
+# ─────────────────────────────────────────────
+SHELF_CACHE_TTL = 60 * 60 * 24   # 86400 seconds
 
 
 # ─────────────────────────────────────────────
@@ -138,7 +147,7 @@ class MyReadingHistoryView(APIView):
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        source  = request.data.get("source", "gutenberg")
+        source  = request.data.get("source", "openlibrary")
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
         obj, created = ReadingHistory.objects.get_or_create(
@@ -166,7 +175,7 @@ class MyBookmarksView(APIView):
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        source  = request.data.get("source", "gutenberg")
+        source  = request.data.get("source", "openlibrary")
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
         obj, created = Bookmarks.objects.get_or_create(
@@ -208,32 +217,68 @@ class BookSearchView(APIView):
 
 
 class TrendingView(APIView):
+    """
+    GET /api/books/trending/
+    Cached in Upstash Redis for 24 hours.
+    External API is only called on first request of the day.
+    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
     def get(self, request):
+        cache_key = "shelf:trending"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         results = aggregator.trending_all()
-        return Response({"results": results, "count": len(results)})
+        payload = {"results": results, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
 
 
 class CategoryView(APIView):
+    """
+    GET /api/books/category/?genre=<genre>
+    Cached in Upstash Redis for 24 hours per genre.
+    Dashboard only calls: science+fiction, mystery.
+    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
     def get(self, request):
-        genre   = request.GET.get("genre", "fiction")
-        page    = int(request.GET.get("page", 1))
+        genre     = request.GET.get("genre", "fiction").strip()
+        page      = int(request.GET.get("page", 1))
+        cache_key = f"shelf:category:{genre}:page:{page}"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         results = aggregator.category_all(genre, page=page)
-        return Response({"results": results, "genre": genre, "page": page, "count": len(results)})
+        payload = {"results": results, "genre": genre, "page": page, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
 
 
 class NewArrivalsView(APIView):
+    """
+    GET /api/books/new-arrivals/
+    Cached in Upstash Redis for 24 hours.
+    External API is only called on first request of the day.
+    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
     def get(self, request):
+        cache_key = "shelf:new-arrivals"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
         results = aggregator.new_arrivals_all()
-        return Response({"results": results, "count": len(results)})
+        payload = {"results": results, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
 
 
 # ─────────────────────────────────────────────
@@ -252,7 +297,7 @@ class BookReadView(APIView):
         if ":" in book_id:
             source, raw_id = book_id.split(":", 1)
         else:
-            source = "gutenberg"
+            source = "openlibrary"
             raw_id = book_id
 
         try:
@@ -412,7 +457,6 @@ class BookReadView(APIView):
             except Exception:
                 pass
 
-        # Fallback: description as preview
         description  = info.get("description", "")
         preview_text = (
             f"{title}\nby {author}\n\n{'─' * 40}\n\n"

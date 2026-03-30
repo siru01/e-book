@@ -37,47 +37,42 @@ export const borrowBook = (token, bookId) =>
     body: JSON.stringify({ book_id: bookId }),
   });
 
-// ── Search — now calls BFF aggregator (all 4 sources + Redis cache) ──
+// ── Search — BFF aggregator (all sources + Redis cache) ──────────
 export const searchGutenberg = (token, q) =>
   apiFetch(`/books/search/?q=${encodeURIComponent(q)}`, token);
 
-// ── Shelf row definitions ─────────────────────────────────────────
-// Each row hits a BFF endpoint — Django fetches from all 4 sources
-// in parallel and caches in Redis. First load slow, then instant.
+// ── ONLY 4 shelf rows — avoids unnecessary API calls on every login
+// Sources: Open Library + Google Books (no Gutendex)
 const SHELF_GENRES = [
-  { label: "Trending Now",         endpoint: "/books/trending/" },
-  { label: "New Arrivals",         endpoint: "/books/new-arrivals/" },
-  { label: "Classic Literature",   endpoint: "/books/category/?genre=classics" },
-  { label: "Mystery & Detective",  endpoint: "/books/category/?genre=mystery" },
-  { label: "Science Fiction",      endpoint: "/books/category/?genre=science+fiction" },
-  { label: "Fantasy & Adventure",  endpoint: "/books/category/?genre=fantasy" },
-  { label: "Philosophy & Thought", endpoint: "/books/category/?genre=philosophy" },
-  { label: "History",              endpoint: "/books/category/?genre=history" },
-  { label: "Children's Classics",  endpoint: "/books/category/?genre=children" },
+  { label: "Trending Now",        endpoint: "/books/trending/" },
+  { label: "New Arrivals",        endpoint: "/books/new-arrivals/" },
+  { label: "Science Fiction",     endpoint: "/books/category/?genre=science+fiction" },
+  { label: "Mystery & Detective", endpoint: "/books/category/?genre=mystery" },
 ];
 
 // ── Normalise a BFF book into the shape the UI expects ───────────
 function parseBFFBook(b) {
   return {
-    gutenbergId: b.book_id,                          // e.g. "google:abc" or "gutenberg:1234"
-    title:       b.title                  || "Untitled",
+    gutenbergId: b.book_id,
+    title:       b.title                      || "Untitled",
     author:      (b.authors || []).join(", ") || "Unknown",
-    cover:       b.cover_url              || "",
-    readUrl:     b.read_url               || "",
-    source:      b.source                 || "gutenberg",
-    description: b.description            || "",
-    year:        b.year                   || null,
+    cover:       b.cover_url                  || "",
+    readUrl:     b.read_url                   || "",
+    source:      b.source                     || "openlibrary",
+    description: b.description                || "",
+    year:        b.year                       || null,
   };
 }
 
 // ── Main shelf rows fetcher ───────────────────────────────────────
-// Fires all rows in parallel — Redis cache makes repeated loads instant.
+// Only 4 parallel calls. Redis caches each for 24h on the backend,
+// so after the very first load every subsequent login is instant.
 export async function fetchGutendexRows() {
   const rows = await Promise.all(
     SHELF_GENRES.map(async ({ label, endpoint }) => {
       try {
-        const res  = await fetch(`${BASE}${endpoint}`);
-        const data = await res.json();
+        const res   = await fetch(`${BASE}${endpoint}`);
+        const data  = await res.json();
         const books = (data.results || []).slice(0, 12).map(parseBFFBook);
         return { label, books };
       } catch (_) {
@@ -88,13 +83,11 @@ export async function fetchGutendexRows() {
   return rows.filter((r) => r.books.length > 0);
 }
 
-// ── Single Gutenberg book fetch (reader page) ─────────────────────
-export async function fetchGutendexBook(gutId) {
-  // gutId may be namespaced e.g. "gutenberg:1234" — strip prefix for Gutendex
-  const numericId = String(gutId).replace("gutenberg:", "");
-  const res = await fetch(`https://gutendex.com/books/${numericId}`);
+// ── Single book fetch (reader page) ──────────────────────────────
+export async function fetchGutendexBook(bookId) {
+  const res = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
   if (!res.ok) throw new Error("Book not found");
-  return parseGutendexBook(await res.json());
+  return res.json();
 }
 
 // ── Book text fetch ───────────────────────────────────────────────
@@ -105,7 +98,7 @@ export async function fetchBookText(readUrl) {
   return text.slice(0, 50000);
 }
 
-// ── Parse a raw Gutendex book object ─────────────────────────────
+// ── Parse a raw Gutendex book object (legacy, kept for reader page)
 export function parseGutendexBook(b) {
   const fmts = b.formats || {};
   const readUrl =
@@ -139,14 +132,13 @@ export function parsePlainTextUrl(b) {
 }
 
 // ── Bookmarks & History saves ─────────────────────────────────────
-// book_id is now namespaced: "gutenberg:1234", "google:abc", etc.
-export const saveBookmark = (token, bookId, source = "gutenberg") =>
+export const saveBookmark = (token, bookId, source = "openlibrary") =>
   apiFetch("/my-bookmarks/", token, {
     method: "POST",
     body:   JSON.stringify({ book_id: bookId, source }),
   });
 
-export const markFinished = (token, bookId, source = "gutenberg") =>
+export const markFinished = (token, bookId, source = "openlibrary") =>
   apiFetch("/my-history/", token, {
     method: "POST",
     body:   JSON.stringify({ book_id: bookId, source }),
