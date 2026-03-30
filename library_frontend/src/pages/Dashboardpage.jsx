@@ -15,6 +15,7 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
 const stars = (r) => { const n = Math.max(0, Math.min(5, r)); return "★".repeat(n) + "☆".repeat(5 - n); };
 
+/* ── Icons ── */
 const IconBook     = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconCal      = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
@@ -32,7 +33,7 @@ const HERO_CARDS = [
   { key: "previously_read", label: "FINISHED",         sub: "Your completed library", Icon: IconCheck,    stat: (c) => `${c.done} DONE`      },
 ];
 
-/* ── Panel book row ─────────────────────────────────────────────── */
+/* ── UI Components ── */
 function PanelBookRow({ book, extra }) {
   return (
     <div className="panel-book-row">
@@ -48,7 +49,6 @@ function PanelBookRow({ book, extra }) {
   );
 }
 
-/* ── Book shelf card ────────────────────────────────────────────── */
 function BookCard({ book }) {
   const navigate = useNavigate();
   return (
@@ -60,13 +60,11 @@ function BookCard({ book }) {
       <div className="book-card-meta">
         <span className="book-card-title">{book.title}</span>
         <span className="book-card-author">{book.author}</span>
-        {book.year && <span className="book-card-year">{book.year}</span>}
       </div>
     </div>
   );
 }
 
-/* ── Search result card ─────────────────────────────────────────── */
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
   return (
@@ -77,201 +75,192 @@ function SearchResultCard({ book }) {
       <div className="src-card-info">
         <span className="src-card-title">{book.title}</span>
         <span className="src-card-author">{book.author}</span>
-        {book.year && <span className="src-card-year">{book.year}</span>}
-        {book.description && <span className="src-card-desc">{book.description.slice(0, 100)}…</span>}
-        <button className="src-card-btn" onClick={(e) => { e.stopPropagation(); navigate(`/read/${encodeURIComponent(book.gutenbergId)}`); }}>Read Now</button>
+        <button className="src-card-btn">Read Now</button>
       </div>
     </div>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — handles its own expansion in-place
+   HeroCard — Handing Container Transform (FLIP)
 ══════════════════════════════════════════════════════════════════ */
-function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isActive, isOtherActive }) {
-  const cardRef   = useRef(null);
-  const [phase, setPhase] = useState("idle"); // idle | expanding | open | closing
+function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherActive }) {
+  const cardRef = useRef(null);
+  const [phase, setPhase] = useState("idle"); 
+  const [flipStyles, setFlipStyles] = useState({});
 
-  /* open */
   const open = () => {
     if (phase !== "idle") return;
-    onExpand();
+
+    // 1. FIRST: Capture where the card is right now
+    const rect = cardRef.current.getBoundingClientRect();
+    
+    // 2. PREPARE: Calculate the math relative to the screen center
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetW = Math.min(560, vw * 0.92);
+    const targetH = Math.min(540, vh * 0.82);
+
+    const scaleX = rect.width / targetW;
+    const scaleY = rect.height / targetH;
+    
+    // Calculate how far the card's center is from the screen's center
+    const translateX = (rect.left + rect.width / 2) - (vw / 2);
+    const translateY = (rect.top + rect.height / 2) - (vh / 2);
+
+    // 3. INVERT: Instantly move the "Big" card to sit exactly over the "Small" card
+    // We disable transitions here so it doesn't "slide" into place
+    setFlipStyles({
+      transition: 'none',
+      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
+      opacity: 1
+    });
+
     setPhase("expanding");
-    requestAnimationFrame(() => requestAnimationFrame(() => setPhase("open")));
+    onExpand();
+
+    // 4. PLAY: Wait for one frame, then turn transitions back on and grow to (0,0)
+    requestAnimationFrame(() => {
+      // The double requestAnimationFrame ensures the "none" transition is applied first
+      requestAnimationFrame(() => {
+        setPhase("open");
+        setFlipStyles({
+          transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s ease',
+          transform: `translate(-50%, -50%) scale(1)`,
+          opacity: 1
+        });
+      });
+    });
   };
 
-  /* close */
-  const close = useCallback(() => {
+  const close = useCallback((e) => {
+    if (e) e.stopPropagation();
+    
+    // Reverse the animation: go back to the small scale at the original position
     setPhase("closing");
-    setTimeout(() => { setPhase("idle"); onCollapse(); }, 320);
+    setFlipStyles({
+        transition: 'all 0.4s cubic-bezier(0.2, 0, 0, 1)',
+        opacity: 0,
+        transform: 'translate(-50%, -20%) scale(0.8)' // Snappy exit
+    });
+
+    setTimeout(() => {
+      setPhase("idle");
+      setFlipStyles({});
+      onCollapse();
+    }, 400);
   }, [onCollapse]);
 
-  /* ESC */
-  useEffect(() => {
-    if (phase !== "open") return;
-    const fn = (e) => { if (e.key === "Escape") close(); };
-    window.addEventListener("keydown", fn);
-    return () => window.removeEventListener("keydown", fn);
-  }, [phase, close]);
-
-  const isOpen    = phase === "open";
+  const isOpen = phase === "open";
   const isExpanded = phase === "expanding" || phase === "open" || phase === "closing";
 
   return (
     <>
-      {/* ── backdrop (only for this card's expansion) ── */}
-      {isExpanded && (
-        <div
-          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
-          onMouseDown={close}
-        />
-      )}
+      {isExpanded && <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />}
 
-      {/* ── the card itself ── */}
       <div
         ref={cardRef}
         className={[
           "hero-card",
-          isExpanded          ? "hero-card--expanded" : "",
-          isOpen              ? "hero-card--open"     : "",
-          phase === "closing" ? "hero-card--closing"  : "",
-          isOtherActive       ? "hero-card--dimmed"   : "",
+          isExpanded ? "hero-card--expanded" : "",
+          isOtherActive ? "hero-card--dimmed" : "",
         ].join(" ")}
+        style={isExpanded ? flipStyles : {}}
         onClick={!isExpanded ? open : undefined}
       >
-        {/* Top row: label + stat — always visible, reposition on expand */}
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
 
-        {/* Book list — fades in when open */}
         <div className={`hc-content ${isOpen ? "hc-content--visible" : ""}`}>
           {panelContent}
         </div>
 
-        {/* Bottom row: sub-text + icon — repositioned on expand */}
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
 
-        {/* Close button — only visible when expanded */}
-        {isExpanded && (
-          <button className="hc-close" onMouseDown={(e) => { e.stopPropagation(); close(); }}>✕</button>
-        )}
+        {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
     </>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Main page
+   Dashboard Page
 ══════════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
   const { token, username, logout } = useAuth();
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activePanel,   setActivePanel]   = useState("");
-  const [searchQuery,   setSearchQuery]   = useState("");
+  const [activePanel, setActivePanel] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searched,      setSearched]      = useState(false);
-
-  const PLACEHOLDER_WORDS = ["literature","mystery","sci-fi","fantasy","history","philosophy","biography","classics"];
+  const [searched, setSearched] = useState(false);
   const [phIndex, setPhIndex] = useState(0);
+
+  const PLACEHOLDER_WORDS = ["literature","mystery","sci-fi","fantasy","history","philosophy"];
+
   useEffect(() => {
     const t = setInterval(() => setPhIndex(i => (i + 1) % PLACEHOLDER_WORDS.length), 2800);
     return () => clearInterval(t);
   }, []);
 
-  const { data: rawBooks      = [] } = useMyBooks(token);
-  const { data: rawHistory    = [] } = useMyHistory(token);
-  const { data: rawBookmarks  = [] } = useMyBookmarks(token);
+  const { data: rawBooks = [] } = useMyBooks(token);
+  const { data: rawHistory = [] } = useMyHistory(token);
+  const { data: rawBookmarks = [] } = useMyBookmarks(token);
   const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
 
   const counts = useMemo(() => ({
-    books:  toArray(rawBooks).length,
-    marks:  toArray(rawBookmarks).length,
+    books: toArray(rawBooks).length,
+    marks: toArray(rawBookmarks).length,
     streak: 12,
-    done:   toArray(rawHistory).length,
+    done: toArray(rawHistory).length,
   }), [rawBooks, rawBookmarks, rawHistory]);
-
-  const recentReadings = useMemo(() => toArray(rawBooks).map(b => ({
-    cover_url: b.book_cover || "", title: b.book_title || "Unknown",
-    author: b.book_author || "", last_read: b.last_read || "Recently",
-    progress_pct: `${parseInt(b.progress_percent || 0)}%`,
-  })), [rawBooks]);
-
-  const calendarEvents = useMemo(() => {
-    const today = new Date();
-    const evts = toArray(rawBooks).flatMap(b => {
-      if (!b.due_date) return [];
-      const due = new Date(b.due_date);
-      const delta = Math.floor((due - today) / 86400000);
-      const color = delta < 0 ? "#ef4444" : delta <= 3 ? "#f59e0b" : "#6366f1";
-      return [{ day_short: DAY_NAMES[due.getDay()], day_num: due.getDate(),
-        title: `Return: ${b.book_title}`, type: delta < 0 ? "overdue" : "return", color }];
-    });
-    evts.push({ day_short: DAY_NAMES[today.getDay()], day_num: today.getDate(),
-      title: "Reading Goal: Keep it up! 📖", type: "goal", color: "#8b5cf6" });
-    return evts;
-  }, [rawBooks]);
-
-  const readingHistory  = useMemo(() => toArray(rawHistory).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", completed_date: b.finished_at||"", stars: stars(b.rating||4) })), [rawHistory]);
-  const bookmarkedBooks = useMemo(() => toArray(rawBookmarks).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", source: b.source||"" })), [rawBookmarks]);
-  const previouslyRead  = useMemo(() => toArray(rawHistory).map(b => ({ cover_url: b.book_cover||"", title: b.book_title||"Unknown", author: b.book_author||"", genre: b.source||"General", stars: stars(b.rating||4) })), [rawHistory]);
 
   const handleSearch = useCallback(async (q) => {
     if (!q.trim()) return;
     setSearched(true); setSearchLoading(true);
     try {
       const data = await searchGutenberg(token, q);
-      setSearchResults((data.results||[]).map(b => ({
-        gutenbergId: b.book_id, title: b.title||"Untitled",
-        author: (b.authors||[]).join(", ")||"Unknown",
-        cover: b.cover_url||"", description: b.description||"", year: b.year||null,
+      setSearchResults((data.results || []).map(b => ({
+        gutenbergId: b.book_id, title: b.title, author: (b.authors || []).join(", "),
+        cover: b.cover_url, description: b.description, year: b.year,
       })));
     } catch { setSearchResults([]); }
     setSearchLoading(false);
   }, [token]);
 
   const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
-  const handleLogout = () => { queryClient.clear(); logout(); navigate("/"); };
 
   function getPanelContent(key) {
+    const readings = toArray(rawBooks);
+    const history = toArray(rawHistory);
+    const marks = toArray(rawBookmarks);
+
     switch (key) {
       case "recent":
-        return recentReadings.length > 0
-          ? recentReadings.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{b.progress_pct}</span></div>}/>)
-          : <p className="panel-empty">No recent readings yet.</p>;
+        return readings.length > 0
+          ? readings.map((b, i) => <PanelBookRow key={i} book={{title: b.book_title, author: b.book_author, cover_url: b.book_cover}} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{parseInt(b.progress_percent)}%</span></div>}/>)
+          : <p className="panel-empty">No recent readings.</p>;
       case "bookmarks":
-        return bookmarkedBooks.length > 0
-          ? bookmarkedBooks.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#6b7280"}}>{b.source}</span></div>}/>)
-          : <p className="panel-empty">No bookmarks yet.</p>;
+        return marks.length > 0
+          ? marks.map((b, i) => <PanelBookRow key={i} book={{title: b.book_title, author: b.book_author, cover_url: b.book_cover}} extra={<div className="panel-row-extra"><span>{b.source}</span></div>}/>)
+          : <p className="panel-empty">No bookmarks saved.</p>;
       case "history":
-        return readingHistory.length > 0
-          ? readingHistory.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span style={{color:"#9ca3af"}}>{b.completed_date}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>)
-          : <p className="panel-empty">No reading history yet.</p>;
-      case "previously_read":
-        return previouslyRead.length > 0
-          ? previouslyRead.map((b,i) => <PanelBookRow key={i} book={b} extra={<div className="panel-row-extra"><span className="genre-badge">{b.genre}</span><span style={{color:"#f59e0b"}}>{b.stars}</span></div>}/>)
-          : <p className="panel-empty">Nothing here yet.</p>;
-      case "calendar":
-        return calendarEvents.map((ev,i) => (
-          <div key={i} className="cal-event">
-            <div className="cal-date" style={{color:ev.color}}><span className="cal-day-short">{ev.day_short}</span><span className="cal-day-num">{ev.day_num}</span></div>
-            <div className="cal-bar" style={{background:ev.color}}/>
-            <div className="cal-info"><span className="cal-title">{ev.title}</span><span className="cal-type" style={{color:ev.color}}>{ev.type}</span></div>
-          </div>));
+        return history.length > 0
+          ? history.map((b, i) => <PanelBookRow key={i} book={{title: b.book_title, author: b.book_author, cover_url: b.book_cover}} extra={<div className="panel-row-extra"><span>{b.finished_at}</span><span>{stars(b.rating)}</span></div>}/>)
+          : <p className="panel-empty">No history recorded.</p>;
       default: return null;
     }
   }
 
   return (
     <div className="dash-root">
-
       <nav className="dash-navbar">
         <span className="dash-brand">SHELF</span>
         <div className="dash-nav-links">
@@ -282,13 +271,11 @@ export default function DashboardPage() {
         <div className="dash-nav-right">
           <button className="dash-icon-btn"><IconBell /></button>
           <div className="dash-avatar"><IconUser /></div>
-          <span className="dash-nav-username">{username}</span>
-          <button className="dash-logout-btn" onClick={handleLogout}>Logout</button>
+          <button className="dash-logout-btn" onClick={() => { queryClient.clear(); logout(); navigate("/"); }}>Logout</button>
         </div>
       </nav>
 
       <main className="dash-main">
-
         <div className="dash-search-bar-wrap">
           <div className="dash-search-bar">
             <IconSearch />
@@ -297,15 +284,13 @@ export default function DashboardPage() {
               placeholder={`Search for ${PLACEHOLDER_WORDS[phIndex]}…`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleSearch(searchQuery); if (e.key === "Escape") clearSearch(); }}
+              onKeyDown={e => e.key === "Enter" && handleSearch(searchQuery)}
             />
-            {searchQuery && <button className="dash-search-clear" onClick={clearSearch}>✕</button>}
           </div>
         </div>
 
         <h1 className="dash-heading">What would you like to read?</h1>
 
-        {/* ── Hero cards row ── */}
         <div className="dash-hero-cards">
           {HERO_CARDS.map(card => (
             <HeroCard
@@ -313,7 +298,6 @@ export default function DashboardPage() {
               card={card}
               counts={counts}
               panelContent={getPanelContent(card.key)}
-              isActive={activePanel === card.key}
               isOtherActive={activePanel !== "" && activePanel !== card.key}
               onExpand={() => setActivePanel(card.key)}
               onCollapse={() => setActivePanel("")}
@@ -321,34 +305,32 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {searched && (
+        {searched ? (
           <div className="dash-search-results">
             <div className="dash-results-header">
               <h3>Results for "<strong>{searchQuery}</strong>"</h3>
               <button onClick={clearSearch}>✕ Clear</button>
             </div>
-            {searchLoading
-              ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
-              : searchResults.length > 0
-                ? <div className="dash-src-grid">{searchResults.map((b,i) => <SearchResultCard key={`${b.gutenbergId}-${i}`} book={b}/>)}</div>
-                : <p className="dash-no-results">No results found.</p>}
+            {searchLoading ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div> : (
+              <div className="dash-src-grid">{searchResults.map((b, i) => <SearchResultCard key={i} book={b}/>)}</div>
+            )}
           </div>
-        )}
-
-        {!searched && (
-          rowsLoading && gutenbergRows.length === 0
-            ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
-            : gutenbergRows.map(row => (
+        ) : (
+          <div className="dash-shelves">
+            {rowsLoading ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div> : (
+              gutenbergRows.map(row => (
                 <div key={row.label} className="dash-shelf">
                   <div className="dash-shelf-header">
                     <h2 className="dash-shelf-label">{row.label}</h2>
-                    <span className="dash-shelf-all">VIEW ALL COLLECTION</span>
+                    <span className="dash-shelf-all">VIEW ALL</span>
                   </div>
                   <div className="dash-shelf-scroll">
-                    {row.books.map((book,i) => <BookCard key={`${book.gutenbergId}-${i}`} book={book}/>)}
+                    {row.books.map((book, i) => <BookCard key={i} book={book}/>)}
                   </div>
                 </div>
               ))
+            )}
+          </div>
         )}
       </main>
     </div>
