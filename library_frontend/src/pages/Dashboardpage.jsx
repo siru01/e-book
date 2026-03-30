@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -82,47 +83,45 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — Handing Container Transform (FLIP)
+   HeroCard — Portal Overlay approach (no position:fixed on original card)
+   The original card NEVER leaves document flow. A portal overlay
+   handles all expand/contract animation, eliminating the reload flash.
 ══════════════════════════════════════════════════════════════════ */
 function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherActive }) {
   const cardRef = useRef(null);
   const [phase, setPhase] = useState("idle"); // idle | expanding | open | closing
-  const [flipStyles, setFlipStyles] = useState({});
-  const [originRect, setOriginRect] = useState(null);
+  const [overlayStyle, setOverlayStyle] = useState({});
+
+  /* Build the FLIP transform string to position the overlay
+     at exactly the same visual position as the original card */
+  const cardToTransform = (rect) => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const tw = Math.min(560, vw * 0.92);
+    const th = Math.min(540, vh * 0.82);
+    const scaleX = rect.width / tw;
+    const scaleY = rect.height / th;
+    const tx = (rect.left + rect.width / 2) - vw / 2;
+    const ty = (rect.top + rect.height / 2) - vh / 2;
+    return `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scaleX}, ${scaleY})`;
+  };
 
   const open = () => {
     if (phase !== "idle") return;
-
-    // 1. Record where we are starting from
     const rect = cardRef.current.getBoundingClientRect();
-    setOriginRect(rect);
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const targetW = Math.min(560, vw * 0.92);
-    const targetH = Math.min(540, vh * 0.82);
-
-    // 2. Initial "Inverted" state (Matches small card exactly)
-    const scaleX = rect.width / targetW;
-    const scaleY = rect.height / targetH;
-    const translateX = (rect.left + rect.width / 2) - (vw / 2);
-    const translateY = (rect.top + rect.height / 2) - (vh / 2);
-
-    setPhase("expanding");
     onExpand();
+    setPhase("expanding");
 
-    setFlipStyles({
-      transition: 'none',
-      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
-    });
+    // Overlay starts visually identical to the small card (no transition)
+    setOverlayStyle({ transition: 'none', transform: cardToTransform(rect) });
 
-    // 3. Play the animation
+    // Then animate to full expanded size
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setPhase("open");
-        setFlipStyles({
-          transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s ease',
-          transform: `translate(-50%, -50%) scale(1)`,
+        setOverlayStyle({
+          transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)',
+          transform: 'translate(-50%, -50%) scale(1)',
         });
       });
     });
@@ -130,70 +129,82 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
 
   const close = useCallback((e) => {
     if (e) e.stopPropagation();
-    if (!originRect) return;
-
+    if (phase !== "open") return;
     setPhase("closing");
 
-    // 4. Calculate the reverse trip back to the EXACT origin rect
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const targetW = Math.min(560, vw * 0.92);
-    const targetH = Math.min(540, vh * 0.82);
+    // Re-measure original card's CURRENT position (works even after scroll)
+    const rect = cardRef.current.getBoundingClientRect();
 
-    const scaleX = originRect.width / targetW;
-    const scaleY = originRect.height / targetH;
-    const translateX = (originRect.left + originRect.width / 2) - (vw / 2);
-    const translateY = (originRect.top + originRect.height / 2) - (vh / 2);
-
-    setFlipStyles({
-      transition: 'transform 0.45s cubic-bezier(0.2, 0, 0, 1), opacity 0.4s ease',
-      transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleX}, ${scaleY})`,
-      opacity: 0,
+    // Animate overlay back to the exact card slot
+    setOverlayStyle({
+      transition: 'transform 0.42s cubic-bezier(0.4, 0, 0.2, 1)',
+      transform: cardToTransform(rect),
     });
 
+    // Once animation finishes, kill the overlay — original card reappears seamlessly
     setTimeout(() => {
       setPhase("idle");
-      setFlipStyles({});
+      setOverlayStyle({});
       onCollapse();
-    }, 450);
-  }, [onCollapse, originRect]);
+    }, 420);
+  }, [phase, onCollapse]);
 
   const isExpanded = phase !== "idle";
   const isOpen = phase === "open";
 
   return (
-    <div className="hero-card-wrapper" style={{ flex: 1, minWidth: '190px', position: 'relative' }}>
-      {/* ── GHOST PLACEHOLDER: This holds the space in the flex row so cards don't jump ── */}
-      {isExpanded && <div className="hero-card-ghost" style={{ width: '100%', height: '110px', visibility: 'hidden' }} />}
-
-      {isExpanded && <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />}
-
+    <div className="hero-card-wrapper">
+      {/* ── Original card: stays in normal document flow ALWAYS ── */}
       <div
         ref={cardRef}
         className={[
           "hero-card",
-          isExpanded ? "hero-card--expanded" : "",
+          isExpanded ? "hero-card--placeholder" : "",
           isOtherActive ? "hero-card--dimmed" : "",
         ].join(" ")}
-        style={flipStyles}
         onClick={!isExpanded ? open : undefined}
       >
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-
-        <div className={`hc-content ${isOpen ? "hc-content--visible" : ""}`}>
-          {panelContent}
-        </div>
-
+        {/* No panel content here — panel only lives in the overlay */}
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-
-        {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
+
+      {/* ── Portal overlay: completely separate animated element ── */}
+      {isExpanded && createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
+            onMouseDown={close}
+          />
+
+          {/* The animating card overlay */}
+          <div className="hc-overlay" style={overlayStyle}>
+            <div className="hc-top hc-overlay-tp">
+              <span className="hc-label">{card.label}</span>
+              <span className="hc-stat">{card.stat(counts)}</span>
+            </div>
+
+            <div className={`hc-content ${isOpen ? "hc-content--visible" : ""}`}>
+              {panelContent}
+            </div>
+
+            <div className="hc-bottom hc-overlay-bt">
+              <span className="hc-sub">{card.sub}</span>
+              <div className="hc-icon hc-overlay-icon"><card.Icon /></div>
+            </div>
+
+            <button className="hc-close" onMouseDown={close}>✕</button>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
