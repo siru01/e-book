@@ -83,17 +83,19 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — Portal Overlay approach (no position:fixed on original card)
-   The original card NEVER leaves document flow. A portal overlay
-   handles all expand/contract animation, eliminating the reload flash.
+   HeroCard — Portal Overlay FLIP
 ══════════════════════════════════════════════════════════════════ */
 function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherActive }) {
   const cardRef = useRef(null);
-  const [phase, setPhase] = useState("idle"); // idle | expanding | open | closing
+  const phaseRef = useRef("idle");
+  const [phase, setPhase] = useState("idle");
   const [overlayStyle, setOverlayStyle] = useState({});
 
-  /* Build the FLIP transform string to position the overlay
-     at exactly the same visual position as the original card */
+  const setPhaseSync = (p) => {
+    phaseRef.current = p;
+    setPhase(p);
+  };
+
   const cardToTransform = (rect) => {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -107,18 +109,14 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
   };
 
   const open = () => {
-    if (phase !== "idle") return;
+    if (phaseRef.current !== "idle") return;
     const rect = cardRef.current.getBoundingClientRect();
     onExpand();
-    setPhase("expanding");
-
-    // Overlay starts visually identical to the small card (no transition)
+    setPhaseSync("expanding");
     setOverlayStyle({ transition: 'none', transform: cardToTransform(rect) });
-
-    // Then animate to full expanded size
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setPhase("open");
+        setPhaseSync("open");
         setOverlayStyle({
           transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)',
           transform: 'translate(-50%, -50%) scale(1)',
@@ -129,32 +127,31 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
 
   const close = useCallback((e) => {
     if (e) e.stopPropagation();
-    if (phase !== "open") return;
-    setPhase("closing");
-
-    // Re-measure original card's CURRENT position (works even after scroll)
+    if (phaseRef.current === "idle" || phaseRef.current === "closing") return;
+    setPhaseSync("closing");
     const rect = cardRef.current.getBoundingClientRect();
-
-    // Animate overlay back to the exact card slot
     setOverlayStyle({
       transition: 'transform 0.42s cubic-bezier(0.4, 0, 0.2, 1)',
       transform: cardToTransform(rect),
     });
-
-    // Once animation finishes, kill the overlay — original card reappears seamlessly
     setTimeout(() => {
-      setPhase("idle");
+      setPhaseSync("idle");
       setOverlayStyle({});
       onCollapse();
-    }, 420);
-  }, [phase, onCollapse]);
+    }, 430);
+  }, [onCollapse]);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [close]);
 
   const isExpanded = phase !== "idle";
   const isOpen = phase === "open";
 
   return (
     <div className="hero-card-wrapper">
-      {/* ── Original card: stays in normal document flow ALWAYS ── */}
       <div
         ref={cardRef}
         className={[
@@ -168,38 +165,30 @@ function HeroCard({ card, counts, panelContent, onExpand, onCollapse, isOtherAct
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-        {/* No panel content here — panel only lives in the overlay */}
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
       </div>
 
-      {/* ── Portal overlay: completely separate animated element ── */}
       {isExpanded && createPortal(
         <>
-          {/* Backdrop */}
           <div
             className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
             onMouseDown={close}
           />
-
-          {/* The animating card overlay */}
           <div className="hc-overlay" style={overlayStyle}>
             <div className="hc-top hc-overlay-tp">
               <span className="hc-label">{card.label}</span>
               <span className="hc-stat">{card.stat(counts)}</span>
             </div>
-
             <div className={`hc-content ${isOpen ? "hc-content--visible" : ""}`}>
               {panelContent}
             </div>
-
             <div className="hc-bottom hc-overlay-bt">
               <span className="hc-sub">{card.sub}</span>
               <div className="hc-icon hc-overlay-icon"><card.Icon /></div>
             </div>
-
             <button className="hc-close" onMouseDown={close}>✕</button>
           </div>
         </>,
@@ -297,6 +286,7 @@ export default function DashboardPage() {
       </nav>
 
       <main className="dash-main">
+        {/* Search bar */}
         <div className="dash-search-bar-wrap">
           <div className="dash-search-bar">
             <IconSearch />
@@ -310,21 +300,25 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <h1 className="dash-heading">What would you like to read?</h1>
+        {!searched && (
+          <h1 className="dash-heading">What would you like to read?</h1>
+        )}
 
-        <div className="dash-hero-cards">
-          {HERO_CARDS.map(card => (
-            <HeroCard
-              key={card.key}
-              card={card}
-              counts={counts}
-              panelContent={getPanelContent(card.key)}
-              isOtherActive={activePanel !== "" && activePanel !== card.key}
-              onExpand={() => setActivePanel(card.key)}
-              onCollapse={() => setActivePanel("")}
-            />
-          ))}
-        </div>
+        {!searched && (
+          <div className="dash-hero-cards">
+            {HERO_CARDS.map(card => (
+              <HeroCard
+                key={card.key}
+                card={card}
+                counts={counts}
+                panelContent={getPanelContent(card.key)}
+                isOtherActive={activePanel !== "" && activePanel !== card.key}
+                onExpand={() => setActivePanel(card.key)}
+                onCollapse={() => setActivePanel("")}
+              />
+            ))}
+          </div>
+        )}
 
         {searched ? (
           <div className="dash-search-results">
@@ -332,25 +326,27 @@ export default function DashboardPage() {
               <h3>Results for "<strong>{searchQuery}</strong>"</h3>
               <button onClick={clearSearch}>✕ Clear</button>
             </div>
-            {searchLoading ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div> : (
-              <div className="dash-src-grid">{searchResults.map((b, i) => <SearchResultCard key={i} book={b}/>)}</div>
-            )}
+            {searchLoading
+              ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
+              : <div className="dash-src-grid">{searchResults.map((b, i) => <SearchResultCard key={i} book={b}/>)}</div>
+            }
           </div>
         ) : (
           <div className="dash-shelves">
-            {rowsLoading ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div> : (
-              gutenbergRows.map(row => (
-                <div key={row.label} className="dash-shelf">
-                  <div className="dash-shelf-header">
-                    <h2 className="dash-shelf-label">{row.label}</h2>
-                    <span className="dash-shelf-all">VIEW ALL</span>
+            {rowsLoading
+              ? <div className="dash-spinner-wrap"><div className="dash-spinner"/></div>
+              : gutenbergRows.map(row => (
+                  <div key={row.label} className="dash-shelf">
+                    <div className="dash-shelf-header">
+                      <h2 className="dash-shelf-label">{row.label}</h2>
+                      <span className="dash-shelf-all">VIEW ALL</span>
+                    </div>
+                    <div className="dash-shelf-scroll">
+                      {row.books.map((book, i) => <BookCard key={i} book={book}/>)}
+                    </div>
                   </div>
-                  <div className="dash-shelf-scroll">
-                    {row.books.map((book, i) => <BookCard key={i} book={book}/>)}
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+            }
           </div>
         )}
       </main>
