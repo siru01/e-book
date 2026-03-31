@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from . import gutendex, openlibrary, google_books, archive
+from . import openlibrary, google_books, archive
 
 ALL_SOURCES = {
     "openlibrary": openlibrary,

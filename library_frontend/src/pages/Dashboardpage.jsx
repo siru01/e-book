@@ -2,13 +2,13 @@ import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { searchGutenberg } from "../api/shelf";
+import { searchBooks } from "../api/shelf";
 import "./DashboardPage.css";
 import {
   useMyBooks,
   useMyHistory,
   useMyBookmarks,
-  useGutenbergRows,
+  useShelfRows,          // ✦ RENAMED from useGutenbergRows
 } from "../hooks/useDashboardData";
 
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
@@ -52,12 +52,13 @@ function PanelBookRow({ book, extra }) {
 function BookCard({ book }) {
   const navigate = useNavigate();
   return (
-    <div className="book-card" onClick={() => navigate(`/read/${encodeURIComponent(book.gutenbergId)}`)}>
+    // ✦ CHANGED: /read/ → /book/ (goes to BookOverviewPage first)
+    <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>  
       <div className="book-card-cover">
         {book.cover
           ? <img src={book.cover} alt={book.title} loading="lazy" />
           : <div className="book-card-placeholder">📖</div>}
-        <div className="book-card-hover"><span>Read Now</span></div>
+        <div className="book-card-hover"><span>View Book</span></div>
       </div>
       <div className="book-card-meta">
         <span className="book-card-title">{book.title}</span>
@@ -71,7 +72,8 @@ function BookCard({ book }) {
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
   return (
-    <div className="src-card" onClick={() => navigate(`/read/${encodeURIComponent(book.gutenbergId)}`)}>
+    // ✦ CHANGED: /read/ → /book/ (goes to BookOverviewPage first)
+    <div className="src-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>  
       <div className="src-card-cover">
         {book.cover ? <img src={book.cover} alt="" loading="lazy" /> : <span>📖</span>}
       </div>
@@ -84,19 +86,7 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — Pure CSS transition approach (like the yellow box)
-
-   SAME element expands. No portal. No FLIP math.
-   
-   How it works:
-   - Card is position:fixed when open, position:static when closed
-   - CSS transitions width, height, top, left, border-radius smoothly
-   - We snapshot the card's rect BEFORE opening, apply it as inline
-     style (so the fixed card starts at the exact same visual position),
-     then on next frame switch to the "open" styles → CSS does the rest
-   - On close: reverse inline styles back to card position → CSS animates
-     back, then remove fixed positioning
-   - Siblings never re-render (memo + CSS dimming via data-active)
+   HeroCard — Pure CSS transition (unchanged)
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
   const cardRef = useRef(null);
@@ -109,7 +99,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
     if (isOpen || isAnimating) return;
     const rect = cardRef.current.getBoundingClientRect();
 
-    // 1. Initial State: Fixed position exactly over the original card
     setCardStyle({
       position: "fixed",
       top: `${rect.top}px`,
@@ -118,13 +107,12 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       height: `${rect.height}px`,
       margin: 0,
       zIndex: 400,
-      transition: "none", // No animation for the initial "teleport"
+      transition: "none",
     });
 
     setIsAnimating(true);
     onExpand();
 
-    // 2. Animate to Expanded State
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const vw = window.innerWidth;
@@ -141,7 +129,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           zIndex: 400,
           borderRadius: "28px",
           boxShadow: "0 32px 80px rgba(0,0,0,0.25)",
-          // Use the "Yellow Box" logic: transition multiple properties
           transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1)",
           opacity: 1,
         });
@@ -154,15 +141,13 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
 
   const close = useCallback(() => {
     if (!isOpen || isAnimating) return;
-    
+
     setIsAnimating(true);
     setContentVisible(false);
 
-    // Find the placeholder (Ghost) to know where to fly back to
     const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
     const ghostRect = ghost.getBoundingClientRect();
 
-    // 3. Animate BACK with Opacity fade to prevent the "flicker"
     setCardStyle(prev => ({
       ...prev,
       top: `${ghostRect.top}px`,
@@ -171,15 +156,14 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       height: `${ghostRect.height}px`,
       borderRadius: "20px",
       boxShadow: "none",
-      // IMPORTANT: transition opacity slightly faster than movement to hide the "snap"
       transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease 0.1s",
-      opacity: 0, 
+      opacity: 0,
     }));
 
     setTimeout(() => {
       setIsOpen(false);
       setIsAnimating(false);
-      setCardStyle({}); // Reset to original CSS
+      setCardStyle({});
       onCollapse();
     }, 500);
   }, [isOpen, isAnimating, onCollapse]);
@@ -188,13 +172,10 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
 
   return (
     <div className="hero-card-wrapper">
-      {/* This keeps the gap from moving when the card flies away */}
       {isExpanded && <div className="hc-ghost" style={{ height: '110px' }} />}
-
       {isExpanded && (
         <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />
       )}
-
       <div
         ref={cardRef}
         className={`hero-card ${isExpanded ? "hero-card--expanded" : ""}`}
@@ -205,19 +186,15 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-
-        {/* Content only renders when expanded to save performance */}
         {isExpanded && (
           <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
             {panelContent}
           </div>
         )}
-
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-
         {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
     </div>
@@ -246,10 +223,11 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  const { data: rawBooks      = [] } = useMyBooks(token);
-  const { data: rawHistory    = [] } = useMyHistory(token);
-  const { data: rawBookmarks  = [] } = useMyBookmarks(token);
-  const { data: gutenbergRows = [], isLoading: rowsLoading } = useGutenbergRows();
+  const { data: rawBooks     = [] } = useMyBooks(token);
+  const { data: rawHistory   = [] } = useMyHistory(token);
+  const { data: rawBookmarks = [] } = useMyBookmarks(token);
+  // ✦ RENAMED: useGutenbergRows → useShelfRows, gutenbergRows → shelfRows
+  const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
   const counts = useMemo(() => ({
     books : toArray(rawBooks).length,
@@ -262,9 +240,9 @@ export default function DashboardPage() {
     if (!q.trim()) return;
     setSearched(true); setSearchLoading(true);
     try {
-      const data = await searchGutenberg(token, q);
+      const data = await searchBooks(token, q);
       setSearchResults((data.results || []).map(b => ({
-        gutenbergId: b.book_id, title: b.title,
+        bookId: b.book_id, title: b.title,
         author: (b.authors || []).join(", "), cover: b.cover_url,
       })));
     } catch { setSearchResults([]); }
@@ -375,7 +353,8 @@ export default function DashboardPage() {
           <div className="dash-shelves">
             {rowsLoading
               ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
-              : gutenbergRows.map(row => (
+              // ✦ RENAMED: gutenbergRows → shelfRows
+              : shelfRows.map(row => (
                   <div key={row.label} className="dash-shelf">
                     <div className="dash-shelf-header">
                       <h2 className="dash-shelf-label">{row.label}</h2>
@@ -392,4 +371,4 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-}
+} 

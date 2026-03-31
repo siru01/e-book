@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import { searchGutenberg } from "../api/shelf";
+import { searchBooks } from "../api/shelf";
 import { useQueryClient } from "@tanstack/react-query";
 import "./Topbar.css";
 
@@ -82,7 +82,7 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
     debounceRef.current = setTimeout(async () => {
       if (taskIdRef.current !== myId) return;
       try {
-        const data = await searchGutenberg(null, val.trim());
+        const data = await searchBooks(null, val.trim());
         if (taskIdRef.current !== myId) return;
         // Normalise BFF response — each item has book_id, title, authors, cover_url
         setSuggestions((data.results || []).slice(0, 6));
@@ -105,20 +105,12 @@ export default function Topbar({ expanded, onSearch, onClearSearch }) {
     navigate("/");
   }
 
-  // ── Navigate to reader from suggestion ────────────────────
+  // ── Navigate to book overview from suggestion ─────────────
   function handleSuggestionClick(book) {
     closeDropdown();
-    // book_id e.g. "archive:xyz" or "google:abc" or "openlibrary:OL123W"
-    const source  = book.source || "gutenberg";
-    const bookId  = book.book_id || "";
-
-    if (source === "gutenberg") {
-      const numId = bookId.replace("gutenberg:", "");
-      navigate(`/read/${numId}`);
-    } else {
-      // For non-Gutenberg, navigate with encoded full book_id
-      navigate(`/read/${encodeURIComponent(bookId)}`);
-    }
+    // book_id e.g. "openlibrary:OL123W", "google:abc", "archive:xyz"
+    const bookId = book.book_id || "";
+    navigate(`/book/${encodeURIComponent(bookId)}`);
   }
 
   return (

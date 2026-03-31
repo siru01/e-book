@@ -301,45 +301,16 @@ class BookReadView(APIView):
             raw_id = book_id
 
         try:
-            if source == "gutenberg":
-                return self._fetch_gutenberg(raw_id)
-            elif source == "archive":
+            if source == "archive":
                 return self._fetch_archive(raw_id)
             elif source == "openlibrary":
                 return self._fetch_openlibrary(raw_id)
             elif source == "google":
                 return self._fetch_google(raw_id)
             else:
-                return Response({"error": f"Unknown source: {source}"}, status=400)
+                return Response({"error": f"Unknown source: {source}. Supported: openlibrary, google, archive"}, status=400)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
-    def _fetch_gutenberg(self, gutenberg_id):
-        r = httpx.get(f"https://gutendex.com/books/{gutenberg_id}", timeout=15)
-        r.raise_for_status()
-        b         = r.json()
-        fmts      = b.get("formats", {})
-        plain_url = (
-            fmts.get("text/plain; charset=utf-8") or
-            fmts.get("text/plain; charset=us-ascii") or
-            fmts.get("text/plain") or ""
-        )
-        cover_url = fmts.get("image/jpeg", "")
-        authors   = b.get("authors", [])
-        author    = authors[0].get("name", "Unknown") if authors else "Unknown"
-
-        if not plain_url:
-            return Response({"error": "No plain text available for this Gutenberg book."}, status=404)
-
-        text_r = httpx.get(plain_url, timeout=20, follow_redirects=True)
-        text_r.raise_for_status()
-        return Response({
-            "title":     b.get("title", "Untitled"),
-            "author":    author,
-            "cover_url": cover_url,
-            "source":    "gutenberg",
-            "text":      text_r.text[:300000],
-        })
 
     def _fetch_archive(self, identifier):
         meta_r = httpx.get(f"https://archive.org/metadata/{identifier}", timeout=15)
@@ -369,15 +340,33 @@ class BookReadView(APIView):
                     "text": text_r.text[:300000],
                 })
             except Exception:
-                return Response({"error": "No readable text found for this Archive.org book."}, status=404)
+                fallback_text = f"Full plain-text is not freely available for this Archive.org item.\n\n"
+                if desc:
+                    fallback_text += f"---\n\n{desc}\n\n---\n\n"
+                fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
 
-        text_url = f"https://archive.org/download/{identifier}/{text_file}"
-        text_r   = httpx.get(text_url, timeout=20, follow_redirects=True)
-        text_r.raise_for_status()
+                return Response({
+                    "title": title, "author": creator,
+                    "cover_url": cover_url, "source": "archive",
+                    "text": fallback_text,
+                })
+
+        try:
+            text_url = f"https://archive.org/download/{identifier}/{text_file}"
+            text_r   = httpx.get(text_url, timeout=20, follow_redirects=True)
+            text_r.raise_for_status()
+            text = text_r.text[:300000]
+        except Exception:
+            fallback_text = f"Full plain-text is not freely available for this Archive.org item.\n\n"
+            if desc:
+                fallback_text += f"---\n\n{desc}\n\n---\n\n"
+            fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
+            text = fallback_text
+
         return Response({
             "title": title, "author": creator,
             "cover_url": cover_url, "source": "archive",
-            "text": text_r.text[:300000],
+            "text": text,
         })
 
     def _fetch_openlibrary(self, ol_id):
@@ -414,10 +403,19 @@ class BookReadView(APIView):
                 break
 
         if not ia_id:
+            desc = work.get("description", "")
+            if isinstance(desc, dict):
+                desc = desc.get("value", "")
+            
+            fallback_text = f"Full plain-text is not freely available for this edition on Open Library.\n\n"
+            if desc:
+                fallback_text += f"---\n\n{desc}\n\n---\n\n"
+            fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
+
             return Response({
-                "error": "No free readable version found for this Open Library book.",
                 "title": title, "author": author, "cover_url": cover_url,
-            }, status=404)
+                "source": "openlibrary", "text": fallback_text
+            })
 
         return self._fetch_archive(ia_id)
 

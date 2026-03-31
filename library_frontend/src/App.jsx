@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/Authcontext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import HomePage           from "./pages/Homepage";
+import HomePage           from "./pages/HomePage";
 import DashboardPage      from "./pages/DashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import DiscoverPage       from "./pages/DiscoverPage";
 import ReaderPage         from "./pages/ReaderPage";
 import Login              from "./pages/Login";
-import SignUp             from "./pages/SignUp";  // ← ADD THIS IMPORT
+import SignUp             from "./pages/SignUp";
+import BookOverviewPage   from "./pages/BookOverviewPage";
 import "./App.css";
 
 // ── React Query client ────────────────────────────────────────────
@@ -54,11 +55,11 @@ function AppRoutes() {
       {/* Protected Routes - require login */}
       <Route path="/dashboard"         element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/admin-dashboard"   element={<ProtectedRoute adminOnly><AdminDashboardPage /></ProtectedRoute>} />
-      <Route path="/read/:gutenbergId" element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
+      <Route path="/read/:bookId"       element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
 
       {/* Public but requires no auth protection */}
       <Route path="/discover" element={<DiscoverPage />} />
-      
+      <Route path="/book/:bookId" element={<BookOverviewPage />} />
       {/* Catch all - redirect to home */}
       <Route path="*"         element={<Navigate to="/" replace />} />
     </Routes>

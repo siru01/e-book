@@ -37,12 +37,11 @@ export const borrowBook = (token, bookId) =>
     body: JSON.stringify({ book_id: bookId }),
   });
 
-// ── Search — BFF aggregator (all sources + Redis cache) ──────────
-export const searchGutenberg = (token, q) =>
+// ── Search — BFF aggregator (Open Library + Google Books via Django)
+export const searchBooks = (token, q) =>
   apiFetch(`/books/search/?q=${encodeURIComponent(q)}`, token);
 
-// ── ONLY 4 shelf rows — avoids unnecessary API calls on every login
-// Sources: Open Library + Google Books (no Gutendex)
+// ── Shelf genres ─────────────────────────────────────────────────
 const SHELF_GENRES = [
   { label: "Trending Now",        endpoint: "/books/trending/" },
   { label: "New Arrivals",        endpoint: "/books/new-arrivals/" },
@@ -53,7 +52,7 @@ const SHELF_GENRES = [
 // ── Normalise a BFF book into the shape the UI expects ───────────
 function parseBFFBook(b) {
   return {
-    gutenbergId: b.book_id,
+    bookId:      b.book_id,
     title:       b.title                      || "Untitled",
     author:      (b.authors || []).join(", ") || "Unknown",
     cover:       b.cover_url                  || "",
@@ -64,10 +63,11 @@ function parseBFFBook(b) {
   };
 }
 
-// ── Main shelf rows fetcher ───────────────────────────────────────
-// Only 4 parallel calls. Redis caches each for 24h on the backend,
-// so after the very first load every subsequent login is instant.
-export async function fetchGutendexRows() {
+// ✦ RENAMED: fetchGutendexRows → fetchShelfRows
+// Fetches the 4 dashboard shelf rows from our Django BFF.
+// Sources: Open Library + Google Books (no Gutendex).
+// Redis caches each endpoint for 24h on the backend.
+export async function fetchShelfRows() {
   const rows = await Promise.all(
     SHELF_GENRES.map(async ({ label, endpoint }) => {
       try {
@@ -83,14 +83,37 @@ export async function fetchGutendexRows() {
   return rows.filter((r) => r.books.length > 0);
 }
 
-// ── Single book fetch (reader page) ──────────────────────────────
-export async function fetchGutendexBook(bookId) {
-  const res = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
-  if (!res.ok) throw new Error("Book not found");
-  return res.json();
+// fetchBookOverview — Used by BookOverviewPage.
+// Calls the BFF read endpoint which returns metadata + text.
+// We only use the metadata fields here (no full text download displayed).
+export async function fetchBookOverview(bookId) {
+  const res  = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
+  const data = await res.json();
+  // Even a 404 may carry partial metadata (title/author/cover) — still render overview.
+  return {
+    title      : data.title        || "Untitled",
+    author     : data.author       || "Unknown",
+    cover_url  : data.cover_url    || "",
+    description: data.description  || (data.text ? data.text.slice(0, 700) + "\u2026" : ""),
+    source     : data.source       || bookId.split(":")[0] || "openlibrary",
+    year       : data.year         || null,
+    read_url   : data.read_url     || null,
+    subjects   : data.subjects     || [],
+    bookshelves: data.bookshelves  || [],
+  };
 }
 
-// ── Book text fetch ───────────────────────────────────────────────
+// ✦ RENAMED: fetchGutendexBook → fetchBookContent
+// Used by ReaderPage — fetches full book text from Django BFF.
+// Django routes to the correct source based on book_id prefix:
+// e.g. "google:abc", "openlibrary:OL123W", "archive:xyz"
+export async function fetchBookContent(bookId) {
+  const res = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
+  if (!res.ok) throw new Error("Book not found");
+  return res.json(); // { title, author, cover_url, text, source }
+}
+
+// ── Book text fetch (for direct URL reads) ────────────────────────
 export async function fetchBookText(readUrl) {
   const res = await fetch(readUrl);
   if (!res.ok) throw new Error("Could not load book content");
@@ -98,38 +121,7 @@ export async function fetchBookText(readUrl) {
   return text.slice(0, 50000);
 }
 
-// ── Parse a raw Gutendex book object (legacy, kept for reader page)
-export function parseGutendexBook(b) {
-  const fmts = b.formats || {};
-  const readUrl =
-    fmts["text/html"] ||
-    fmts["text/html; charset=utf-8"] ||
-    fmts["text/html; charset=us-ascii"] ||
-    fmts["text/plain; charset=utf-8"] ||
-    fmts["text/plain"] ||
-    "";
-  const cover   = fmts["image/jpeg"] || "";
-  const authors = b.authors || [];
-  const author  = authors[0]?.name || "Unknown";
-  return {
-    gutenbergId: b.id,
-    title:       b.title || "Untitled",
-    author,
-    cover,
-    readUrl,
-  };
-}
 
-// ── Parse plain text URL from a Gutendex book ─────────────────────
-export function parsePlainTextUrl(b) {
-  const fmts = b.formats || {};
-  return (
-    fmts["text/plain; charset=utf-8"] ||
-    fmts["text/plain; charset=us-ascii"] ||
-    fmts["text/plain"] ||
-    ""
-  );
-}
 
 // ── Bookmarks & History saves ─────────────────────────────────────
 export const saveBookmark = (token, bookId, source = "openlibrary") =>

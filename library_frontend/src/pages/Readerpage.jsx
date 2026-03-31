@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import { saveBookmark, markFinished } from "../api/shelf";
+// ✦ CHANGED: added fetchBookContent import — replaces the local function below
+import { saveBookmark, markFinished, fetchBookContent } from "../api/shelf";
 import "./ReaderPage.css";
 
 const CHARS_PER_PAGE = 1200;
-const BASE = "http://127.0.0.1:8000/api";
 
 function splitIntoPages(text) {
   let t = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -28,24 +28,11 @@ function splitIntoPages(text) {
   return pages;
 }
 
-// ── Fetch book content from Django BFF ────────────────────────
-// Django handles fetching from the right source and returning plain text
-async function fetchBookContent(bookId) {
-  const res = await fetch(
-    `${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`
-  );
-  if (!res.ok) {
-    const d = await res.json().catch(() => ({}));
-    throw new Error(d.error || `Server error ${res.status}`);
-  }
-  const data = await res.json();
-  return data; // { title, author, cover_url, text, source }
-}
+// ✦ REMOVED: local fetchBookContent function — now imported from ../api/shelf
+// (was: async function fetchBookContent(bookId) { ... })
 
 export default function ReaderPage() {
-  // book_id can be "gutenberg:1234", "google:abc", "archive:xyz", "openlibrary:OL123W"
-  // or just a plain number for backwards compatibility with old Gutenberg links
-  const { gutenbergId } = useParams();
+  const { bookId: rawBookId } = useParams();
   const { token } = useAuth();
 
   const [fontSize,      setFontSize]      = useState(16);
@@ -64,13 +51,10 @@ export default function ReaderPage() {
   const leftPageNum  = spreadIndex + 1;
   const rightPageNum = spreadIndex + 2;
 
-  // ── Normalise book_id ──────────────────────────────────────
-  // Old links use plain number e.g. /read/1234 → treat as gutenberg:1234
-  const bookId = gutenbergId
-    ? (isNaN(gutenbergId) ? decodeURIComponent(gutenbergId) : `gutenberg:${gutenbergId}`)
-    : "";
+  // bookId is always a prefixed string e.g. "openlibrary:OL123W", "google:abc"
+  const bookId = rawBookId ? decodeURIComponent(rawBookId) : "";
 
-  const source = bookId.split(":")[0] || "gutenberg";
+  const source = bookId.split(":")[0] || "openlibrary";
 
   useEffect(() => {
     if (!bookId) { setError("No book ID provided."); setLoading(false); return; }
@@ -83,6 +67,7 @@ export default function ReaderPage() {
 
     (async () => {
       try {
+        // ✦ now calls imported fetchBookContent from shelf.js
         const data = await fetchBookContent(bookId);
 
         if (cancelled) return;
@@ -100,7 +85,7 @@ export default function ReaderPage() {
           return;
         }
 
-        // Strip Gutenberg header/footer if present
+        // Strip archive.org / plain-text preamble markers if present
         let text = data.text;
         const startMarker = text.indexOf("*** START OF");
         if (startMarker !== -1) {
@@ -115,7 +100,6 @@ export default function ReaderPage() {
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
-
       if (!cancelled) setLoading(false);
     })();
 
@@ -219,7 +203,11 @@ export default function ReaderPage() {
         ) : error ? (
           <div className="reader-center">
             <p style={{ fontSize: "3em" }}>📚</p>
-            <p className="reader-error-text">{error}</p>
+            <p className="reader-error-text">
+              {error === "Book not found" || error.includes("Unknown source") ?
+                "This book edition is no longer available in the archive. Please try searching for a newer edition." :
+                error}
+            </p>
             <Link to="/dashboard">
               <button className="reader-back-btn">← Back to Dashboard</button>
             </Link>
