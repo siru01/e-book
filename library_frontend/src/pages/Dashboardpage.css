@@ -8,18 +8,12 @@
   overflow-x: hidden;
 }
 
-/* ── Navbar ────────────────────────────────────────────────────── */
+/* ── Navbar ── */
 .dash-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 0 48px;
-  height: 60px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 32px;
+  padding: 0 48px; height: 60px;
+  background: #fff; border-bottom: 1px solid #f0f0f0;
 }
 .dash-brand { font-size: 1rem; font-weight: 800; letter-spacing: .15em; color: #111; flex-shrink: 0; }
 .dash-nav-links { display: flex; gap: 28px; flex: 1; }
@@ -33,19 +27,15 @@
 .dash-logout-btn { background: none; border: 1px solid #e0e0e0; border-radius: 6px; padding: 5px 12px; font-size: .8rem; color: #666; cursor: pointer; transition: all .15s; }
 .dash-logout-btn:hover { border-color: #111; color: #111; }
 
-/* ── Main ──────────────────────────────────────────────────────── */
+/* ── Main ── */
 .dash-main {
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: 1100px; margin: 0 auto;
   padding: 40px 32px 80px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  width: 100%;
-  min-height: 0;
+  display: flex; flex-direction: column; gap: 32px;
+  width: 100%; min-height: 0;
 }
 
-/* ── Search ────────────────────────────────────────────────────── */
+/* ── Search ── */
 .dash-search-bar-wrap { display: flex; justify-content: center; }
 .dash-search-bar {
   display: flex; align-items: center; gap: 10px;
@@ -57,7 +47,7 @@
 .dash-search-input { flex: 1; border: none; background: none; outline: none; font-size: .95rem; color: #111; }
 .dash-search-input::placeholder { color: #bbb; }
 
-/* ── Heading ───────────────────────────────────────────────────── */
+/* ── Heading ── */
 .dash-heading {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 800; color: #111; text-align: center;
@@ -66,63 +56,56 @@
 
 /* ════════════════════════════════════════════════════════════════
    HERO CARDS
-   
-   Dimming non-active cards is done entirely in CSS using
-   [data-active] on the parent — zero JS re-renders on siblings.
+   Pure CSS transition — same element expands, no portal needed.
+   Like the yellow box: transition-property: top, left, width, height
 ════════════════════════════════════════════════════════════════ */
 .dash-hero-cards {
-  display: flex;
-  gap: 16px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  scrollbar-width: none;
+  display: flex; gap: 16px; flex-wrap: nowrap;
+  overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;
 }
 .dash-hero-cards::-webkit-scrollbar { display: none; }
 
 .hero-card-wrapper {
-  flex: 1;
-  min-width: 190px;
-  position: relative;
+  flex: 1; min-width: 190px; position: relative;
 }
 
-/* When any card is active, dim ALL siblings via CSS — no React re-render */
-.dash-hero-cards[data-active] .hero-card:not(.hero-card--ghost) {
-  opacity: 0.3;
-  filter: grayscale(0.6);
+/* Ghost placeholder — holds the exact space of the card while it's fixed/flying */
+.hc-ghost {
+  flex: 1;
+  min-width: 190px;
+  min-height: 130px;
+  border-radius: 20px;
+  background: #f5f5f5;
+  border: 1.5px dashed #e8e8e8;
+  pointer-events: none;
+}
+
+/* Dim siblings when any card is active — pure CSS, zero re-renders */
+.dash-hero-cards[data-active] .hero-card:not(.hero-card--expanded) {
+  opacity: 0.25;
+  filter: grayscale(0.5);
   transform: scale(0.96);
   pointer-events: none;
   transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
 }
 
-/* Ghost: invisible but holds layout space — prevents other cards from shifting */
-.hero-card--ghost {
-  visibility: hidden !important;
-  pointer-events: none !important;
-  /* Revert any dimming that CSS above would apply */
-  opacity: 1 !important;
-  filter: none !important;
-  transform: none !important;
-}
-
 /* ── Backdrop ── */
 .hc-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0);
-  backdrop-filter: blur(0px);
-  z-index: 300;
-  pointer-events: none;
+  background: rgba(0,0,0,0); backdrop-filter: blur(0px);
+  z-index: 300; pointer-events: none;
   transition: background 0.5s ease, backdrop-filter 0.5s ease;
 }
 .hc-backdrop--on {
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
   pointer-events: all;
 }
 
-/* ── The Card ──
-   Use flex so getBoundingClientRect() returns a stable height.
-   min-height ensures short-content cards still give a good FLIP rect. ── */
+/* ── Hero Card ──
+   Small state: static in flex row, 130px tall, 20px radius
+   Expanded state: fixed, centered, full size — via inline style set by JS
+   Transition properties: top, left, width, height, border-radius, box-shadow
+   This is EXACTLY the same as the yellow box trick — just on more properties. ── */
 .hero-card {
   background: #fafafa;
   border: 1.5px solid #efefef;
@@ -133,66 +116,52 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 130px;
-  position: relative;
-  /* Transition for hover effect only — open/close is handled by overlay */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  will-change: transform;
-  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  /* Default transition for hover only */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  will-change: top, left, width, height, border-radius;
 }
-.hero-card:hover:not(.hero-card--ghost) {
+
+.hero-card:hover:not(.hero-card--expanded) {
   border-color: #d8d8d8;
   box-shadow: 0 8px 24px rgba(0,0,0,0.06);
   transform: translateY(-3px);
 }
 
-/* ── Portal Overlay ──
-   Sits at top:50% left:50%.
-   JS sets transform to match card position, then releases it.
-   CSS transition does the rest. ── */
-.hc-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: min(560px, 92vw);
-  height: min(540px, 85vh);
+/* Expanded: JS sets position:fixed + top/left/width/height via inline style.
+   We just need to ensure the card looks right when big. */
+.hero-card--expanded {
+  cursor: default;
   background: #fff;
-  border: 1.5px solid #f0f0f0;
-  /* border-radius, box-shadow, transform all come from inline style (JS) */
-  padding: 32px;
-  z-index: 400;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  transform-origin: center center;
-  will-change: transform, border-radius, opacity;
-  overflow: hidden;
 }
 
-.hc-overlay-tp { border-bottom: 1px solid #f0f0f0; padding-bottom: 18px; margin-bottom: 12px; }
-.hc-overlay-bt { border-top: 1px solid #f0f0f0; padding-top: 18px; margin-top: 4px; }
-.hc-overlay-icon { opacity: 1 !important; color: #6366f1 !important; }
-
 /* ── Card internals ── */
-.hc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.hc-top { display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
 .hc-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; color: #999; text-transform: uppercase; }
 .hc-stat { font-size: .7rem; font-weight: 700; color: #bbb; background: #f0f0f0; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
 
-/* Content fades in after card finishes expanding */
+/* Middle content area — not rendered when closed, fades in when open */
 .hc-content {
+  flex: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  opacity: 0;
-  transform: translateY(10px);
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px 0;
+  opacity: 0; transform: translateY(10px);
   transition: opacity 0.25s ease, transform 0.25s ease;
   scrollbar-width: none;
 }
 .hc-content::-webkit-scrollbar { display: none; }
 .hc-content--visible { opacity: 1; transform: translateY(0); }
 
-.hc-bottom { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 16px; }
+.hc-bottom { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 16px; flex-shrink: 0; }
 .hc-sub { font-size: .9rem; font-weight: 600; color: #111; max-width: 70%; }
-.hc-icon { color: #111; opacity: 0.15; transition: opacity 0.3s ease, color 0.3s ease; }
+.hc-icon { color: #111; opacity: 0.15; }
+.hero-card--expanded .hc-icon { opacity: 1; color: #6366f1; }
+
+/* Separator lines in expanded mode */
+.hero-card--expanded .hc-top  { border-bottom: 1px solid #f0f0f0; padding-bottom: 16px; }
+.hero-card--expanded .hc-bottom { border-top: 1px solid #f0f0f0; }
 
 /* Close button */
 .hc-close {
@@ -231,11 +200,7 @@
 
 /* ── Book Card ── */
 .book-card { flex-shrink: 0; width: 160px; cursor: pointer; }
-.book-card-cover {
-  width: 160px; height: 240px; border-radius: 12px; overflow: hidden;
-  position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  transition: all 0.4s cubic-bezier(0.2,0,0,1);
-}
+.book-card-cover { width: 160px; height: 240px; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: all 0.4s cubic-bezier(0.2,0,0,1); }
 .book-card:hover .book-card-cover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 .book-card-cover img { width: 100%; height: 100%; object-fit: cover; }
 .book-card-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #f0f0f0; }
@@ -243,7 +208,7 @@
 .book-card:hover .book-card-hover { opacity: 1; }
 .book-card-hover span { color: #fff; font-size: .85rem; font-weight: 700; letter-spacing: .04em; }
 .book-card-meta { padding-top: 10px; height: 68px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; }
-.book-card-title { font-weight: 700; font-size: .88rem; color: #111; display: -webkit-box;; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.35; }
+.book-card-title { font-weight: 700; font-size: .88rem; color: #111; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.35; }
 .book-card-author { font-size: .73rem; color: #888; display: block; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
 
 /* ── Spinner ── */
@@ -274,5 +239,4 @@
   .dash-nav-links { display: none; }
   .book-card { width: 130px; }
   .book-card-cover { width: 130px; height: 195px; }
-  .hc-overlay { width: 92vw; height: 85vh; padding: 24px; }
 }

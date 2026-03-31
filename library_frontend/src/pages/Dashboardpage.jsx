@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,104 +84,122 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — iOS-style expand animation
+   HeroCard — Pure CSS transition approach (like the yellow box)
 
-   KEY INSIGHT: The overlay is a separate DOM node rendered via portal.
-   It starts positioned/scaled to look exactly like the source card,
-   then transitions to full size. The source card becomes invisible
-   (visibility:hidden) so layout is preserved — no reflow, no jitter.
-
-   Other cards are memoized and only receive stable props so they
-   NEVER re-render when a card opens/closes.
+   SAME element expands. No portal. No FLIP math.
+   
+   How it works:
+   - Card is position:fixed when open, position:static when closed
+   - CSS transitions width, height, top, left, border-radius smoothly
+   - We snapshot the card's rect BEFORE opening, apply it as inline
+     style (so the fixed card starts at the exact same visual position),
+     then on next frame switch to the "open" styles → CSS does the rest
+   - On close: reverse inline styles back to card position → CSS animates
+     back, then remove fixed positioning
+   - Siblings never re-render (memo + CSS dimming via data-active)
 ══════════════════════════════════════════════════════════════════ */
-
-/* Stable child — memo prevents re-render when activePanel changes */
-const HeroCard = memo(function HeroCard({ card, counts, panelContent, isActive, onExpand, onCollapse }) {
-  const cardRef            = useRef(null);
-  const phaseRef           = useRef("idle");
-  const [phase,            setPhase]           = useState("idle");
-  const [overlayStyle,     setOverlayStyle]    = useState({});
-  const [contentVisible,   setContentVisible]  = useState(false);
-
-  const setPhaseSync = (p) => { phaseRef.current = p; setPhase(p); };
-
-  /* Build transform that maps the centered overlay onto the card's screen rect */
-  const buildTransform = useCallback((rect) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const ow = Math.min(560, vw * 0.92);   // overlay natural width
-    const oh = Math.min(540, vh * 0.85);   // overlay natural height
-
-    // Card center (viewport coords)
-    const cx = rect.left + rect.width  / 2;
-    const cy = rect.top  + rect.height / 2;
-
-    // Overlay center when sitting at top:50% left:50% translate(-50%,-50%)
-    const ocx = vw / 2;
-    const ocy = vh / 2;
-
-    const tx = cx - ocx;
-    const ty = cy - ocy;
-    const sx = rect.width  / ow;
-    const sy = rect.height / oh;
-
-    return `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${sx}, ${sy})`;
-  }, []);
+const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
+  const cardRef          = useRef(null);
+  const [isOpen,         setIsOpen]         = useState(false);
+  const [isAnimating,    setIsAnimating]    = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [cardStyle,      setCardStyle]      = useState({});
 
   const open = useCallback(() => {
-    if (phaseRef.current !== "idle") return;
+    if (isOpen || isAnimating) return;
     const rect = cardRef.current.getBoundingClientRect();
 
-    onExpand();
-    setContentVisible(false);
-    setPhaseSync("opening");
-
-    // Frame 0: overlay is hidden at its natural size, no transition yet
-    setOverlayStyle({
-      transition  : "none",
-      transform   : buildTransform(rect),
-      borderRadius: getComputedStyle(cardRef.current).borderRadius,
-      opacity     : 1,
+    // Step 1: pin card to its current exact screen position using fixed
+    setCardStyle({
+      position  : "fixed",
+      top       : `${rect.top}px`,
+      left      : `${rect.left}px`,
+      width     : `${rect.width}px`,
+      height    : `${rect.height}px`,
+      margin    : 0,
+      zIndex    : 400,
+      transition: "none",           // no transition yet — just teleport into place
     });
 
-    // Frame 1+: let go → CSS transition animates to center
+    setIsAnimating(true);
+    onExpand();
+
+    // Step 2: next frame → switch to open dimensions with transition
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setPhaseSync("open");
-        setOverlayStyle({
-          transition  : "transform 0.58s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.58s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.58s ease",
-          transform   : "translate(-50%, -50%) scale(1)",
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const openW = Math.min(560, vw * 0.92);
+        const openH = Math.min(540, vh * 0.85);
+        setCardStyle({
+          position    : "fixed",
+          top         : `${(vh - openH) / 2}px`,
+          left        : `${(vw - openW) / 2}px`,
+          width       : `${openW}px`,
+          height      : `${openH}px`,
+          margin      : 0,
+          zIndex      : 400,
           borderRadius: "28px",
-          opacity     : 1,
+          boxShadow   : "0 32px 80px rgba(0,0,0,0.22)",
+          // CSS transition-property: top, left, width, height, border-radius
+          transition  : [
+            "top 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
+            "left 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
+            "width 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
+            "height 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
+            "border-radius 0.55s ease",
+            "box-shadow 0.55s ease",
+          ].join(", "),
         });
-        setTimeout(() => setContentVisible(true), 360);
+        setIsOpen(true);
+        setTimeout(() => {
+          setContentVisible(true);
+          setIsAnimating(false);
+        }, 360);
       });
     });
-  }, [buildTransform, onExpand]);
+  }, [isOpen, isAnimating, onExpand]);
 
-  const close = useCallback((e) => {
-    if (e) e.stopPropagation();
-    if (phaseRef.current === "idle" || phaseRef.current === "closing") return;
-
-    setContentVisible(false);
-    setPhaseSync("closing");
-
+  const close = useCallback(() => {
+    if (!isOpen || isAnimating) return;
     const rect = cardRef.current.getBoundingClientRect();
 
+    setContentVisible(false);
+    setIsAnimating(true);
+
+    // Find where the card SHOULD be in the layout (its placeholder position)
+    // The card is currently fixed so we read the ghost placeholder
+    const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
+    const ghostRect = ghost ? ghost.getBoundingClientRect() : rect;
+
+    // Animate back to original card position
+    setCardStyle(prev => ({
+      ...prev,
+      top         : `${ghostRect.top}px`,
+      left        : `${ghostRect.left}px`,
+      width       : `${ghostRect.width}px`,
+      height      : `${ghostRect.height}px`,
+      borderRadius: "20px",
+      boxShadow   : "none",
+      transition  : [
+        "top 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
+        "left 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
+        "width 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
+        "height 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
+        "border-radius 0.48s ease",
+        "box-shadow 0.48s ease",
+        "opacity 0.15s ease 0.32s",
+      ].join(", "),
+      opacity: 0,
+    }));
+
     setTimeout(() => {
-      setOverlayStyle({
-        transition  : "transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.5s ease, opacity 0.12s ease 0.36s",
-        transform   : buildTransform(rect),
-        borderRadius: getComputedStyle(cardRef.current).borderRadius,
-        opacity     : 0,
-      });
-      setTimeout(() => {
-        setPhaseSync("idle");
-        setOverlayStyle({});
-        onCollapse();
-      }, 520);
-    }, 40);
-  }, [buildTransform, onCollapse]);
+      setIsOpen(false);
+      setIsAnimating(false);
+      setCardStyle({});
+      onCollapse();
+    }, 500);
+  }, [isOpen, isAnimating, onCollapse]);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") close(); };
@@ -190,76 +207,58 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, isActive, 
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
 
-  const isExpanded = phase !== "idle";
-  const isOpen     = phase === "open" || phase === "opening";
+  const isExpanded = isOpen || isAnimating;
 
   return (
     <div className="hero-card-wrapper">
+      {/* Ghost placeholder — keeps layout space while card is fixed */}
+      {isExpanded && <div className="hc-ghost" />}
+
+      {/* Backdrop */}
+      {isExpanded && (
+        <div
+          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
+          onMouseDown={close}
+        />
+      )}
+
+      {/* THE CARD — same element, transitions via CSS */}
       <div
         ref={cardRef}
         className={[
           "hero-card",
-          isExpanded ? "hero-card--ghost"  : "",
-          /* NOTE: we do NOT pass isOtherActive here — that caused re-renders
-             on every other card each time activePanel changed.
-             Instead we use CSS :has() on the parent or handle via backdrop. */
+          isExpanded ? "hero-card--expanded" : "",
         ].filter(Boolean).join(" ")}
+        style={cardStyle}
         onClick={!isExpanded ? open : undefined}
       >
+        {/* Header — always visible */}
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
+
+        {/* Content — only visible when open */}
+        {isExpanded && (
+          <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
+            {panelContent}
+          </div>
+        )}
+
+        {/* Footer */}
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-      </div>
 
-      {isExpanded && createPortal(
-        <>
-          {/* Backdrop — clicking closes */}
-          <div
-            className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
-            onMouseDown={close}
-          />
-          {/* Expanding overlay */}
-          <div className="hc-overlay" style={overlayStyle}>
-            <div className="hc-top hc-overlay-tp">
-              <span className="hc-label">{card.label}</span>
-              <span className="hc-stat">{card.stat(counts)}</span>
-            </div>
-            <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
-              {panelContent}
-            </div>
-            <div className="hc-bottom hc-overlay-bt">
-              <span className="hc-sub">{card.sub}</span>
-              <div className="hc-icon hc-overlay-icon"><card.Icon /></div>
-            </div>
-            <button className="hc-close" onMouseDown={close}>✕</button>
-          </div>
-        </>,
-        document.body
-      )}
+        {/* Close button — only when open */}
+        {isExpanded && (
+          <button className="hc-close" onMouseDown={close}>✕</button>
+        )}
+      </div>
     </div>
   );
 });
-
-/* ── Panel Book Row ── */
-function PanelBookRowMemo({ book, extra }) {
-  return (
-    <div className="panel-book-row">
-      <div className="panel-book-cover">
-        {book.cover_url ? <img src={book.cover_url} alt="" /> : <span>📚</span>}
-      </div>
-      <div className="panel-book-info">
-        <span className="panel-book-title">{book.title}</span>
-        <span className="panel-book-author">{book.author}</span>
-        {extra}
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════════
    Dashboard Page
@@ -310,11 +309,9 @@ export default function DashboardPage() {
 
   const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
 
-  /* Stable callbacks — won't cause HeroCard re-renders */
-  const handleExpand   = useCallback((key) => setActivePanel(key),  []);
-  const handleCollapse = useCallback(()    => setActivePanel(""),   []);
+  const handleExpand   = useCallback((key) => setActivePanel(key), []);
+  const handleCollapse = useCallback(()    => setActivePanel(""),  []);
 
-  /* Panel content — memoized per key so content doesn't rebuild on unrelated renders */
   const getPanelContent = useCallback((key) => {
     const readings = toArray(rawBooks);
     const history  = toArray(rawHistory);
@@ -383,7 +380,6 @@ export default function DashboardPage() {
         {!searched && <h1 className="dash-heading">What would you like to read?</h1>}
 
         {!searched && (
-          /* data-has-active lets CSS dim non-active cards without JS re-renders */
           <div className="dash-hero-cards" data-active={activePanel || undefined}>
             {HERO_CARDS.map(card => (
               <HeroCard
@@ -391,7 +387,6 @@ export default function DashboardPage() {
                 card={card}
                 counts={counts}
                 panelContent={getPanelContent(card.key)}
-                isActive={activePanel === card.key}
                 onExpand={() => handleExpand(card.key)}
                 onCollapse={handleCollapse}
               />
