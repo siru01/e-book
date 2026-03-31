@@ -99,162 +99,126 @@ function SearchResultCard({ book }) {
    - Siblings never re-render (memo + CSS dimming via data-active)
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
-  const cardRef          = useRef(null);
-  const [isOpen,         setIsOpen]         = useState(false);
-  const [isAnimating,    setIsAnimating]    = useState(false);
+  const cardRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
-  const [cardStyle,      setCardStyle]      = useState({});
+  const [cardStyle, setCardStyle] = useState({});
 
   const open = useCallback(() => {
     if (isOpen || isAnimating) return;
     const rect = cardRef.current.getBoundingClientRect();
 
-    // Step 1: pin card to its current exact screen position using fixed
+    // 1. Initial State: Fixed position exactly over the original card
     setCardStyle({
-      position  : "fixed",
-      top       : `${rect.top}px`,
-      left      : `${rect.left}px`,
-      width     : `${rect.width}px`,
-      height    : `${rect.height}px`,
-      margin    : 0,
-      zIndex    : 400,
-      transition: "none",           // no transition yet — just teleport into place
+      position: "fixed",
+      top: `${rect.top}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      margin: 0,
+      zIndex: 400,
+      transition: "none", // No animation for the initial "teleport"
     });
 
     setIsAnimating(true);
     onExpand();
 
-    // Step 2: next frame → switch to open dimensions with transition
+    // 2. Animate to Expanded State
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const openW = Math.min(560, vw * 0.92);
         const openH = Math.min(540, vh * 0.85);
+
         setCardStyle({
-          position    : "fixed",
-          top         : `${(vh - openH) / 2}px`,
-          left        : `${(vw - openW) / 2}px`,
-          width       : `${openW}px`,
-          height      : `${openH}px`,
-          margin      : 0,
-          zIndex      : 400,
+          position: "fixed",
+          top: `${(vh - openH) / 2}px`,
+          left: `${(vw - openW) / 2}px`,
+          width: `${openW}px`,
+          height: `${openH}px`,
+          zIndex: 400,
           borderRadius: "28px",
-          boxShadow   : "0 32px 80px rgba(0,0,0,0.22)",
-          // CSS transition-property: top, left, width, height, border-radius
-          transition  : [
-            "top 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
-            "left 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
-            "width 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
-            "height 0.55s cubic-bezier(0.32, 0.72, 0, 1)",
-            "border-radius 0.55s ease",
-            "box-shadow 0.55s ease",
-          ].join(", "),
+          boxShadow: "0 32px 80px rgba(0,0,0,0.25)",
+          // Use the "Yellow Box" logic: transition multiple properties
+          transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1)",
+          opacity: 1,
         });
         setIsOpen(true);
-        setTimeout(() => {
-          setContentVisible(true);
-          setIsAnimating(false);
-        }, 360);
+        setTimeout(() => setContentVisible(true), 300);
+        setTimeout(() => setIsAnimating(false), 500);
       });
     });
   }, [isOpen, isAnimating, onExpand]);
 
   const close = useCallback(() => {
     if (!isOpen || isAnimating) return;
-    const rect = cardRef.current.getBoundingClientRect();
-
-    setContentVisible(false);
+    
     setIsAnimating(true);
+    setContentVisible(false);
 
-    // Find where the card SHOULD be in the layout (its placeholder position)
-    // The card is currently fixed so we read the ghost placeholder
+    // Find the placeholder (Ghost) to know where to fly back to
     const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
-    const ghostRect = ghost ? ghost.getBoundingClientRect() : rect;
+    const ghostRect = ghost.getBoundingClientRect();
 
-    // Animate back to original card position
+    // 3. Animate BACK with Opacity fade to prevent the "flicker"
     setCardStyle(prev => ({
       ...prev,
-      top         : `${ghostRect.top}px`,
-      left        : `${ghostRect.left}px`,
-      width       : `${ghostRect.width}px`,
-      height      : `${ghostRect.height}px`,
+      top: `${ghostRect.top}px`,
+      left: `${ghostRect.left}px`,
+      width: `${ghostRect.width}px`,
+      height: `${ghostRect.height}px`,
       borderRadius: "20px",
-      boxShadow   : "none",
-      transition  : [
-        "top 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
-        "left 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
-        "width 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
-        "height 0.48s cubic-bezier(0.32, 0.72, 0, 1)",
-        "border-radius 0.48s ease",
-        "box-shadow 0.48s ease",
-        "opacity 0.15s ease 0.32s",
-      ].join(", "),
-      opacity: 0,
+      boxShadow: "none",
+      // IMPORTANT: transition opacity slightly faster than movement to hide the "snap"
+      transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease 0.1s",
+      opacity: 0, 
     }));
 
     setTimeout(() => {
       setIsOpen(false);
       setIsAnimating(false);
-      setCardStyle({});
+      setCardStyle({}); // Reset to original CSS
       onCollapse();
     }, 500);
   }, [isOpen, isAnimating, onCollapse]);
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") close(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [close]);
 
   const isExpanded = isOpen || isAnimating;
 
   return (
     <div className="hero-card-wrapper">
-      {/* Ghost placeholder — keeps layout space while card is fixed */}
-      {isExpanded && <div className="hc-ghost" />}
+      {/* This keeps the gap from moving when the card flies away */}
+      {isExpanded && <div className="hc-ghost" style={{ height: '110px' }} />}
 
-      {/* Backdrop */}
       {isExpanded && (
-        <div
-          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
-          onMouseDown={close}
-        />
+        <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />
       )}
 
-      {/* THE CARD — same element, transitions via CSS */}
       <div
         ref={cardRef}
-        className={[
-          "hero-card",
-          isExpanded ? "hero-card--expanded" : "",
-        ].filter(Boolean).join(" ")}
+        className={`hero-card ${isExpanded ? "hero-card--expanded" : ""}`}
         style={cardStyle}
         onClick={!isExpanded ? open : undefined}
       >
-        {/* Header — always visible */}
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
 
-        {/* Content — only visible when open */}
+        {/* Content only renders when expanded to save performance */}
         {isExpanded && (
           <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
             {panelContent}
           </div>
         )}
 
-        {/* Footer */}
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
 
-        {/* Close button — only when open */}
-        {isExpanded && (
-          <button className="hc-close" onMouseDown={close}>✕</button>
-        )}
+        {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
     </div>
   );

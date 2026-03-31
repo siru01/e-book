@@ -71,22 +71,16 @@
 
 /* Ghost placeholder — holds the exact space of the card while it's fixed/flying */
 .hc-ghost {
-  flex: 1;
-  min-width: 190px;
-  min-height: 130px;
-  border-radius: 20px;
-  background: #f5f5f5;
-  border: 1.5px dashed #e8e8e8;
+  width: 100%;
+  visibility: hidden;
   pointer-events: none;
 }
 
 /* Dim siblings when any card is active — pure CSS, zero re-renders */
 .dash-hero-cards[data-active] .hero-card:not(.hero-card--expanded) {
-  opacity: 0.25;
+  opacity: 0.4;
   filter: grayscale(0.5);
-  transform: scale(0.96);
   pointer-events: none;
-  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
 }
 
 /* ── Backdrop ── */
@@ -132,8 +126,11 @@
 /* Expanded: JS sets position:fixed + top/left/width/height via inline style.
    We just need to ensure the card looks right when big. */
 .hero-card--expanded {
+  margin: 0 !important;
   cursor: default;
-  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Card internals ── */
@@ -143,16 +140,17 @@
 
 /* Middle content area — not rendered when closed, fades in when open */
 .hc-content {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease-out;
   flex: 1;
   overflow-y: auto;
-  display: flex; flex-direction: column; gap: 12px;
-  padding: 16px 0;
-  opacity: 0; transform: translateY(10px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  scrollbar-width: none;
 }
 .hc-content::-webkit-scrollbar { display: none; }
-.hc-content--visible { opacity: 1; transform: translateY(0); }
+.hc-content--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 .hc-bottom { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 16px; flex-shrink: 0; }
 .hc-sub { font-size: .9rem; font-weight: 600; color: #111; max-width: 70%; }
