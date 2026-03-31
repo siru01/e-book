@@ -30,8 +30,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
         model  = Bookmarks
         fields = [
             "id",
-            "book_id",       # e.g. "google:abc123"
-            "source",        # "gutenberg" | "openlibrary" | "google" | "archive"
+            "book_id",       # e.g "google:abc123"
+            "source",        # "openlibrary" | "google"
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]

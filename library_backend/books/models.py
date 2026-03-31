@@ -3,10 +3,9 @@ from users.models import User
 
 
 SOURCE_CHOICES = [
-    ('gutenberg',   'Gutenberg'),
     ('openlibrary', 'Open Library'),
     ('google',      'Google Books'),
-    ('archive',     'Internet Archive'),
+    
 ]
 
 
@@ -22,7 +21,6 @@ class Book(models.Model):
     available_copies = models.IntegerField(default=1)
     cover_url       = models.URLField(blank=True, null=True)
     genre           = models.CharField(max_length=100, blank=True, default="General")
-    gutenberg_id    = models.IntegerField(null=True, blank=True, unique=True)
     read_url        = models.URLField(blank=True, null=True)
     added_by        = models.ForeignKey(
         User,
