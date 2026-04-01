@@ -213,7 +213,10 @@ class BookSearchView(APIView):
 
         results = aggregator.search_all(query)
         payload = {"results": results, "count": len(results)}
-        cache.set(cache_key, payload, 60 * 30)
+
+        if results:
+            cache.set(cache_key, payload, 60 * 30)
+
         return Response(payload)
 
 
@@ -269,8 +272,6 @@ class NewArrivalsView(APIView):
 
 # ─────────────────────────────────────────────
 # BOOK TEXT PROXY  — GET /api/books/read/
-# Returns { title, author, cover_url, text, source,
-#           description, subjects, bookshelves, year }
 # ─────────────────────────────────────────────
 class BookReadView(APIView):
     permission_classes     = [AllowAny]
@@ -306,28 +307,44 @@ class BookReadView(APIView):
 
     # ── Gutenberg ─────────────────────────────────────────────────
     def _fetch_gutenberg(self, gutenberg_id: str):
-        # ── Metadata from Gutendex ────────────────────────────
-        meta_r = httpx.get(
-            f"https://gutendex.com/books/{gutenberg_id}",
-            timeout=15
-        )
-        meta_r.raise_for_status()
-        meta = meta_r.json()
+        # Step 1: get metadata from gutendex with redirect fix
+        try:
+            meta_r = httpx.get(
+                f"https://gutendex.com/books/{gutenberg_id}",
+                timeout=10,
+                follow_redirects=True
+            )
+            meta_r.raise_for_status()
+            meta        = meta_r.json()
+            title       = meta.get("title", f"Book #{gutenberg_id}")
+            authors     = meta.get("authors", [])
+            author      = authors[0].get("name", "Unknown") if authors else "Unknown"
+            formats     = meta.get("formats", {})
+            cover_url   = formats.get("image/jpeg", "")
+            subjects    = meta.get("subjects",    [])[:8]
+            bookshelves = meta.get("bookshelves", [])[:8]
+            text_url    = (
+                formats.get("text/plain; charset=utf-8") or
+                formats.get("text/plain; charset=us-ascii") or
+                formats.get("text/plain") or
+                ""
+            )
+        except Exception:
+            title       = f"Project Gutenberg Book #{gutenberg_id}"
+            author      = "Unknown"
+            cover_url   = ""
+            subjects    = []
+            bookshelves = []
+            text_url    = ""
 
-        title   = meta.get("title", "Untitled")
-        authors = meta.get("authors", [])
-        author  = authors[0].get("name", "Unknown") if authors else "Unknown"
-        formats = meta.get("formats", {})
-
-        cover_url   = formats.get("image/jpeg", "")
-        subjects    = meta.get("subjects",    [])[:8]
-        bookshelves = meta.get("bookshelves", [])[:8]
-
-        # ── Plain text: UTF-8 cache first, ASCII fallback ─────
-        text_urls = [
+        # Step 2: fetch text — use gutendex-provided URL first, then fallbacks
+        text_urls = list(filter(None, [
+            text_url,
             f"https://www.gutenberg.org/cache/epub/{gutenberg_id}/pg{gutenberg_id}.txt",
             f"https://www.gutenberg.org/files/{gutenberg_id}/{gutenberg_id}-0.txt",
-        ]
+            f"https://www.gutenberg.org/files/{gutenberg_id}/{gutenberg_id}.txt",
+        ]))
+
         text = None
         for url in text_urls:
             try:
@@ -341,8 +358,8 @@ class BookReadView(APIView):
         if text is None:
             text = (
                 f"{title}\nby {author}\n\n"
-                "──────────────────────────────────────\n\n"
-                "Plain text could not be loaded at this time.\n"
+                f"{'─' * 40}\n\n"
+                f"Plain text could not be loaded at this time.\n\n"
                 f"Read it directly at: https://www.gutenberg.org/ebooks/{gutenberg_id}"
             )
 
