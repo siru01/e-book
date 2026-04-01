@@ -8,7 +8,7 @@ import {
   useMyBooks,
   useMyHistory,
   useMyBookmarks,
-  useShelfRows,          // ✦ RENAMED from useGutenbergRows
+  useShelfRows,
 } from "../hooks/useDashboardData";
 
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
@@ -25,11 +25,11 @@ const IconBell     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill=
 const IconUser     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 
 const HERO_CARDS = [
-  { key: "recent",          label: "RECENT READINGS", sub: "Continue where you left", Icon: IconBook,     stat: (c) => `${c.books} BOOKS`   },
-  { key: "bookmarks",       label: "BOOKMARKS",        sub: "Your saved excerpts",    Icon: IconBookmark, stat: (c) => `${c.marks} MARKS`   },
-  { key: "calendar",        label: "CALENDAR",         sub: "Daily reading schedule", Icon: IconCal,      stat: (c) => `STREAK ${c.streak}` },
-  { key: "history",         label: "HISTORY",          sub: "Review your journey",    Icon: IconHistory,  stat: ()  => "FULL LOG"            },
-  { key: "previously_read", label: "FINISHED",         sub: "Your completed library", Icon: IconCheck,    stat: (c) => `${c.done} DONE`      },
+  { key: "recent",          label: "RECENT READINGS", sub: "Continue",  Icon: IconBook,     stat: (c) => `${c.books} BOOKS`   },
+  { key: "bookmarks",       label: "BOOKMARKS",        sub: "Saved",     Icon: IconBookmark, stat: (c) => `${c.marks} MARKS`   },
+  { key: "calendar",        label: "CALENDAR",         sub: "Routine",   Icon: IconCal,      stat: (c) => `STREAK ${c.streak}` },
+  { key: "history",         label: "HISTORY",          sub: "Journey",   Icon: IconHistory,  stat: ()  => "FULL LOG"           },
+  { key: "previously_read", label: "FINISHED",         sub: "Completed", Icon: IconCheck,    stat: (c) => `${c.done} DONE`     },
 ];
 
 /* ── Panel Book Row ── */
@@ -52,8 +52,7 @@ function PanelBookRow({ book, extra }) {
 function BookCard({ book }) {
   const navigate = useNavigate();
   return (
-    // ✦ CHANGED: /read/ → /book/ (goes to BookOverviewPage first)
-    <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>  
+    <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
       <div className="book-card-cover">
         {book.cover
           ? <img src={book.cover} alt={book.title} loading="lazy" />
@@ -72,8 +71,7 @@ function BookCard({ book }) {
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
   return (
-    // ✦ CHANGED: /read/ → /book/ (goes to BookOverviewPage first)
-    <div className="src-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>  
+    <div className="src-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
       <div className="src-card-cover">
         {book.cover ? <img src={book.cover} alt="" loading="lazy" /> : <span>📖</span>}
       </div>
@@ -86,84 +84,96 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — Pure CSS transition (unchanged)
+   HeroCard
+   FIX: Direct DOM style manipulation + forced reflow eliminates
+   the jitter caused by React batching the two setCardStyle calls
+   into a single commit (browser never saw the intermediate snap).
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
   const cardRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isOpen,         setIsOpen]         = useState(false);
+  const [isAnimating,    setIsAnimating]    = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
-  const [cardStyle, setCardStyle] = useState({});
 
+  /* ── OPEN ── */
   const open = useCallback(() => {
     if (isOpen || isAnimating) return;
-    const rect = cardRef.current.getBoundingClientRect();
-
-    setCardStyle({
-      position: "fixed",
-      top: `${rect.top}px`,
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-      height: `${rect.height}px`,
-      margin: 0,
-      zIndex: 400,
-      transition: "none",
-    });
+    const el   = cardRef.current;
+    const rect = el.getBoundingClientRect();
 
     setIsAnimating(true);
     onExpand();
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const openW = Math.min(560, vw * 0.92);
-        const openH = Math.min(540, vh * 0.85);
-
-        setCardStyle({
-          position: "fixed",
-          top: `${(vh - openH) / 2}px`,
-          left: `${(vw - openW) / 2}px`,
-          width: `${openW}px`,
-          height: `${openH}px`,
-          zIndex: 400,
-          borderRadius: "28px",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.25)",
-          transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1)",
-          opacity: 1,
-        });
-        setIsOpen(true);
-        setTimeout(() => setContentVisible(true), 300);
-        setTimeout(() => setIsAnimating(false), 500);
-      });
+    // Step 1: snap card to its exact current position via direct DOM write.
+    // This bypasses React batching — the browser sees this style immediately.
+    Object.assign(el.style, {
+      position:   "fixed",
+      top:        `${rect.top}px`,
+      left:       `${rect.left}px`,
+      width:      `${rect.width}px`,
+      height:     `${rect.height}px`,
+      margin:     "0",
+      zIndex:     "400",
+      transition: "none",
     });
+
+    // Step 2: force a synchronous reflow. The browser MUST commit the snapped
+    // position to layout before continuing — this is the critical line.
+    // Without it, the browser batches step 1 + step 3 together and the card
+    // jumps straight to final size (the visible jitter).
+    void el.getBoundingClientRect();
+
+    // Step 3: apply transition + final expanded dimensions.
+    // Browser now has a real "from" position to animate from — no jump.
+    const vw   = window.innerWidth;
+    const vh   = window.innerHeight;
+    const openW = Math.min(560, vw * 0.92);
+    const openH = Math.min(540, vh * 0.85);
+    const ease  = "0.5s cubic-bezier(0.2,0,0,1)";
+
+    Object.assign(el.style, {
+      top:          `${(vh - openH) / 2}px`,
+      left:         `${(vw - openW) / 2}px`,
+      width:        `${openW}px`,
+      height:       `${openH}px`,
+      borderRadius: "28px",
+      boxShadow:    "0 32px 80px rgba(0,0,0,0.25)",
+      transition:   `top ${ease}, left ${ease}, width ${ease}, height ${ease}, border-radius ${ease}, box-shadow ${ease}`,
+    });
+
+    setIsOpen(true);
+    setTimeout(() => setContentVisible(true), 300);
+    setTimeout(() => setIsAnimating(false), 500);
   }, [isOpen, isAnimating, onExpand]);
 
+  /* ── CLOSE ── */
   const close = useCallback(() => {
     if (!isOpen || isAnimating) return;
+
+    const el        = cardRef.current;
+    const ghost     = el.parentElement.querySelector(".hc-ghost");
+    const ghostRect = ghost.getBoundingClientRect();
+    const ease      = "0.5s cubic-bezier(0.2,0,0,1)";
 
     setIsAnimating(true);
     setContentVisible(false);
 
-    const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
-    const ghostRect = ghost.getBoundingClientRect();
-
-    setCardStyle(prev => ({
-      ...prev,
-      top: `${ghostRect.top}px`,
-      left: `${ghostRect.left}px`,
-      width: `${ghostRect.width}px`,
-      height: `${ghostRect.height}px`,
+    // Slide back to ghost position — direct DOM write, no React batching delay
+    Object.assign(el.style, {
+      top:          `${ghostRect.top}px`,
+      left:         `${ghostRect.left}px`,
+      width:        `${ghostRect.width}px`,
+      height:       `${ghostRect.height}px`,
       borderRadius: "20px",
-      boxShadow: "none",
-      transition: "all 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease 0.1s",
-      opacity: 0,
-    }));
+      boxShadow:    "none",
+      transition:   `top ${ease}, left ${ease}, width ${ease}, height ${ease}, border-radius ${ease}, box-shadow ${ease}`,
+    });
 
     setTimeout(() => {
       setIsOpen(false);
       setIsAnimating(false);
-      setCardStyle({});
+      // Wipe all inline styles — CSS classes fully take over again
+      el.style.cssText = "";
       onCollapse();
     }, 500);
   }, [isOpen, isAnimating, onCollapse]);
@@ -172,14 +182,16 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
 
   return (
     <div className="hero-card-wrapper">
-      {isExpanded && <div className="hc-ghost" style={{ height: '110px' }} />}
+      {isExpanded && <div className="hc-ghost" style={{ height: "130px" }} />}
       {isExpanded && (
-        <div className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`} onMouseDown={close} />
+        <div
+          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
+          onMouseDown={close}
+        />
       )}
       <div
         ref={cardRef}
         className={`hero-card ${isExpanded ? "hero-card--expanded" : ""}`}
-        style={cardStyle}
         onClick={!isExpanded ? open : undefined}
       >
         <div className="hc-top">
@@ -195,7 +207,9 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-        {isExpanded && <button className="hc-close" onMouseDown={close}>✕</button>}
+        {isExpanded && (
+          <button className="hc-close" onMouseDown={close}>✕</button>
+        )}
       </div>
     </div>
   );
@@ -226,7 +240,6 @@ export default function DashboardPage() {
   const { data: rawBooks     = [] } = useMyBooks(token);
   const { data: rawHistory   = [] } = useMyHistory(token);
   const { data: rawBookmarks = [] } = useMyBookmarks(token);
-  // ✦ RENAMED: useGutenbergRows → useShelfRows, gutenbergRows → shelfRows
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
   const counts = useMemo(() => ({
@@ -353,7 +366,6 @@ export default function DashboardPage() {
           <div className="dash-shelves">
             {rowsLoading
               ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
-              // ✦ RENAMED: gutenbergRows → shelfRows
               : shelfRows.map(row => (
                   <div key={row.label} className="dash-shelf">
                     <div className="dash-shelf-header">
@@ -371,4 +383,4 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-} 
+}

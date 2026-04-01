@@ -39,7 +39,7 @@ def search_all(query: str, page: int = 1, sources: list = None) -> list:
     results = _run_ordered([
         lambda: gutendex.search(query, page),
         lambda: archive.search(query, page),
-        #lambda: openlibrary.search(query, page),
+        lambda: openlibrary.search(query, page),
         #lambda: google_books.search(query, page),
     ])
     return _deduplicate(results)
@@ -50,7 +50,7 @@ def trending_all() -> list:
     results = _run_ordered([
         lambda: gutendex.trending(),
         lambda: archive.search("popular books", 1),
-        #lambda: openlibrary.search("bestseller", 1),
+        lambda: openlibrary.search("bestseller", 1),
         #lambda: google_books.search("bestseller", 1),
     ])
     return _deduplicate(results)
@@ -60,7 +60,7 @@ def new_arrivals_all() -> list:
     # Order: gutendex → openlibrary → google_books
     results = _run_ordered([
         lambda: gutendex.trending(),
-        #lambda: openlibrary.search("new releases 2024", 1),
+        lambda: openlibrary.search("new releases 2024", 1),
         #lambda: google_books.search("new releases 2024", 1),
     ])
     return _deduplicate(results)
