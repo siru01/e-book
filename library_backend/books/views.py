@@ -1,3 +1,4 @@
+import re
 from django_filters.rest_framework import DjangoFilterBackend
 from .services import aggregator
 from .permissions import IsAdminOrLibrarianOrReadOnly
@@ -11,12 +12,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 import httpx
 
-# ─────────────────────────────────────────────
-# SHELF CACHE TTL — 24 hours
-# Matches frontend staleTime so the 4 dashboard
-# shelf rows are only fetched from the external
-# APIs (Open Library / Google Books) once per day.
-# ─────────────────────────────────────────────
 SHELF_CACHE_TTL = 60 * 60 * 24   # 86400 seconds
 
 
@@ -147,7 +142,7 @@ class MyReadingHistoryView(APIView):
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        source  = request.data.get("source", "openlibrary")
+        source  = request.data.get("source", "gutenberg")
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
         obj, created = ReadingHistory.objects.get_or_create(
@@ -175,7 +170,7 @@ class MyBookmarksView(APIView):
 
     def post(self, request):
         book_id = request.data.get("book_id")
-        source  = request.data.get("source", "openlibrary")
+        source  = request.data.get("source", "gutenberg")
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
         obj, created = Bookmarks.objects.get_or_create(
@@ -207,21 +202,22 @@ class BookSearchView(APIView):
     authentication_classes = []
 
     def get(self, request):
-        query   = request.GET.get("q", "").strip()
-        page    = int(request.GET.get("page", 1))
-        sources = request.GET.get("sources", "").split(",") if request.GET.get("sources") else None
+        query = request.GET.get("q", "").strip()
         if not query:
             return Response({"error": "q parameter required"}, status=400)
-        results = aggregator.search_all(query, page=page, sources=sources)
-        return Response({"results": results, "page": page, "count": len(results)})
+
+        cache_key = f"shelf:search:{query.lower()}"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        results = aggregator.search_all(query)
+        payload = {"results": results, "count": len(results)}
+        cache.set(cache_key, payload, 60 * 30)
+        return Response(payload)
 
 
 class TrendingView(APIView):
-    """
-    GET /api/books/trending/
-    Cached in Upstash Redis for 24 hours.
-    External API is only called on first request of the day.
-    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
@@ -238,11 +234,6 @@ class TrendingView(APIView):
 
 
 class CategoryView(APIView):
-    """
-    GET /api/books/category/?genre=<genre>
-    Cached in Upstash Redis for 24 hours per genre.
-    Dashboard only calls: science+fiction, mystery.
-    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
@@ -261,11 +252,6 @@ class CategoryView(APIView):
 
 
 class NewArrivalsView(APIView):
-    """
-    GET /api/books/new-arrivals/
-    Cached in Upstash Redis for 24 hours.
-    External API is only called on first request of the day.
-    """
     permission_classes     = [AllowAny]
     authentication_classes = []
 
@@ -283,7 +269,8 @@ class NewArrivalsView(APIView):
 
 # ─────────────────────────────────────────────
 # BOOK TEXT PROXY  — GET /api/books/read/
-# Returns { title, author, cover_url, text, source }
+# Returns { title, author, cover_url, text, source,
+#           description, subjects, bookshelves, year }
 # ─────────────────────────────────────────────
 class BookReadView(APIView):
     permission_classes     = [AllowAny]
@@ -297,21 +284,81 @@ class BookReadView(APIView):
         if ":" in book_id:
             source, raw_id = book_id.split(":", 1)
         else:
-            source = "openlibrary"
+            source = "gutenberg"
             raw_id = book_id
 
         try:
-            if source == "archive":
+            if source == "gutenberg":
+                return self._fetch_gutenberg(raw_id)
+            elif source == "archive":
                 return self._fetch_archive(raw_id)
             elif source == "openlibrary":
                 return self._fetch_openlibrary(raw_id)
             elif source == "google":
                 return self._fetch_google(raw_id)
             else:
-                return Response({"error": f"Unknown source: {source}. Supported: openlibrary, google, archive"}, status=400)
+                return Response(
+                    {"error": f"Unknown source: {source}. Supported: gutenberg, openlibrary, google, archive"},
+                    status=400
+                )
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+    # ── Gutenberg ─────────────────────────────────────────────────
+    def _fetch_gutenberg(self, gutenberg_id: str):
+        # ── Metadata from Gutendex ────────────────────────────
+        meta_r = httpx.get(
+            f"https://gutendex.com/books/{gutenberg_id}",
+            timeout=15
+        )
+        meta_r.raise_for_status()
+        meta = meta_r.json()
+
+        title   = meta.get("title", "Untitled")
+        authors = meta.get("authors", [])
+        author  = authors[0].get("name", "Unknown") if authors else "Unknown"
+        formats = meta.get("formats", {})
+
+        cover_url   = formats.get("image/jpeg", "")
+        subjects    = meta.get("subjects",    [])[:8]
+        bookshelves = meta.get("bookshelves", [])[:8]
+
+        # ── Plain text: UTF-8 cache first, ASCII fallback ─────
+        text_urls = [
+            f"https://www.gutenberg.org/cache/epub/{gutenberg_id}/pg{gutenberg_id}.txt",
+            f"https://www.gutenberg.org/files/{gutenberg_id}/{gutenberg_id}-0.txt",
+        ]
+        text = None
+        for url in text_urls:
+            try:
+                t_r = httpx.get(url, timeout=20, follow_redirects=True)
+                if t_r.status_code == 200:
+                    text = t_r.text[:300000]
+                    break
+            except Exception:
+                continue
+
+        if text is None:
+            text = (
+                f"{title}\nby {author}\n\n"
+                "──────────────────────────────────────\n\n"
+                "Plain text could not be loaded at this time.\n"
+                f"Read it directly at: https://www.gutenberg.org/ebooks/{gutenberg_id}"
+            )
+
+        return Response({
+            "title":       title,
+            "author":      author,
+            "cover_url":   cover_url,
+            "source":      "gutenberg",
+            "description": "",
+            "subjects":    subjects,
+            "bookshelves": bookshelves,
+            "year":        None,
+            "text":        text,
+        })
+
+    # ── Archive.org ───────────────────────────────────────────────
     def _fetch_archive(self, identifier):
         meta_r = httpx.get(f"https://archive.org/metadata/{identifier}", timeout=15)
         meta_r.raise_for_status()
@@ -320,6 +367,18 @@ class BookReadView(APIView):
         title     = m.get("title", "Untitled")
         creator   = m.get("creator", "Unknown")
         cover_url = f"https://archive.org/services/img/{identifier}"
+        desc      = m.get("description", "")
+        if isinstance(desc, list):
+            desc = " ".join(desc)
+        subjects  = m.get("subject", [])
+        if isinstance(subjects, str):
+            subjects = [subjects]
+        year_raw  = m.get("year") or m.get("date", "")
+        year      = None
+        if year_raw:
+            y = re.search(r"\d{4}", str(year_raw))
+            if y:
+                year = int(y.group())
 
         files     = meta.get("files", [])
         text_file = None
@@ -329,27 +388,33 @@ class BookReadView(APIView):
                 text_file = name
                 break
 
+        def _fallback_text():
+            t = "Full plain-text is not freely available for this Archive.org item.\n\n"
+            if desc:
+                t += f"---\n\n{desc}\n\n---\n\n"
+            t += "You can use this app to track your reading status or borrow the physical book from your local library."
+            return t
+
+        def _base():
+            return {
+                "title":       title,
+                "author":      creator,
+                "cover_url":   cover_url,
+                "source":      "archive",
+                "description": desc,
+                "subjects":    subjects,
+                "bookshelves": [],
+                "year":        year,
+            }
+
         if not text_file:
             stream_url = f"https://archive.org/stream/{identifier}/{identifier}_djvu.txt"
             try:
                 text_r = httpx.get(stream_url, timeout=20, follow_redirects=True)
                 text_r.raise_for_status()
-                return Response({
-                    "title": title, "author": creator,
-                    "cover_url": cover_url, "source": "archive",
-                    "text": text_r.text[:300000],
-                })
+                return Response({**_base(), "text": text_r.text[:300000]})
             except Exception:
-                fallback_text = f"Full plain-text is not freely available for this Archive.org item.\n\n"
-                if desc:
-                    fallback_text += f"---\n\n{desc}\n\n---\n\n"
-                fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
-
-                return Response({
-                    "title": title, "author": creator,
-                    "cover_url": cover_url, "source": "archive",
-                    "text": fallback_text,
-                })
+                return Response({**_base(), "text": _fallback_text()})
 
         try:
             text_url = f"https://archive.org/download/{identifier}/{text_file}"
@@ -357,18 +422,11 @@ class BookReadView(APIView):
             text_r.raise_for_status()
             text = text_r.text[:300000]
         except Exception:
-            fallback_text = f"Full plain-text is not freely available for this Archive.org item.\n\n"
-            if desc:
-                fallback_text += f"---\n\n{desc}\n\n---\n\n"
-            fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
-            text = fallback_text
+            text = _fallback_text()
 
-        return Response({
-            "title": title, "author": creator,
-            "cover_url": cover_url, "source": "archive",
-            "text": text,
-        })
+        return Response({**_base(), "text": text})
 
+    # ── Open Library ─────────────────────────────────────────────
     def _fetch_openlibrary(self, ol_id):
         work_r = httpx.get(f"https://openlibrary.org/works/{ol_id}.json", timeout=15)
         work_r.raise_for_status()
@@ -376,6 +434,13 @@ class BookReadView(APIView):
         title     = work.get("title", "Untitled")
         cover_id  = work.get("covers", [None])[0]
         cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg" if cover_id else ""
+
+        desc = work.get("description", "")
+        if isinstance(desc, dict):
+            desc = desc.get("value", "")
+
+        subjects    = work.get("subjects",    [])[:8]
+        bookshelves = work.get("bookshelves", [])[:8]
 
         author = "Unknown"
         try:
@@ -386,39 +451,58 @@ class BookReadView(APIView):
         except Exception:
             pass
 
-        editions_r = httpx.get(
-            f"https://openlibrary.org/works/{ol_id}/editions.json?limit=10",
-            timeout=15
-        )
-        editions_r.raise_for_status()
-        editions = editions_r.json().get("entries", [])
-
         ia_id = None
-        for ed in editions:
-            ia_ids = ed.get("ocaid") or ed.get("ia") or []
-            if isinstance(ia_ids, str):
-                ia_ids = [ia_ids]
-            if ia_ids:
-                ia_id = ia_ids[0]
-                break
+        year  = None
+        try:
+            editions_r = httpx.get(
+                f"https://openlibrary.org/works/{ol_id}/editions.json?limit=10",
+                timeout=15
+            )
+            editions_r.raise_for_status()
+            for ed in editions_r.json().get("entries", []):
+                if not year:
+                    pd = ed.get("publish_date", "")
+                    if pd:
+                        y = re.search(r"\d{4}", str(pd))
+                        if y:
+                            year = int(y.group())
+                if not ia_id:
+                    ia_ids = ed.get("ocaid") or ed.get("ia") or []
+                    if isinstance(ia_ids, str):
+                        ia_ids = [ia_ids]
+                    if ia_ids:
+                        ia_id = ia_ids[0]
+                if ia_id and year:
+                    break
+        except Exception:
+            pass
+
+        def _base():
+            return {
+                "title":       title,
+                "author":      author,
+                "cover_url":   cover_url,
+                "source":      "openlibrary",
+                "description": desc,
+                "subjects":    subjects,
+                "bookshelves": bookshelves,
+                "year":        year,
+            }
 
         if not ia_id:
-            desc = work.get("description", "")
-            if isinstance(desc, dict):
-                desc = desc.get("value", "")
-            
-            fallback_text = f"Full plain-text is not freely available for this edition on Open Library.\n\n"
-            if desc:
-                fallback_text += f"---\n\n{desc}\n\n---\n\n"
-            fallback_text += "You can use this app to track your reading status or borrow the physical book from your local library."
+            fallback = (
+                "Full plain-text is not freely available for this edition on Open Library.\n\n"
+                + (f"---\n\n{desc}\n\n---\n\n" if desc else "")
+                + "You can use this app to track your reading status or borrow the physical book from your local library."
+            )
+            return Response({**_base(), "text": fallback})
 
-            return Response({
-                "title": title, "author": author, "cover_url": cover_url,
-                "source": "openlibrary", "text": fallback_text
-            })
+        archive_resp = self._fetch_archive(ia_id)
+        merged = {**archive_resp.data, **_base()}
+        merged["text"] = archive_resp.data.get("text", "")
+        return Response(merged)
 
-        return self._fetch_archive(ia_id)
-
+    # ── Google Books ──────────────────────────────────────────────
     def _fetch_google(self, google_id):
         from django.conf import settings
         params  = {}
@@ -439,6 +523,23 @@ class BookReadView(APIView):
         cover_url = info.get("imageLinks", {}).get("thumbnail", "").replace("http://", "https://")
         access    = item.get("accessInfo", {})
 
+        description = info.get("description", "")
+        subjects    = info.get("categories", [])
+        year_str    = info.get("publishedDate", "")
+        year        = int(year_str[:4]) if year_str and year_str[:4].isdigit() else None
+
+        def _base():
+            return {
+                "title":       title,
+                "author":      author,
+                "cover_url":   cover_url,
+                "source":      "google",
+                "description": description,
+                "subjects":    subjects,
+                "bookshelves": [],
+                "year":        year,
+            }
+
         download_url = (
             access.get("epub", {}).get("downloadLink") or
             access.get("pdf",  {}).get("downloadLink") or ""
@@ -447,23 +548,14 @@ class BookReadView(APIView):
             try:
                 text_r = httpx.get(download_url, timeout=20, follow_redirects=True)
                 text_r.raise_for_status()
-                return Response({
-                    "title": title, "author": author,
-                    "cover_url": cover_url, "source": "google",
-                    "text": text_r.text[:300000],
-                })
+                return Response({**_base(), "text": text_r.text[:300000]})
             except Exception:
                 pass
 
-        description  = info.get("description", "")
         preview_text = (
             f"{title}\nby {author}\n\n{'─' * 40}\n\n"
             f"{description}\n\n{'─' * 40}\n\n"
             f"Full text not available (may be under copyright).\n"
             f"Visit: https://books.google.com/books?id={google_id}"
         )
-        return Response({
-            "title": title, "author": author,
-            "cover_url": cover_url, "source": "google",
-            "text": preview_text,
-        })
+        return Response({**_base(), "text": preview_text})

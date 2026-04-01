@@ -99,3 +99,22 @@ def by_category(genre: str, page: int = 1):
 
     set_cached("category", results, source="openlibrary", genre=genre, page=page)
     return results
+
+def new_arrivals():
+    cached = get_cached("new_arrivals", source="openlibrary")
+    if cached:
+        return cached
+    resp = requests.get(
+        f"{BASE_URL}/search.json",
+        params={
+            "q": "new books",
+            "sort": "new",
+            "limit": 20,
+            "fields": "key,title,author_name,cover_i,subject,first_publish_year,first_sentence,ia"
+        },
+        timeout=15
+    )
+    resp.raise_for_status()
+    results = [_normalize(d) for d in resp.json().get("docs", [])]
+    set_cached("new_arrivals", results, source="openlibrary")
+    return results

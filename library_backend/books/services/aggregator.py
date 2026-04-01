@@ -1,11 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from . import openlibrary, google_books, archive
-
-ALL_SOURCES = {
-    "openlibrary": openlibrary,
-    "google":      google_books,
-    "archive":     archive,
-}
+from . import openlibrary, google_books, gutendex, archive
 
 
 def _run_parallel(fn_map: dict) -> list:
@@ -22,11 +16,12 @@ def _run_parallel(fn_map: dict) -> list:
 
 
 def _deduplicate(books: list) -> list:
-    seen = set()
+    seen   = set()
     unique = []
     for book in books:
-        title_key  = book["title"].lower().strip()[:40]
-        author_key = (book["authors"][0].lower().strip()[:20] if book["authors"] else "")
+        title_key  = book.get("title",   "").lower().strip()[:40]
+        authors    = book.get("authors", [])
+        author_key = authors[0].lower().strip()[:20] if authors else ""
         fp = f"{title_key}|{author_key}"
         if fp not in seen:
             seen.add(fp)
@@ -35,30 +30,34 @@ def _deduplicate(books: list) -> list:
 
 
 def search_all(query: str, page: int = 1, sources: list = None) -> list:
-    sources = sources or list(ALL_SOURCES.keys())
+    # Gutendex + Archive only — both have free text available
     fn_map = {
-        s: (lambda mod=ALL_SOURCES[s]: mod.search(query, page))
-        for s in sources if s in ALL_SOURCES
+        "gutendex": lambda: gutendex.search(query, page),
+        "archive":  lambda: archive.search(query, page),
     }
-    return _deduplicate(_run_parallel(fn_map))
+    results = _run_parallel(fn_map)
+    return _deduplicate(results)
 
 
 def trending_all() -> list:
-    fn_map = {s: (lambda mod=m: mod.trending()) for s, m in ALL_SOURCES.items()}
-    return _deduplicate(_run_parallel(fn_map))
+    try:
+        return _deduplicate(gutendex.trending())
+    except Exception as e:
+        print(f"[aggregator] gutendex trending failed: {e}")
+        return []
 
 
 def category_all(genre: str, page: int = 1) -> list:
-    fn_map = {
-        s: (lambda mod=m: mod.by_category(genre, page))
-        for s, m in ALL_SOURCES.items()
-    }
-    return _deduplicate(_run_parallel(fn_map))
+    try:
+        return _deduplicate(gutendex.by_category(genre, page))
+    except Exception as e:
+        print(f"[aggregator] gutendex category failed: {e}")
+        return []
 
 
 def new_arrivals_all() -> list:
-    fn_map = {
-        "google":      lambda: google_books.new_arrivals(),
-        "openlibrary": lambda: openlibrary.new_arrivals(),
-    }
-    return _deduplicate(_run_parallel(fn_map))
+    try:
+        return _deduplicate(gutendex.trending())
+    except Exception as e:
+        print(f"[aggregator] gutendex new_arrivals failed: {e}")
+        return []

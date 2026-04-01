@@ -132,7 +132,7 @@ CACHE_TTL = {
 }
 
 # ─── Google Books API Key ────────────────────────────────────
-GOOGLE_BOOKS_API_KEY = ""           # add your key here later
+GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY", "")     
 
 
 

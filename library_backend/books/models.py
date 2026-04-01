@@ -3,9 +3,9 @@ from users.models import User
 
 
 SOURCE_CHOICES = [
+    ('gutenberg',   'Gutenberg'),
     ('openlibrary', 'Open Library'),
     ('google',      'Google Books'),
-    
 ]
 
 
