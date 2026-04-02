@@ -81,7 +81,7 @@
   pointer-events: none;
 }
 
-/* ── Backdrop (invisible — just catches clicks to close) ── */
+/* Backdrop — transparent click-catcher, only visible while open */
 .hc-backdrop {
   position: fixed; inset: 0;
   z-index: 300;
@@ -102,7 +102,6 @@
   min-height: 130px;
   width: 100%;
   overflow: hidden;
-  /* CSS transition only for hover — position/size animated via inline style by JS */
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   will-change: top, left, width, height, border-radius;
 }

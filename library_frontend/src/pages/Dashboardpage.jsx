@@ -84,130 +84,159 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard
-   FIX: Direct DOM style manipulation + forced reflow eliminates
-   the jitter caused by React batching the two setCardStyle calls
-   into a single commit (browser never saw the intermediate snap).
+   HeroCard — state machine:
+
+     closed   isOpen:false  isClosing:false   card in flex flow, static position
+     open     isOpen:true   isClosing:false   card fixed+expanded, ghost holds space
+     closing  isOpen:false  isClosing:true    card fixed+shrinking back, ghost holds space
+                                              ✕ and panel already gone (isOpen=false)
+
+   The end-of-close snap fix:
+     When the 500ms timeout fires at close end, the card switches from
+     position:fixed → static. That layout change was visible as a jump.
+     Fix: we fade opacity to 0 for the last 80ms so the snap is invisible.
+
+   The ✕ lingering fix:
+     ✕ and hc-content now render only when {isOpen} (not isAnimating),
+     so they disappear the instant close() is called, before animation starts.
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
-  const cardRef = useRef(null);
+  const cardRef  = useRef(null);
+  const timer1   = useRef(null);
+  const timer2   = useRef(null);
+
   const [isOpen,         setIsOpen]         = useState(false);
-  const [isAnimating,    setIsAnimating]    = useState(false);
+  const [isClosing,      setIsClosing]      = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
+  const [cardStyle,      setCardStyle]      = useState({});
+
+  const ghostVisible = isOpen || isClosing;
+  const isAnimating  = isOpen || isClosing;
 
   /* ── OPEN ── */
   const open = useCallback(() => {
-    if (isOpen || isAnimating) return;
-    const el   = cardRef.current;
-    const rect = el.getBoundingClientRect();
+    if (isAnimating) return;
+    const rect = cardRef.current.getBoundingClientRect();
 
-    setIsAnimating(true);
-    onExpand();
-
-    // Step 1: snap card to its exact current position via direct DOM write.
-    // This bypasses React batching — the browser sees this style immediately.
-    Object.assign(el.style, {
+    setCardStyle({
       position:   "fixed",
       top:        `${rect.top}px`,
       left:       `${rect.left}px`,
       width:      `${rect.width}px`,
       height:     `${rect.height}px`,
-      margin:     "0",
-      zIndex:     "400",
+      margin:     0,
+      zIndex:     400,
       transition: "none",
     });
 
-    // Step 2: force a synchronous reflow. The browser MUST commit the snapped
-    // position to layout before continuing — this is the critical line.
-    // Without it, the browser batches step 1 + step 3 together and the card
-    // jumps straight to final size (the visible jitter).
-    void el.getBoundingClientRect();
-
-    // Step 3: apply transition + final expanded dimensions.
-    // Browser now has a real "from" position to animate from — no jump.
-    const vw   = window.innerWidth;
-    const vh   = window.innerHeight;
-    const openW = Math.min(560, vw * 0.92);
-    const openH = Math.min(540, vh * 0.85);
-    const ease  = "0.5s cubic-bezier(0.2,0,0,1)";
-
-    Object.assign(el.style, {
-      top:          `${(vh - openH) / 2}px`,
-      left:         `${(vw - openW) / 2}px`,
-      width:        `${openW}px`,
-      height:       `${openH}px`,
-      borderRadius: "28px",
-      boxShadow:    "0 32px 80px rgba(0,0,0,0.25)",
-      transition:   `top ${ease}, left ${ease}, width ${ease}, height ${ease}, border-radius ${ease}, box-shadow ${ease}`,
-    });
-
     setIsOpen(true);
-    setTimeout(() => setContentVisible(true), 300);
-    setTimeout(() => setIsAnimating(false), 500);
-  }, [isOpen, isAnimating, onExpand]);
+    onExpand();
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const vw    = window.innerWidth;
+          const vh    = window.innerHeight;
+          const openW = Math.min(560, vw * 0.92);
+          const openH = Math.min(540, vh * 0.85);
+
+          setCardStyle({
+            position:     "fixed",
+            top:          `${(vh - openH) / 2}px`,
+            left:         `${(vw - openW) / 2}px`,
+            width:        `${openW}px`,
+            height:       `${openH}px`,
+            zIndex:       400,
+            borderRadius: "28px",
+            boxShadow:    "0 32px 80px rgba(0,0,0,0.25)",
+            transition:   "all 0.5s cubic-bezier(0.2,0,0,1)",
+          });
+
+          setTimeout(() => setContentVisible(true), 300);
+        });
+      });
+    });
+  }, [isAnimating, onExpand]);
 
   /* ── CLOSE ── */
   const close = useCallback(() => {
-    if (!isOpen || isAnimating) return;
+    if (!isOpen) return;
 
-    const el        = cardRef.current;
-    const ghost     = el.parentElement.querySelector(".hc-ghost");
-    const ghostRect = ghost.getBoundingClientRect();
-    const ease      = "0.5s cubic-bezier(0.2,0,0,1)";
+    // Cancel any pending timers
+    clearTimeout(timer1.current);
+    clearTimeout(timer2.current);
 
-    setIsAnimating(true);
+    // Immediately hide ✕, panel content, and backdrop — no waiting
+    setIsOpen(false);
+    setIsClosing(true);
     setContentVisible(false);
 
-    // Slide back to ghost position — direct DOM write, no React batching delay
-    Object.assign(el.style, {
+    const ghost     = cardRef.current.parentElement.querySelector(".hc-ghost");
+    const ghostRect = ghost.getBoundingClientRect();
+
+    setCardStyle(prev => ({
+      ...prev,
       top:          `${ghostRect.top}px`,
       left:         `${ghostRect.left}px`,
       width:        `${ghostRect.width}px`,
       height:       `${ghostRect.height}px`,
       borderRadius: "20px",
       boxShadow:    "none",
-      transition:   `top ${ease}, left ${ease}, width ${ease}, height ${ease}, border-radius ${ease}, box-shadow ${ease}`,
-    });
+      transition:   "all 0.5s cubic-bezier(0.2,0,0,1)",
+    }));
 
-    setTimeout(() => {
-      setIsOpen(false);
-      setIsAnimating(false);
-      // Wipe all inline styles — CSS classes fully take over again
-      el.style.cssText = "";
+    // 80ms before animation ends: fade to invisible so the
+    // position:fixed → static switch at 500ms is completely hidden
+    timer1.current = setTimeout(() => {
+      setCardStyle(prev => ({
+        ...prev,
+        opacity:    0,
+        transition: "opacity 0.08s ease",
+      }));
+    }, 400);
+
+    // Animation done: restore card to normal CSS flow
+    timer2.current = setTimeout(() => {
+      setIsClosing(false);
+      setCardStyle({});   // clears all inline styles, CSS class takes over
       onCollapse();
     }, 500);
-  }, [isOpen, isAnimating, onCollapse]);
-
-  const isExpanded = isOpen || isAnimating;
+  }, [isOpen, onCollapse]);
 
   return (
     <div className="hero-card-wrapper">
-      {isExpanded && <div className="hc-ghost" style={{ height: "130px" }} />}
-      {isExpanded && (
-        <div
-          className={`hc-backdrop ${isOpen ? "hc-backdrop--on" : ""}`}
-          onMouseDown={close}
-        />
+      {ghostVisible && <div className="hc-ghost" style={{ height: "130px" }} />}
+
+      {/* Backdrop only while fully open — vanishes immediately on close */}
+      {isOpen && (
+        <div className="hc-backdrop" onMouseDown={close} />
       )}
+
       <div
         ref={cardRef}
-        className={`hero-card ${isExpanded ? "hero-card--expanded" : ""}`}
-        onClick={!isExpanded ? open : undefined}
+        className={`hero-card ${isOpen ? "hero-card--expanded" : ""}`}
+        style={cardStyle}
+        onClick={!isAnimating ? open : undefined}
       >
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-        {isExpanded && (
+
+        {/* Content only when isOpen — gone immediately on close click */}
+        {isOpen && (
           <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
             {panelContent}
           </div>
         )}
+
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-        {isExpanded && (
+
+        {/* ✕ only when isOpen — vanishes the instant close() fires */}
+        {isOpen && (
           <button className="hc-close" onMouseDown={close}>✕</button>
         )}
       </div>
