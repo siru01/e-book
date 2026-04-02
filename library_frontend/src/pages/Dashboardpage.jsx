@@ -162,11 +162,9 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
   const close = useCallback(() => {
     if (!isOpen) return;
 
-    // Cancel any pending timers
     clearTimeout(timer1.current);
     clearTimeout(timer2.current);
 
-    // Immediately hide ✕, panel content, and backdrop — no waiting
     setIsOpen(false);
     setIsClosing(true);
     setContentVisible(false);
@@ -185,8 +183,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       transition:   "all 0.5s cubic-bezier(0.2,0,0,1)",
     }));
 
-    // 80ms before animation ends: fade to invisible so the
-    // position:fixed → static switch at 500ms is completely hidden
     timer1.current = setTimeout(() => {
       setCardStyle(prev => ({
         ...prev,
@@ -195,10 +191,9 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       }));
     }, 400);
 
-    // Animation done: restore card to normal CSS flow
     timer2.current = setTimeout(() => {
       setIsClosing(false);
-      setCardStyle({});   // clears all inline styles, CSS class takes over
+      setCardStyle({});
       onCollapse();
     }, 500);
   }, [isOpen, onCollapse]);
@@ -207,7 +202,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
     <div className="hero-card-wrapper">
       {ghostVisible && <div className="hc-ghost" style={{ height: "130px" }} />}
 
-      {/* Backdrop only while fully open — vanishes immediately on close */}
       {isOpen && (
         <div className="hc-backdrop" onMouseDown={close} />
       )}
@@ -223,7 +217,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
 
-        {/* Content only when isOpen — gone immediately on close click */}
         {isOpen && (
           <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
             {panelContent}
@@ -235,7 +228,6 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           <div className="hc-icon"><card.Icon /></div>
         </div>
 
-        {/* ✕ only when isOpen — vanishes the instant close() fires */}
         {isOpen && (
           <button className="hc-close" onMouseDown={close}>✕</button>
         )}
@@ -333,22 +325,15 @@ export default function DashboardPage() {
     <div className="dash-root">
       <nav className="dash-navbar">
         <span className="dash-brand">SHELF</span>
+
         <div className="dash-nav-links">
           <span className="dash-nav-link dash-nav-link-active">Library</span>
           <span className="dash-nav-link">Journal</span>
           <span className="dash-nav-link">Store</span>
         </div>
-        <div className="dash-nav-right">
-          <button className="dash-icon-btn"><IconBell /></button>
-          <div className="dash-avatar"><IconUser /></div>
-          <button className="dash-logout-btn" onClick={() => { queryClient.clear(); logout(); navigate("/"); }}>
-            Logout
-          </button>
-        </div>
-      </nav>
 
-      <main className="dash-main">
-        <div className="dash-search-bar-wrap">
+        {/* ── Search bar lives here in the navbar ── */}
+        <div className="dash-nav-search">
           <div className="dash-search-bar">
             <IconSearch />
             <input
@@ -361,6 +346,16 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="dash-nav-right">
+          <button className="dash-icon-btn"><IconBell /></button>
+          <div className="dash-avatar"><IconUser /></div>
+          <button className="dash-logout-btn" onClick={() => { queryClient.clear(); logout(); navigate("/"); }}>
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      <main className="dash-main">
         {!searched && <h1 className="dash-heading">What would you like to read?</h1>}
 
         {!searched && (
