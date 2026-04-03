@@ -14,6 +14,31 @@ import {
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
 const stars   = (r)   => { const n = Math.max(0, Math.min(5, r)); return "★".repeat(n) + "☆".repeat(5 - n); };
 
+/* ── Greeting helpers ── */
+const getGreeting = (username) => {
+  const hour = new Date().getHours();
+  const name = username ? `, ${username}` : "";
+  if (hour >= 5  && hour < 12) return `Good Morning 🌅${name}`;
+  if (hour >= 12 && hour < 17) return `Good Afternoon ☕${name}`;
+  if (hour >= 17 && hour < 21) return `Good Evening 🌙${name}`;
+  return `Night Owl 🦉${name} – rest is productive too!`;
+};
+
+const SUBTITLES = [
+  "What are you in the mood for?",
+  "What's on your reading list?",
+  "What do you want to pick up?",
+  "Any preferences for today?",
+  "What type of stories are you looking for?",
+  "What's your pick for today?",
+  "What are you keen to delve into?",
+  "What are you in the market for?",
+  "What is your preference for today's reading?",
+  "What materials would you like to examine?",
+  "What topic would you like to explore?",
+  "Do you have a preference for current literature?",
+];
+
 /* ── Icons ── */
 const IconBook     = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
@@ -22,7 +47,7 @@ const IconHistory  = () => <svg width="28" height="28" viewBox="0 0 24 24" fill=
 const IconCheck    = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
 const IconSearch   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
 const IconBell     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
-const IconUser     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const IconLogout   = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
 
 const HERO_CARDS = [
   { key: "recent",          label: "RECENT READINGS", sub: "Continue",  Icon: IconBook,     stat: (c) => `${c.books} BOOKS`   },
@@ -31,6 +56,57 @@ const HERO_CARDS = [
   { key: "history",         label: "HISTORY",          sub: "Journey",   Icon: IconHistory,  stat: ()  => "FULL LOG"           },
   { key: "previously_read", label: "FINISHED",         sub: "Completed", Icon: IconCheck,    stat: (c) => `${c.done} DONE`     },
 ];
+
+/* ══════════════════════════════════════════════════════════════════
+   Profile Dropdown
+══════════════════════════════════════════════════════════════════ */
+function ProfileDropdown({ username, email, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const initials = username
+    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="profile-wrap" ref={ref}>
+      <button
+        className="profile-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-label="Profile menu"
+      >
+        <span className="avatar-initials">{initials}</span>
+      </button>
+
+      {open && (
+        <div className="profile-dropdown">
+          <div className="profile-dropdown-header">
+            <div className="profile-dropdown-avatar">{initials}</div>
+            <div className="profile-dropdown-info">
+              <span className="profile-dropdown-name">{username || "User"}</span>
+              <span className="profile-dropdown-email">{email || "—"}</span>
+            </div>
+          </div>
+
+          <div className="profile-dropdown-divider" />
+
+          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
+            <IconLogout />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── Panel Book Row ── */
 function PanelBookRow({ book, extra }) {
@@ -84,21 +160,7 @@ function SearchResultCard({ book }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HeroCard — state machine:
-
-     closed   isOpen:false  isClosing:false   card in flex flow, static position
-     open     isOpen:true   isClosing:false   card fixed+expanded, ghost holds space
-     closing  isOpen:false  isClosing:true    card fixed+shrinking back, ghost holds space
-                                              ✕ and panel already gone (isOpen=false)
-
-   The end-of-close snap fix:
-     When the 500ms timeout fires at close end, the card switches from
-     position:fixed → static. That layout change was visible as a jump.
-     Fix: we fade opacity to 0 for the last 80ms so the snap is invisible.
-
-   The ✕ lingering fix:
-     ✕ and hc-content now render only when {isOpen} (not isAnimating),
-     so they disappear the instant close() is called, before animation starts.
+   HeroCard
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
   const cardRef  = useRef(null);
@@ -113,124 +175,50 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
   const ghostVisible = isOpen || isClosing;
   const isAnimating  = isOpen || isClosing;
 
-  /* ── OPEN ── */
   const open = useCallback(() => {
     if (isAnimating) return;
     const rect = cardRef.current.getBoundingClientRect();
-
-    setCardStyle({
-      position:   "fixed",
-      top:        `${rect.top}px`,
-      left:       `${rect.left}px`,
-      width:      `${rect.width}px`,
-      height:     `${rect.height}px`,
-      margin:     0,
-      zIndex:     400,
-      transition: "none",
-    });
-
+    setCardStyle({ position:"fixed", top:`${rect.top}px`, left:`${rect.left}px`, width:`${rect.width}px`, height:`${rect.height}px`, margin:0, zIndex:400, transition:"none" });
     setIsOpen(true);
     onExpand();
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const vw    = window.innerWidth;
-          const vh    = window.innerHeight;
-          const openW = Math.min(560, vw * 0.92);
-          const openH = Math.min(540, vh * 0.85);
-
-          setCardStyle({
-            position:     "fixed",
-            top:          `${(vh - openH) / 2}px`,
-            left:         `${(vw - openW) / 2}px`,
-            width:        `${openW}px`,
-            height:       `${openH}px`,
-            zIndex:       400,
-            borderRadius: "28px",
-            boxShadow:    "0 32px 80px rgba(0,0,0,0.25)",
-            transition:   "all 0.5s cubic-bezier(0.2,0,0,1)",
-          });
-
-          setTimeout(() => setContentVisible(true), 300);
-        });
-      });
-    });
+    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const openW = Math.min(560, vw * 0.92), openH = Math.min(540, vh * 0.85);
+      setCardStyle({ position:"fixed", top:`${(vh-openH)/2}px`, left:`${(vw-openW)/2}px`, width:`${openW}px`, height:`${openH}px`, zIndex:400, borderRadius:"28px", boxShadow:"0 32px 80px rgba(0,0,0,0.25)", transition:"all 0.5s cubic-bezier(0.2,0,0,1)" });
+      setTimeout(() => setContentVisible(true), 300);
+    })));
   }, [isAnimating, onExpand]);
 
-  /* ── CLOSE ── */
   const close = useCallback(() => {
     if (!isOpen) return;
-
-    clearTimeout(timer1.current);
-    clearTimeout(timer2.current);
-
-    setIsOpen(false);
-    setIsClosing(true);
-    setContentVisible(false);
-
-    const ghost     = cardRef.current.parentElement.querySelector(".hc-ghost");
+    clearTimeout(timer1.current); clearTimeout(timer2.current);
+    setIsOpen(false); setIsClosing(true); setContentVisible(false);
+    const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
     const ghostRect = ghost.getBoundingClientRect();
-
-    setCardStyle(prev => ({
-      ...prev,
-      top:          `${ghostRect.top}px`,
-      left:         `${ghostRect.left}px`,
-      width:        `${ghostRect.width}px`,
-      height:       `${ghostRect.height}px`,
-      borderRadius: "20px",
-      boxShadow:    "none",
-      transition:   "all 0.5s cubic-bezier(0.2,0,0,1)",
-    }));
-
-    timer1.current = setTimeout(() => {
-      setCardStyle(prev => ({
-        ...prev,
-        opacity:    0,
-        transition: "opacity 0.08s ease",
-      }));
-    }, 400);
-
-    timer2.current = setTimeout(() => {
-      setIsClosing(false);
-      setCardStyle({});
-      onCollapse();
-    }, 500);
+    setCardStyle(prev => ({ ...prev, top:`${ghostRect.top}px`, left:`${ghostRect.left}px`, width:`${ghostRect.width}px`, height:`${ghostRect.height}px`, borderRadius:"20px", boxShadow:"none", transition:"all 0.5s cubic-bezier(0.2,0,0,1)" }));
+    timer1.current = setTimeout(() => setCardStyle(prev => ({ ...prev, opacity:0, transition:"opacity 0.08s ease" })), 400);
+    timer2.current = setTimeout(() => { setIsClosing(false); setCardStyle({}); onCollapse(); }, 500);
   }, [isOpen, onCollapse]);
 
   return (
     <div className="hero-card-wrapper">
       {ghostVisible && <div className="hc-ghost" style={{ height: "130px" }} />}
-
-      {isOpen && (
-        <div className="hc-backdrop" onMouseDown={close} />
-      )}
-
-      <div
-        ref={cardRef}
-        className={`hero-card ${isOpen ? "hero-card--expanded" : ""}`}
-        style={cardStyle}
-        onClick={!isAnimating ? open : undefined}
-      >
+      {isOpen && <div className="hc-backdrop" onMouseDown={close} />}
+      <div ref={cardRef} className={`hero-card ${isOpen ? "hero-card--expanded" : ""}`} style={cardStyle} onClick={!isAnimating ? open : undefined}>
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-
         {isOpen && (
           <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
             {panelContent}
           </div>
         )}
-
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-
-        {isOpen && (
-          <button className="hc-close" onMouseDown={close}>✕</button>
-        )}
+        {isOpen && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
     </div>
   );
@@ -240,9 +228,19 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
    Dashboard Page
 ══════════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
-  const { token, logout } = useAuth();
+  const { token, logout, username } = useAuth();
   const navigate    = useNavigate();
   const queryClient = useQueryClient();
+
+  // Decode email from JWT (it's in the payload but not stored separately in context)
+  const resolvedEmail = useMemo(() => {
+    try {
+      const t = sessionStorage.getItem("shelf_token");
+      if (!t) return "";
+      const payload = JSON.parse(atob(t.split(".")[1]));
+      return payload.email || "";
+    } catch { return ""; }
+  }, [token]);
 
   const [activePanel,   setActivePanel]   = useState("");
   const [searchQuery,   setSearchQuery]   = useState("");
@@ -250,6 +248,9 @@ export default function DashboardPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searched,      setSearched]      = useState(false);
   const [phIndex,       setPhIndex]       = useState(0);
+
+  const greeting = useMemo(() => getGreeting(username), [username]);
+  const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)]);
 
   const PLACEHOLDER_WORDS = ["literature","mystery","sci-fi","fantasy","history","philosophy"];
 
@@ -283,10 +284,10 @@ export default function DashboardPage() {
     setSearchLoading(false);
   }, [token]);
 
-  const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
-
+  const clearSearch    = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
   const handleExpand   = useCallback((key) => setActivePanel(key), []);
   const handleCollapse = useCallback(()    => setActivePanel(""),  []);
+  const handleLogout   = useCallback(() => { queryClient.clear(); logout(); navigate("/"); }, [queryClient, logout, navigate]);
 
   const getPanelContent = useCallback((key) => {
     const readings = toArray(rawBooks);
@@ -295,27 +296,15 @@ export default function DashboardPage() {
     switch (key) {
       case "recent":
         return readings.length > 0
-          ? readings.map((b, i) => (
-              <PanelBookRow key={i}
-                book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }}
-                extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{parseInt(b.progress_percent)}%</span></div>}
-              />))
+          ? readings.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{parseInt(b.progress_percent)}%</span></div>} />)
           : <p className="panel-empty">No recent readings.</p>;
       case "bookmarks":
         return marks.length > 0
-          ? marks.map((b, i) => (
-              <PanelBookRow key={i}
-                book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }}
-                extra={<div className="panel-row-extra"><span>{b.source}</span></div>}
-              />))
+          ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
           : <p className="panel-empty">No bookmarks saved.</p>;
       case "history":
         return history.length > 0
-          ? history.map((b, i) => (
-              <PanelBookRow key={i}
-                book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }}
-                extra={<div className="panel-row-extra"><span>{b.finished_at}</span><span>{stars(b.rating)}</span></div>}
-              />))
+          ? history.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.finished_at}</span><span>{stars(b.rating)}</span></div>} />)
           : <p className="panel-empty">No history recorded.</p>;
       default: return null;
     }
@@ -332,7 +321,6 @@ export default function DashboardPage() {
           <span className="dash-nav-link">Store</span>
         </div>
 
-        {/* ── Search bar lives here in the navbar ── */}
         <div className="dash-nav-search">
           <div className="dash-search-bar">
             <IconSearch />
@@ -348,15 +336,22 @@ export default function DashboardPage() {
 
         <div className="dash-nav-right">
           <button className="dash-icon-btn"><IconBell /></button>
-          <div className="dash-avatar"><IconUser /></div>
-          <button className="dash-logout-btn" onClick={() => { queryClient.clear(); logout(); navigate("/"); }}>
-            Logout
-          </button>
+          <ProfileDropdown
+            username={username}
+            email={resolvedEmail}
+            onLogout={handleLogout}
+          />
         </div>
       </nav>
 
       <main className="dash-main">
-        {!searched && <h1 className="dash-heading">What would you like to read?</h1>}
+        {!searched && (
+          <div className="dash-heading-block">
+            <h1 className="dash-greeting">{greeting}</h1>
+            <p className="dash-subtitle">{subtitle}</p>
+          </div>
+        )}
+
         {!searched && (
           <div className="dash-hero-cards" data-active={activePanel || undefined}>
             {HERO_CARDS.map(card => (
