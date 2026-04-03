@@ -297,7 +297,7 @@
 
 /* ── Book Card ── */
 .book-card { flex-shrink: 0; width: 160px; cursor: pointer; overflow: visible; }
-.book-card-cover { width: 160px; height: 240px; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: all 0.4s cubic-bezier(0.2,0,0,1); }
+.book-card-cover { width: 160px; height: 240px; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: all 0.4s cubic-bezier(0.2,0,0,1); border: 3.5px solid #000000; background: #fff; }
 .book-card:hover .book-card-cover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 .book-card-cover img { width: 100%; height: 100%; object-fit: cover; }
 .book-card-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #f0f0f0; }

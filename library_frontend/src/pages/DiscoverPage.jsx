@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { searchOpenLibrary, importBooks } from "../api/shelf";
 import { useAuth } from "../context/Authcontext";
 import "./DiscoverPage.css";
@@ -31,6 +32,7 @@ function ResultCard({ book, onImport, importing }) {
 
 export default function DiscoverPage() {
   const { token } = useAuth();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -43,13 +45,13 @@ export default function DiscoverPage() {
     setTimeout(() => setToast(null), 3000);
   }
 
-  async function handleSearch() {
-    if (!query.trim()) return;
+  const handleSearch = useCallback(async (term) => {
+    if (!term.trim()) return;
     setLoading(true);
     setResults([]);
     setSelected([]);
     try {
-      const data = await searchOpenLibrary(query);
+      const data = await searchOpenLibrary(term);
       setResults((data.results || []).map((b) => ({
         title: b.title || "Untitled",
         author: b.author || "Unknown",
@@ -61,7 +63,15 @@ export default function DiscoverPage() {
       showToast(e.message, "error");
     }
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      setQuery(q);
+      handleSearch(q);
+    }
+  }, [searchParams, handleSearch]);
 
   async function handleImportSingle(book) {
     setImporting(true);
@@ -106,9 +116,9 @@ export default function DiscoverPage() {
           placeholder="Search books, authors, ISBN..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch(query)}
         />
-        <button className="disc-search-btn" onClick={handleSearch} disabled={loading}>Search</button>
+        <button className="disc-search-btn" onClick={() => handleSearch(query)} disabled={loading}>Search</button>
         <button className="disc-import-sel-btn" onClick={handleImportSelected} disabled={importing || !selected.length}>
           Import Selected
         </button>

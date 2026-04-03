@@ -149,7 +149,7 @@ export default function BookOverviewPage() {
   /* ── Shared Nav ── */
   const Nav = () => (
     <nav className="bop-nav">
-      <span className="bop-brand" onClick={() => navigate("/dashboard")}>SHELF</span>
+      <span className="bop-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</span>
       <div className="bop-nav-center">
         <button className="bop-nav-link bop-nav-active" onClick={() => navigate("/dashboard")}>Browse</button>
         <button className="bop-nav-link" onClick={() => navigate("/discover")}>Collections</button>

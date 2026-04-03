@@ -163,6 +163,7 @@ function SearchResultCard({ book }) {
    HeroCard
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   
   // Status: 'idle' | 'opening' | 'open' | 'closing'
@@ -372,7 +373,7 @@ export default function DashboardPage() {
   return (
     <div className="dash-root">
       <nav className="dash-navbar">
-        <span className="dash-brand">SHELF</span>
+        <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</span>
 
         <div className="dash-nav-links">
           <span className="dash-nav-link dash-nav-link-active">Library</span>
@@ -447,7 +448,7 @@ export default function DashboardPage() {
                   <div key={row.label} className="dash-shelf">
                     <div className="dash-shelf-header">
                       <h2 className="dash-shelf-label">{row.label}</h2>
-                      <span className="dash-shelf-all">VIEW ALL</span>
+                      <span className="dash-shelf-all" onClick={() => { setSearchQuery(row.label); handleSearch(row.label); }}>VIEW ALL</span>
                     </div>
                     <div className="dash-shelf-scroll">
                       {row.books.map((book, i) => <BookCard key={i} book={book} />)}

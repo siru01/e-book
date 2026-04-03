@@ -75,7 +75,7 @@ const SignUp = () => {
   return (
     <div className="signup-container">
       <div className="signup-card">
-        <div className="logo">SHELF</div>
+        <div className="logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</div>
         <h2>Create Account</h2>
         <p className="subtitle">Join our community of readers</p>
 
