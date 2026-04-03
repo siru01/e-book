@@ -163,62 +163,121 @@ function SearchResultCard({ book }) {
    HeroCard
 ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
-  const cardRef  = useRef(null);
-  const timer1   = useRef(null);
-  const timer2   = useRef(null);
+  const containerRef = useRef(null);
+  
+  // Status: 'idle' | 'opening' | 'open' | 'closing'
+  const [status, setStatus] = useState('idle');
+  const [cardStyle, setCardStyle] = useState({});
+  const [wrapperStyle, setWrapperStyle] = useState({});
 
-  const [isOpen,         setIsOpen]         = useState(false);
-  const [isClosing,      setIsClosing]      = useState(false);
-  const [contentVisible, setContentVisible] = useState(false);
-  const [cardStyle,      setCardStyle]      = useState({});
-
-  const ghostVisible = isOpen || isClosing;
-  const isAnimating  = isOpen || isClosing;
+  const isActive = status !== 'idle';
+  const isExpanded = status === 'open' || status === 'closing' || status === 'opening';
 
   const open = useCallback(() => {
-    if (isAnimating) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    setCardStyle({ position:"fixed", top:`${rect.top}px`, left:`${rect.left}px`, width:`${rect.width}px`, height:`${rect.height}px`, margin:0, zIndex:400, transition:"none" });
-    setIsOpen(true);
+    if (isActive) return;
+    setStatus('opening');
+    
+    // Capture precise fractional dimensions
+    const rect = containerRef.current.getBoundingClientRect();
+    
+    // Keep the grid placeholder stable using EXACT dimensions (both W and H)
+    setWrapperStyle({ 
+      width: `${rect.width}px`, 
+      height: `${rect.height}px`, 
+      flex: 'none' 
+    });
+    
+    // Set initial fixed position exactly over the current spot
+    setCardStyle({
+      position: "fixed",
+      top: `${rect.top}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      margin: 0,
+      zIndex: 400,
+      transition: "none"
+    });
+    
     onExpand();
-    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
-      const vw = window.innerWidth, vh = window.innerHeight;
-      const openW = Math.min(560, vw * 0.92), openH = Math.min(540, vh * 0.85);
-      setCardStyle({ position:"fixed", top:`${(vh-openH)/2}px`, left:`${(vw-openW)/2}px`, width:`${openW}px`, height:`${openH}px`, zIndex:400, borderRadius:"28px", boxShadow:"0 32px 80px rgba(0,0,0,0.25)", transition:"all 0.5s cubic-bezier(0.2,0,0,1)" });
-      setTimeout(() => setContentVisible(true), 300);
-    })));
-  }, [isAnimating, onExpand]);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const w = Math.min(560, vw * 0.92), h = Math.min(540, vh * 0.85);
+
+        setCardStyle({
+          position: "fixed",
+          top: `${(vh - h) / 2}px`,
+          left: `${(vw - w) / 2}px`,
+          width: `${w}px`,
+          height: `${h}px`,
+          zIndex: 400,
+          borderRadius: "28px",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.3)",
+          transition: "all 0.4s ease-out"
+        });
+        
+        setTimeout(() => setStatus('open'), 400);
+      });
+    });
+  }, [isActive, onExpand]);
 
   const close = useCallback(() => {
-    if (!isOpen) return;
-    clearTimeout(timer1.current); clearTimeout(timer2.current);
-    setIsOpen(false); setIsClosing(true); setContentVisible(false);
-    const ghost = cardRef.current.parentElement.querySelector(".hc-ghost");
-    const ghostRect = ghost.getBoundingClientRect();
-    setCardStyle(prev => ({ ...prev, top:`${ghostRect.top}px`, left:`${ghostRect.left}px`, width:`${ghostRect.width}px`, height:`${ghostRect.height}px`, borderRadius:"20px", boxShadow:"none", transition:"all 0.5s cubic-bezier(0.2,0,0,1)" }));
-    timer1.current = setTimeout(() => setCardStyle(prev => ({ ...prev, opacity:0, transition:"opacity 0.08s ease" })), 400);
-    timer2.current = setTimeout(() => { setIsClosing(false); setCardStyle({}); onCollapse(); }, 500);
-  }, [isOpen, onCollapse]);
+    if (status !== 'open') return;
+    setStatus('closing');
+
+    // Recalculate target position using raw fractional values
+    const rect = containerRef.current.getBoundingClientRect();
+    
+    setCardStyle(prev => ({
+      ...prev,
+      top: `${rect.top}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      borderRadius: "20px",
+      boxShadow: "none",
+      transition: "all 0.4s ease-out"
+    }));
+
+    setTimeout(() => {
+      setCardStyle({});
+      setWrapperStyle({});
+      setStatus('idle');
+      onCollapse();
+    }, 410);
+  }, [status, onCollapse]);
 
   return (
-    <div className="hero-card-wrapper">
-      {ghostVisible && <div className="hc-ghost" style={{ height: "130px" }} />}
-      {isOpen && <div className="hc-backdrop" onMouseDown={close} />}
-      <div ref={cardRef} className={`hero-card ${isOpen ? "hero-card--expanded" : ""}`} style={cardStyle} onClick={!isAnimating ? open : undefined}>
+    <div className="hero-card-wrapper" ref={containerRef} style={wrapperStyle}>
+      {status !== 'idle' && (
+        <div 
+          className="hc-backdrop" 
+          onMouseDown={close} 
+          style={{ background: "transparent", pointerEvents: "auto" }} 
+        />
+      )}
+      <div 
+        className={`hero-card ${isExpanded ? "hero-card--expanded" : ""} ${(status === 'opening' || status === 'closing') ? "hero-card--animating" : ""}`} 
+        style={cardStyle} 
+        onClick={status === 'idle' ? open : undefined}
+      >
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-        {isOpen && (
-          <div className={`hc-content ${contentVisible ? "hc-content--visible" : ""}`}>
-            {panelContent}
-          </div>
-        )}
+        
+        {/* Always keep container to maintain 3-item flex layout stability */}
+        <div className="hc-content">
+          {status !== 'idle' && panelContent}
+        </div>
+        
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-        {isOpen && <button className="hc-close" onMouseDown={close}>✕</button>}
+        {status === 'open' && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
     </div>
   );
@@ -353,7 +412,7 @@ export default function DashboardPage() {
         )}
 
         {!searched && (
-          <div className="dash-hero-cards" data-active={activePanel || undefined}>
+          <div className="dash-hero-cards">
             {HERO_CARDS.map(card => (
               <HeroCard
                 key={card.key}
