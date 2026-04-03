@@ -357,7 +357,6 @@ export default function DashboardPage() {
 
       <main className="dash-main">
         {!searched && <h1 className="dash-heading">What would you like to read?</h1>}
-
         {!searched && (
           <div className="dash-hero-cards" data-active={activePanel || undefined}>
             {HERO_CARDS.map(card => (
