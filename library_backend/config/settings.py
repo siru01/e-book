@@ -93,10 +93,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# settings.py around line 105
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=0,
+            conn_health_checks=False, # Wakes up Neon if it's sleeping
+            ssl_require=False,        # CRITICAL for Neon
+        )
     }
 else:
     # Fallback to a local SQLite database for development when DATABASE_URL isn't provided
@@ -109,18 +115,27 @@ else:
 
 
 # ─── Redis Cache ─────────────────────────────────────────────
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv("REDIS_URL"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "REDIS_CLIENT_KWARGS": {
-                "ssl_cert_reqs": None,   # ← moved here, correct place for newer redis-py
-            },
+REDIS_URL = os.getenv("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "REDIS_CLIENT_KWARGS": {
+                    "ssl_cert_reqs": None,
+                },
+            }
         }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
 
 # ─── Cache TTLs (seconds) ────────────────────────────────────
 CACHE_TTL = {
@@ -178,6 +193,7 @@ AUTH_USER_MODEL = 'users.User'
 
 from datetime import timedelta
 
+# settings.py around line 175
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -185,7 +201,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     ),
-    'UNAUTHENTICATED_USER': None, 
+    # CHANGE THIS LINE:
+    'UNAUTHENTICATED_USER': 'django.contrib.auth.models.AnonymousUser', 
+    
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],

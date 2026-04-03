@@ -56,15 +56,6 @@ def trending_all() -> list:
     return _deduplicate(results)
 
 
-def new_arrivals_all() -> list:
-    # Order: gutendex → openlibrary → google_books
-    results = _run_ordered([
-        lambda: gutendex.trending(),
-        lambda: openlibrary.search("new releases 2024", 1),
-        #lambda: google_books.search("new releases 2024", 1),
-    ])
-    return _deduplicate(results)
-
 
 def category_all(genre: str, page: int = 1) -> list:
     # Order: gutendex → openlibrary → google_books
