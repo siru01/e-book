@@ -65,3 +65,11 @@ def category_all(genre: str, page: int = 1) -> list:
         lambda: google_books.search(genre, page),
     ])
     return _deduplicate(results)
+
+def new_arrivals_all() -> list:
+    results = _run_ordered([
+        lambda: gutendex.new_arrivals(),
+        lambda: archive.new_arrivals(),
+        lambda: openlibrary.new_arrivals(),
+    ])
+    return _deduplicate(results)

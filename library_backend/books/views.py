@@ -1,9 +1,18 @@
 import re
+from datetime import timedelta, date as date_type
+
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
+
 from .services import aggregator
 from .permissions import IsAdminOrLibrarianOrReadOnly
-from .models import Book, ReadingHistory, Bookmarks
-from .serializers import BookSerializer, ReadingHistorySerializer, BookmarkSerializer
+from .models import Book, ReadingActivity, Bookmarks, ReadingSession
+from .serializers import (
+    BookSerializer,
+    ReadingActivitySerializer,
+    BookmarkSerializer,
+    ReadingSessionSerializer,
+)
 from rest_framework import viewsets, status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
@@ -36,6 +45,295 @@ class BookViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
         serializer.save(added_by=user)
+
+
+# ─────────────────────────────────────────────
+# READING ACTIVITY  —  GET/POST /api/my-activity/
+# ─────────────────────────────────────────────
+class MyActivityView(APIView):
+    """
+    GET  → last 8 reading activities (most recently read first)
+    POST → upsert an activity (create on first open, update on page turn / finish)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        activities = ReadingActivity.objects.filter(
+            user=request.user
+        ).order_by('-last_read_at')[:6]
+        serializer = ReadingActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        book_id      = request.data.get("book_id", "").strip()
+        source       = request.data.get("source", "openlibrary")
+        book_title   = request.data.get("book_title", "")
+        book_author  = request.data.get("book_author", "")
+        book_cover   = request.data.get("book_cover", "")
+        progress     = float(request.data.get("progress_percent", 0))
+        is_finished  = bool(request.data.get("is_finished", False))
+
+        if not book_id:
+            return Response({"error": "book_id required"}, status=400)
+
+        obj, created = ReadingActivity.objects.get_or_create(
+            user=request.user,
+            book_id=book_id,
+            defaults={
+                "source":       source,
+                "book_title":   book_title,
+                "book_author":  book_author,
+                "book_cover":   book_cover,
+                "progress_percent": progress,
+                "is_finished":  is_finished,
+                "finished_at":  timezone.now() if is_finished else None,
+            },
+        )
+
+        if not created:
+            # Update fields — always refresh metadata + progress
+            if book_title:  obj.book_title  = book_title
+            if book_author: obj.book_author = book_author
+            if book_cover:  obj.book_cover  = book_cover
+            obj.progress_percent = progress
+            
+            # Use just the new value to decide if we need to mark finished
+            if is_finished and not obj.is_finished:
+                obj.finished_at = timezone.now()
+            obj.is_finished = is_finished
+            obj.save()
+
+        serializer = ReadingActivitySerializer(obj)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────
+# FINISHED BOOKS  —  GET /api/my-finished/
+# ─────────────────────────────────────────────
+class MyFinishedView(APIView):
+    """Returns only the books the user has marked as finished."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        finished = ReadingActivity.objects.filter(
+            user=request.user,
+            is_finished=True,
+        ).order_by('-finished_at')[:8]
+        serializer = ReadingActivitySerializer(finished, many=True)
+        return Response(serializer.data)
+
+
+# ─────────────────────────────────────────────
+# BOOKMARKS  —  GET/POST/DELETE /api/my-bookmarks/
+# ─────────────────────────────────────────────
+class MyBookmarksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        bookmarks  = Bookmarks.objects.filter(user=request.user)
+        serializer = BookmarkSerializer(bookmarks, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        book_id     = request.data.get("book_id", "").strip()
+        source      = request.data.get("source", "openlibrary")
+        book_title  = request.data.get("book_title", "")
+        book_author = request.data.get("book_author", "")
+        book_cover  = request.data.get("book_cover", "")
+
+        if not book_id:
+            return Response({"error": "book_id required"}, status=400)
+
+        obj, created = Bookmarks.objects.get_or_create(
+            user=request.user,
+            book_id=book_id,
+            defaults={
+                "source":      source,
+                "book_title":  book_title,
+                "book_author": book_author,
+                "book_cover":  book_cover,
+            },
+        )
+
+        if not created and (book_title or book_author or book_cover):
+            # Backfill metadata if missing
+            if book_title and not obj.book_title:   obj.book_title  = book_title
+            if book_author and not obj.book_author: obj.book_author = book_author
+            if book_cover and not obj.book_cover:   obj.book_cover  = book_cover
+            obj.save()
+
+        serializer = BookmarkSerializer(obj)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    def delete(self, request):
+        book_id    = request.data.get("book_id")
+        deleted, _ = Bookmarks.objects.filter(
+            user=request.user, book_id=book_id
+        ).delete()
+        if deleted:
+            return Response({"message": "Bookmark removed"})
+        return Response({"error": "Bookmark not found"}, status=404)
+
+
+# ─────────────────────────────────────────────
+# DASHBOARD SUMMARY (BFF) — GET /api/my-activity-summary/
+# ─────────────────────────────────────────────
+class DashboardSummaryView(APIView):
+    """
+    Returns a unified object for the dashboard to reduce API calls.
+    Includes: bookmarks, activity, finished books, sessions, and streak.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        # 1. Activities (last 6)
+        activities = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:6]
+        
+        # 2. Finished (last 8)
+        finished = ReadingActivity.objects.filter(user=user, is_finished=True).order_by('-finished_at')[:8]
+        
+        # 3. Bookmarks
+        bookmarks = Bookmarks.objects.filter(user=user)
+        
+        # 4. Sessions (last 365 days)
+        since = date_type.today() - timedelta(days=364)
+        sessions_qs = ReadingSession.objects.filter(user=user, date__gte=since).order_by('date')
+        
+        # 5. Streak (consecutive days reading ending today/yesterday)
+        # Using a list for faster lookup in Python for streak calculation
+        session_dates = set(sessions_qs.values_list('date', flat=True))
+        streak = 0
+        current_check = date_type.today()
+        
+        # Check if they read today or yesterday to continue streak
+        if current_check in session_dates or (current_check - timedelta(days=1)) in session_dates:
+            # Start from the most recent day read
+            test_day = current_check if current_check in session_dates else current_check - timedelta(days=1)
+            while test_day in session_dates:
+                streak += 1
+                test_day -= timedelta(days=1)
+
+        payload = {
+            "activity": ReadingActivitySerializer(activities, many=True).data,
+            "finished": ReadingActivitySerializer(finished, many=True).data,
+            "bookmarks": BookmarkSerializer(bookmarks, many=True).data,
+            "sessions": ReadingSessionSerializer(sessions_qs, many=True).data,
+            "streak": streak,
+        }
+        return Response(payload)
+
+
+# ─────────────────────────────────────────────
+# READING SESSIONS HEARTBEAT — POST /api/my-sessions/
+# ─────────────────────────────────────────────
+class MySessionsView(APIView):
+    """
+    POST → add N minutes to today's session (heartbeat from Reader page).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        minutes = int(request.data.get("minutes", 1))
+        today   = date_type.today()
+
+        obj, created = ReadingSession.objects.get_or_create(
+            user=request.user,
+            date=today,
+            defaults={"minutes_read": minutes},
+        )
+        if not created:
+            obj.minutes_read += minutes
+            obj.save()
+
+        serializer = ReadingSessionSerializer(obj)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────
+# BFF AGGREGATOR VIEWS
+# ─────────────────────────────────────────────
+class BookSearchView(APIView):
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        if not query:
+            return Response({"error": "q parameter required"}, status=400)
+
+        cache_key = f"shelf:search:{query.lower()}"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        results = aggregator.search_all(query)
+        payload = {"results": results, "count": len(results)}
+
+        if results:
+            cache.set(cache_key, payload, 60 * 30)
+
+        return Response(payload)
+
+
+class TrendingView(APIView):
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        cache_key = "shelf:trending"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        results = aggregator.trending_all()
+        payload = {"results": results, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
+
+
+class CategoryView(APIView):
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        genre     = request.GET.get("genre", "fiction").strip()
+        page      = int(request.GET.get("page", 1))
+        cache_key = f"shelf:category:{genre}:page:{page}"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        results = aggregator.category_all(genre, page=page)
+        payload = {"results": results, "genre": genre, "page": page, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
+
+
+class NewArrivalsView(APIView):
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        cache_key = "shelf:new-arrivals"
+        cached    = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        results = aggregator.new_arrivals_all()
+        payload = {"results": results, "count": len(results)}
+        cache.set(cache_key, payload, SHELF_CACHE_TTL)
+        return Response(payload)
 
 
 # ─────────────────────────────────────────────
@@ -130,147 +428,6 @@ class OpenLibraryImport(APIView):
 
 
 # ─────────────────────────────────────────────
-# READING HISTORY  —  GET/POST /api/my-history/
-# ─────────────────────────────────────────────
-class MyReadingHistoryView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        history    = ReadingHistory.objects.filter(user=request.user)
-        serializer = ReadingHistorySerializer(history, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        book_id = request.data.get("book_id")
-        source  = request.data.get("source", "gutenberg")
-        if not book_id:
-            return Response({"error": "book_id required"}, status=400)
-        obj, created = ReadingHistory.objects.get_or_create(
-            user=request.user,
-            book_id=book_id,
-            defaults={"source": source},
-        )
-        serializer = ReadingHistorySerializer(obj)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-
-# ─────────────────────────────────────────────
-# BOOKMARKS  —  GET/POST/DELETE /api/my-bookmarks/
-# ─────────────────────────────────────────────
-class MyBookmarksView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        bookmarks  = Bookmarks.objects.filter(user=request.user)
-        serializer = BookmarkSerializer(bookmarks, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        book_id = request.data.get("book_id")
-        source  = request.data.get("source", "gutenberg")
-        if not book_id:
-            return Response({"error": "book_id required"}, status=400)
-        obj, created = Bookmarks.objects.get_or_create(
-            user=request.user,
-            book_id=book_id,
-            defaults={"source": source},
-        )
-        serializer = BookmarkSerializer(obj)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-    def delete(self, request):
-        book_id    = request.data.get("book_id")
-        deleted, _ = Bookmarks.objects.filter(
-            user=request.user, book_id=book_id
-        ).delete()
-        if deleted:
-            return Response({"message": "Bookmark removed"})
-        return Response({"error": "Bookmark not found"}, status=404)
-
-
-# ─────────────────────────────────────────────
-# BFF AGGREGATOR VIEWS
-# ─────────────────────────────────────────────
-class BookSearchView(APIView):
-    permission_classes     = [AllowAny]
-    authentication_classes = []
-
-    def get(self, request):
-        query = request.GET.get("q", "").strip()
-        if not query:
-            return Response({"error": "q parameter required"}, status=400)
-
-        cache_key = f"shelf:search:{query.lower()}"
-        cached    = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
-
-        results = aggregator.search_all(query)
-        payload = {"results": results, "count": len(results)}
-
-        if results:
-            cache.set(cache_key, payload, 60 * 30)
-
-        return Response(payload)
-
-
-class TrendingView(APIView):
-    permission_classes     = [AllowAny]
-    authentication_classes = []
-
-    def get(self, request):
-        cache_key = "shelf:trending"
-        cached    = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
-
-        results = aggregator.trending_all()
-        payload = {"results": results, "count": len(results)}
-        cache.set(cache_key, payload, SHELF_CACHE_TTL)
-        return Response(payload)
-
-
-class CategoryView(APIView):
-    permission_classes     = [AllowAny]
-    authentication_classes = []
-
-    def get(self, request):
-        genre     = request.GET.get("genre", "fiction").strip()
-        page      = int(request.GET.get("page", 1))
-        cache_key = f"shelf:category:{genre}:page:{page}"
-        cached    = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
-
-        results = aggregator.category_all(genre, page=page)
-        payload = {"results": results, "genre": genre, "page": page, "count": len(results)}
-        cache.set(cache_key, payload, SHELF_CACHE_TTL)
-        return Response(payload)
-
-
-class NewArrivalsView(APIView):
-    permission_classes     = [AllowAny]
-    authentication_classes = []
-
-    def get(self, request):
-        cache_key = "shelf:new-arrivals"
-        cached    = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
-
-        results = aggregator.new_arrivals_all()
-        payload = {"results": results, "count": len(results)}
-        cache.set(cache_key, payload, SHELF_CACHE_TTL)
-        return Response(payload)
-
-
-# ─────────────────────────────────────────────
 # BOOK TEXT PROXY  — GET /api/books/read/
 # ─────────────────────────────────────────────
 class BookReadView(APIView):
@@ -289,25 +446,42 @@ class BookReadView(APIView):
             raw_id = book_id
 
         try:
+            # Fetch user progress if authenticated
+            user_progress = 0.0
+            is_faved = False
+            is_done  = False
+            user = request.user
+            if user and user.is_authenticated:
+                act = ReadingActivity.objects.filter(user=user, book_id=book_id).first()
+                if act:
+                    user_progress = act.progress_percent
+                    is_done = act.is_finished
+                is_faved = Bookmarks.objects.filter(user=user, book_id=book_id).exists()
+
             if source == "gutenberg":
-                return self._fetch_gutenberg(raw_id)
+                resp = self._fetch_gutenberg(raw_id)
             elif source == "archive":
-                return self._fetch_archive(raw_id)
+                resp = self._fetch_archive(raw_id)
             elif source == "openlibrary":
-                return self._fetch_openlibrary(raw_id)
+                resp = self._fetch_openlibrary(raw_id)
             elif source == "google":
-                return self._fetch_google(raw_id)
+                resp = self._fetch_google(raw_id)
             else:
                 return Response(
                     {"error": f"Unknown source: {source}. Supported: gutenberg, openlibrary, google, archive"},
                     status=400
                 )
+            
+            # Inject user metadata into the response
+            resp.data["user_progress"] = user_progress
+            resp.data["is_bookmarked"] = is_faved
+            resp.data["is_finished"]   = is_done
+            return resp
+
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-    # ── Gutenberg ─────────────────────────────────────────────────
     def _fetch_gutenberg(self, gutenberg_id: str):
-        # Step 1: get metadata from gutendex with redirect fix
         try:
             meta_r = httpx.get(
                 f"https://gutendex.com/books/{gutenberg_id}",
@@ -337,7 +511,6 @@ class BookReadView(APIView):
             bookshelves = []
             text_url    = ""
 
-        # Step 2: fetch text — use gutendex-provided URL first, then fallbacks
         text_urls = list(filter(None, [
             text_url,
             f"https://www.gutenberg.org/cache/epub/{gutenberg_id}/pg{gutenberg_id}.txt",
@@ -375,7 +548,6 @@ class BookReadView(APIView):
             "text":        text,
         })
 
-    # ── Archive.org ───────────────────────────────────────────────
     def _fetch_archive(self, identifier):
         meta_r = httpx.get(f"https://archive.org/metadata/{identifier}", timeout=15)
         meta_r.raise_for_status()
@@ -443,7 +615,6 @@ class BookReadView(APIView):
 
         return Response({**_base(), "text": text})
 
-    # ── Open Library ─────────────────────────────────────────────
     def _fetch_openlibrary(self, ol_id):
         work_r = httpx.get(f"https://openlibrary.org/works/{ol_id}.json", timeout=15)
         work_r.raise_for_status()
@@ -519,7 +690,6 @@ class BookReadView(APIView):
         merged["text"] = archive_resp.data.get("text", "")
         return Response(merged)
 
-    # ── Google Books ──────────────────────────────────────────────
     def _fetch_google(self, google_id):
         from django.conf import settings
         params  = {}

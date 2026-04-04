@@ -1,4 +1,4 @@
-.disc-root { padding: 24px; background: #f8fafc; min-height: 100vh; }
+.disc-root { padding: 24px; background: #fff; min-height: 100vh; }
 
 .disc-toolbar {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px;

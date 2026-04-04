@@ -340,3 +340,53 @@
   .book-card { width: 140px; }
   .book-card-cover { width: 140px; height: 210px; }
 }
+/* -- Calendar Heatmap -- */
+.cal-heatmap-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #111;
+  padding: 16px;
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow-x: auto;
+}
+.cal-months {
+  display: flex;
+  margin-left: 32px;
+  gap: 32px;
+  font-size: 0.75rem;
+  color: #888;
+}
+.cal-grid-area {
+  display: flex;
+  gap: 8px;
+}
+.cal-days-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-size: 0.75rem;
+  color: #888;
+  height: 98px; /* 7 boxes * 14px */
+}
+.cal-grid {
+  display: flex;
+  gap: 4px;
+}
+.cal-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cal-box {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background-color: #1e1e1e;
+}
+.cal-box:hover {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}

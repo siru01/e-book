@@ -4,13 +4,16 @@ from .views import (
     BookViewSet,
     OpenLibrarySearch,
     OpenLibraryImport,
-    MyReadingHistoryView,
+    MyActivityView,
+    MyFinishedView,
     MyBookmarksView,
+    MySessionsView,
     BookSearchView,
     TrendingView,
     CategoryView,
     NewArrivalsView,
     BookReadView,
+    DashboardSummaryView,
 )
 
 router = DefaultRouter()
@@ -25,8 +28,11 @@ urlpatterns = [
     path("books/new-arrivals/", NewArrivalsView.as_view(), name="book-new-arrivals"),
 
     # ── User data ─────────────────────────────────────────────
-    path("my-history/",    MyReadingHistoryView.as_view(), name="my-history"),
-    path("my-bookmarks/",  MyBookmarksView.as_view(),      name="my-bookmarks"),
+    path("my-activity/",   MyActivityView.as_view(),   name="my-activity"),
+    path("my-finished/",   MyFinishedView.as_view(),   name="my-finished"),
+    path("my-bookmarks/",  MyBookmarksView.as_view(),  name="my-bookmarks"),
+    path("my-sessions/",   MySessionsView.as_view(),   name="my-sessions"),
+    path("my-activity-summary/", DashboardSummaryView.as_view(), name="my-activity-summary"),
 
     # ── Open Library import (admin feature) ───────────────────
     path("openlibrary/search/", OpenLibrarySearch.as_view(), name="ol-search"),

@@ -26,9 +26,11 @@ export const deleteBook = (token, id) =>
 
 // ── Dashboard stats ──────────────────────────────────────────────
 export const fetchAdminDashboard = (token) => apiFetch("/dashboard/", token);
-export const fetchMyBooks     = (token) => apiFetch("/my-books/",     token);
-export const fetchMyHistory   = (token) => apiFetch("/my-history/",   token);
+export const fetchMyActivity  = (token) => apiFetch("/my-activity/",  token);
+export const fetchMyFinished  = (token) => apiFetch("/my-finished/",  token);
 export const fetchMyBookmarks = (token) => apiFetch("/my-bookmarks/", token);
+export const fetchMySessions  = (token) => apiFetch("/my-sessions/",  token);
+export const fetchMySummary   = (token) => apiFetch("/my-activity-summary/", token);
 
 // ── Borrow ───────────────────────────────────────────────────────
 export const borrowBook = (token, bookId) =>
@@ -50,7 +52,7 @@ const SHELF_GENRES = [
 ];
 
 // ── Normalise a BFF book into the shape the UI expects ───────────
-function parseBFFBook(b) {
+export function parseBFFBook(b) {
   return {
     bookId:      b.book_id,
     title:       b.title                      || "Untitled",
@@ -63,10 +65,6 @@ function parseBFFBook(b) {
   };
 }
 
-// ✦ RENAMED: fetchGutendexRows → fetchShelfRows
-// Fetches the 4 dashboard shelf rows from our Django BFF.
-// Sources: Open Library + Google Books (no Gutendex).
-// Redis caches each endpoint for 24h on the backend.
 export async function fetchShelfRows() {
   const rows = await Promise.all(
     SHELF_GENRES.map(async ({ label, endpoint }) => {
@@ -83,13 +81,9 @@ export async function fetchShelfRows() {
   return rows.filter((r) => r.books.length > 0);
 }
 
-// fetchBookOverview — Used by BookOverviewPage.
-// Calls the BFF read endpoint which returns metadata + text.
-// We only use the metadata fields here (no full text download displayed).
 export async function fetchBookOverview(bookId) {
   const res  = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
   const data = await res.json();
-  // Even a 404 may carry partial metadata (title/author/cover) — still render overview.
   return {
     title      : data.title        || "Untitled",
     author     : data.author       || "Unknown",
@@ -103,17 +97,12 @@ export async function fetchBookOverview(bookId) {
   };
 }
 
-// ✦ RENAMED: fetchGutendexBook → fetchBookContent
-// Used by ReaderPage — fetches full book text from Django BFF.
-// Django routes to the correct source based on book_id prefix:
-// e.g. "google:abc", "openlibrary:OL123W", "archive:xyz"
 export async function fetchBookContent(bookId) {
   const res = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
   if (!res.ok) throw new Error("Book not found");
-  return res.json(); // { title, author, cover_url, text, source }
+  return res.json();
 }
 
-// ── Book text fetch (for direct URL reads) ────────────────────────
 export async function fetchBookText(readUrl) {
   const res = await fetch(readUrl);
   if (!res.ok) throw new Error("Could not load book content");
@@ -122,19 +111,31 @@ export async function fetchBookText(readUrl) {
 }
 
 
-
 // ── Bookmarks & History saves ─────────────────────────────────────
-export const saveBookmark = (token, bookId, source = "openlibrary") =>
+export const saveBookmark = (token, bookData) =>
   apiFetch("/my-bookmarks/", token, {
     method: "POST",
-    body:   JSON.stringify({ book_id: bookId, source }),
+    body:   JSON.stringify(bookData),
   });
 
-export const markFinished = (token, bookId, source = "openlibrary") =>
-  apiFetch("/my-history/", token, {
-    method: "POST",
-    body:   JSON.stringify({ book_id: bookId, source }),
+export const unbookmark = (token, bookId) =>
+  apiFetch("/my-bookmarks/", token, {
+    method: "DELETE",
+    body:   JSON.stringify({ book_id: bookId }),
   });
+
+export const saveReadingActivity = (token, activityData) =>
+  apiFetch("/my-activity/", token, {
+    method: "POST",
+    body:   JSON.stringify(activityData),
+  });
+
+export const recordSession = (token, minutes = 1) =>
+  apiFetch("/my-sessions/", token, {
+    method: "POST",
+    body: JSON.stringify({ minutes }),
+  });
+
 
 // ── Open Library search & import ─────────────────────────────────
 export const searchOpenLibrary = (q) =>
@@ -144,4 +145,4 @@ export const importBooks = (token, books) =>
   apiFetch("/openlibrary/import/", token, {
     method: "POST",
     body:   JSON.stringify({ books }),
-  });
+  });

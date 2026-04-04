@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import { saveBookmark, markFinished, fetchBookContent } from "../api/shelf";
+import { useQueryClient } from "@tanstack/react-query";
+import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent } from "../api/shelf";
 import "./ReaderPage.css";
 
 const CHARS_PER_PAGE = 1200;
@@ -48,6 +49,62 @@ const IconBookmark = () => (
 );
 const IconArrowLeft  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconArrowRight = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconLogout     = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+
+/* ── Helpers ── */
+const capitalizeFirst = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+
+/* ══════════════════════════════════════════════════════
+   Profile Dropdown (shared with Dashboard)
+══════════════════════════════════════════════════════ */
+function ProfileDropdown({ username, email, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const initials = username
+    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="profile-wrap" ref={ref}>
+      <button
+        className="profile-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-label="Profile menu"
+      >
+        <span className="avatar-initials">{initials}</span>
+      </button>
+
+      {open && (
+        <div className="profile-dropdown">
+          <div className="profile-dropdown-header">
+            <div className="profile-dropdown-avatar">{initials}</div>
+            <div className="profile-dropdown-info">
+              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
+              <span className="profile-dropdown-email">{email || "—"}</span>
+            </div>
+          </div>
+
+          <div className="profile-dropdown-divider" />
+
+          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
+            <IconLogout />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── Vertical side label ── */
 function VerticalSideLabel({ text, position }) {
@@ -63,7 +120,19 @@ function VerticalSideLabel({ text, position }) {
 ══════════════════════════════════════════════════════ */
 export default function ReaderPage() {
   const { bookId: rawBookId } = useParams();
-  const { token } = useAuth();
+  const { token, username, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const resolvedEmail = useMemo(() => {
+    try {
+      const t = sessionStorage.getItem("shelf_token");
+      if (!t) return "";
+      const payload = JSON.parse(atob(t.split(".")[1]));
+      return payload.email || "";
+    } catch { return ""; }
+  }, [token]);
+
+  const handleLogout = useCallback(() => { logout(); navigate("/"); }, [logout, navigate]);
 
   const [fontSize,      setFontSize]      = useState(16);
   const [showTypo,      setShowTypo]      = useState(false);
@@ -102,7 +171,12 @@ export default function ReaderPage() {
           author:    data.author    || "Unknown",
           cover_url: data.cover_url || "",
           source:    data.source    || source,
+          user_progress: data.user_progress || 0,
+          is_bookmarked: data.is_bookmarked || false,
+          is_finished:   data.is_finished   || false,
         });
+        setBookmarkSaved(data.is_bookmarked || false);
+        setFinishedSaved(data.is_finished   || false);
         if (!data.text || data.text.trim().length === 0) {
           setError("No readable text available for this book.");
           setLoading(false);
@@ -114,6 +188,14 @@ export default function ReaderPage() {
         const endMarker = text.indexOf("*** END OF");
         if (endMarker !== -1) text = text.slice(0, endMarker);
         setPages(splitIntoPages(text));
+        
+        // Restore progress if available
+        if (data.user_progress > 0) {
+            const total = splitIntoPages(text).length;
+            const targetIdx = Math.floor((data.user_progress / 100) * total);
+            // Ensure we land on a spread start (even index)
+            setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+        }
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
@@ -157,26 +239,72 @@ export default function ReaderPage() {
   }, [spreadIndex, pages.length, sliding]);
 
   /* ── Actions ── */
+  /* ── Actions & Auto-tracking ── */
   async function handleBookmark() {
-    if (!token) return;
+    if (!token || !bookMeta) return;
     try {
-      await saveBookmark(token, bookId, source);
+      await saveBookmark(token, {
+        book_id: bookId,
+        source: source,
+        book_title: bookMeta.title,
+        book_author: bookMeta.author,
+        book_cover: bookMeta.cover_url
+      });
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
     } catch {}
   }
 
   async function handleMarkFinished() {
-    if (!token) return;
+    if (!token || !bookMeta) return;
+    const nextFinished = !finishedSaved;
     try {
-      await markFinished(token, bookId, source);
-      setFinishedSaved(true);
+      await saveReadingActivity(token, {
+        book_id: bookId,
+        source: source,
+        book_title: bookMeta.title,
+        book_author: bookMeta.author,
+        book_cover: bookMeta.cover_url,
+        progress_percent: nextFinished ? 100 : progressPct,
+        is_finished: nextFinished
+      });
+      setFinishedSaved(nextFinished);
     } catch {}
   }
+
 
   const progressPct = pages.length > 0
     ? Math.min(100, ((spreadIndex + 2) / pages.length) * 100)
     : 0;
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!token || !bookMeta || pages.length === 0) return;
+    saveReadingActivity(token, {
+      book_id: bookId,
+      source: source,
+      book_title: bookMeta.title,
+      book_author: bookMeta.author,
+      book_cover: bookMeta.cover_url,
+      progress_percent: progressPct,
+      is_finished: finishedSaved
+    })
+    .then(() => {
+      queryClient.invalidateQueries({ queryKey: ["myActivity"] });
+      queryClient.invalidateQueries({ queryKey: ["myFinished"] });
+    })
+    .catch(() => {});
+  }, [spreadIndex, pages.length, bookMeta, token, bookId, source, progressPct, queryClient]);
+
+  useEffect(() => {
+    if (!token) return;
+    // Heartbeat every 60 seconds (1 min) of reading time
+    const interval = setInterval(() => {
+      recordSession(token, 1).catch(() => {});
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [token]);
 
   /* ══════════════════════════════════════════════════════
      RENDER
@@ -223,9 +351,11 @@ export default function ReaderPage() {
           >
             {finishedSaved ? "✅ Finished" : "Mark as Finished"}
           </button>
-          <div className="user-avatar">
-            {bookMeta?.title?.[0] ?? "S"}
-          </div>
+          <ProfileDropdown
+            username={username}
+            email={resolvedEmail}
+            onLogout={handleLogout}
+          />
         </div>
       </header>
 

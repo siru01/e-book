@@ -2,22 +2,34 @@ import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { searchBooks } from "../api/shelf";
+import { searchBooks, parseBFFBook } from "../api/shelf";
 import "./DashboardPage.css";
 import {
-  useMyBooks,
-  useMyHistory,
-  useMyBookmarks,
+  useDashboardSummary,
   useShelfRows,
 } from "../hooks/useDashboardData";
 
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
-const stars   = (r)   => { const n = Math.max(0, Math.min(5, r)); return "★".repeat(n) + "☆".repeat(5 - n); };
+
+function timeAgo(dateString) {
+  if (!dateString) return "";
+  const diff = Date.now() - new Date(dateString).getTime();
+  const mins = Math.max(0, Math.floor(diff / 60000));
+  if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr${hours !== 1 ? 's' : ''} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days !== 1 ? 's' : ''} ago`;
+}
 
 /* ── Greeting helpers ── */
+const capitalizeFirst = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+
 const getGreeting = (username) => {
   const hour = new Date().getHours();
-  const name = username ? `, ${username}` : "";
+  const displayName = username ? capitalizeFirst(username) : "";
+  const name = displayName ? `, ${displayName}` : "";
   if (hour >= 5  && hour < 12) return `Good Morning 🌅${name}`;
   if (hour >= 12 && hour < 17) return `Good Afternoon ☕${name}`;
   if (hour >= 17 && hour < 21) return `Good Evening 🌙${name}`;
@@ -91,7 +103,7 @@ function ProfileDropdown({ username, email, onLogout }) {
           <div className="profile-dropdown-header">
             <div className="profile-dropdown-avatar">{initials}</div>
             <div className="profile-dropdown-info">
-              <span className="profile-dropdown-name">{username || "User"}</span>
+              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
               <span className="profile-dropdown-email">{email || "—"}</span>
             </div>
           </div>
@@ -284,6 +296,57 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
   );
 });
 
+/* ── Calendar Heatmap ── */
+function CalendarHeatmap({ sessions }) {
+  const dates = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dates.push(d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0'));
+  }
+  
+  const sessMap = {};
+  sessions.forEach(s => sessMap[s.date] = s.minutes_read);
+
+  const getCol = (min) => {
+    if (!min) return "#1e1e1e";
+    if (min < 15) return "#0e4429";
+    if (min < 30) return "#006d32";
+    if (min < 60) return "#26a641";
+    return "#39d353";
+  };
+
+  const weeks = [];
+  for (let i = 0; i < 52; i++) {
+    const w = dates.slice(i * 7, (i + 1) * 7);
+    weeks.push(w);
+  }
+
+  return (
+    <div className="cal-heatmap-wrapper">
+      <div className="cal-months">
+        <span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
+      </div>
+      <div className="cal-grid-area">
+        <div className="cal-days-axis">
+          <span>Mon</span><span>Wed</span><span>Fri</span>
+        </div>
+        <div className="cal-grid">
+          {weeks.map((week, i) => (
+            <div key={i} className="cal-col">
+              {week.map(d => (
+                <div key={d} className="cal-box" style={{ backgroundColor: getCol(sessMap[d]) }} title={`${d}: ${sessMap[d]||0} mins`} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════
    Dashboard Page
 ══════════════════════════════════════════════════════════════════ */
@@ -319,27 +382,24 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  const { data: rawBooks     = [] } = useMyBooks(token);
-  const { data: rawHistory   = [] } = useMyHistory(token);
-  const { data: rawBookmarks = [] } = useMyBookmarks(token);
+  const { data: summary = {} } = useDashboardSummary(token);
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
-  const counts = useMemo(() => ({
-    books : toArray(rawBooks).length,
-    marks : toArray(rawBookmarks).length,
-    streak: 12,
-    done  : toArray(rawHistory).length,
-  }), [rawBooks, rawBookmarks, rawHistory]);
+  const counts = useMemo(() => {
+    return {
+      books : toArray(summary.activity).length,
+      marks : toArray(summary.bookmarks).length,
+      streak: summary.streak || 0,
+      done  : toArray(summary.finished).length,
+    };
+  }, [summary]);
 
   const handleSearch = useCallback(async (q) => {
     if (!q.trim()) return;
     setSearched(true); setSearchLoading(true);
     try {
       const data = await searchBooks(token, q);
-      setSearchResults((data.results || []).map(b => ({
-        bookId: b.book_id, title: b.title,
-        author: (b.authors || []).join(", "), cover: b.cover_url,
-      })));
+      setSearchResults((data.results || []).map(parseBFFBook));
     } catch { setSearchResults([]); }
     setSearchLoading(false);
   }, [token]);
@@ -350,25 +410,33 @@ export default function DashboardPage() {
   const handleLogout   = useCallback(() => { queryClient.clear(); logout(); navigate("/"); }, [queryClient, logout, navigate]);
 
   const getPanelContent = useCallback((key) => {
-    const readings = toArray(rawBooks);
-    const history  = toArray(rawHistory);
-    const marks    = toArray(rawBookmarks);
+    const activity = toArray(summary.activity);
+    const finished = toArray(summary.finished);
+    const marks    = toArray(summary.bookmarks);
+    const sessions = toArray(summary.sessions);
+
     switch (key) {
       case "recent":
-        return readings.length > 0
-          ? readings.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.last_read}</span><span style={{color:"#f59e0b"}}>{parseInt(b.progress_percent)}%</span></div>} />)
+        return activity.length > 0
+          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{ b.progress_percent < 100 && <span style={{color:"#f59e0b", marginLeft: "auto"}}>{parseInt(b.progress_percent)}%</span> }</div>} />)
           : <p className="panel-empty">No recent readings.</p>;
       case "bookmarks":
         return marks.length > 0
           ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
           : <p className="panel-empty">No bookmarks saved.</p>;
+      case "calendar":
+        return <CalendarHeatmap sessions={sessions} />;
       case "history":
-        return history.length > 0
-          ? history.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.finished_at}</span><span>{stars(b.rating)}</span></div>} />)
-          : <p className="panel-empty">No history recorded.</p>;
+        return finished.length > 0
+          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.finished_at || b.last_read_at)}</span></div>} />)
+          : <p className="panel-empty">No full history recorded yet.</p>;
+      case "previously_read":
+        return finished.length > 0
+          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>COMPLETED</span></div>} />)
+          : <p className="panel-empty">No books finished yet.</p>;
       default: return null;
     }
-  }, [rawBooks, rawHistory, rawBookmarks]);
+  }, [summary]);
 
   return (
     <div className="dash-root">

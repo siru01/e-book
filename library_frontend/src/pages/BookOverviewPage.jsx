@@ -1,10 +1,68 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { fetchBookOverview, searchBooks, saveBookmark } from "../api/shelf";
 import "./BookOverviewPage.css";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
+const capitalizeFirst = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+
+const IconLogout = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
+/* ── Profile Dropdown ────────────────────────────────────────── */
+function ProfileDropdown({ username, email, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const initials = username
+    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="profile-wrap" ref={ref}>
+      <button
+        className="profile-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-label="Profile menu"
+      >
+        <span className="avatar-initials">{initials}</span>
+      </button>
+
+      {open && (
+        <div className="profile-dropdown">
+          <div className="profile-dropdown-header">
+            <div className="profile-dropdown-avatar">{initials}</div>
+            <div className="profile-dropdown-info">
+              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
+              <span className="profile-dropdown-email">{email || "—"}</span>
+            </div>
+          </div>
+          <div className="profile-dropdown-divider" />
+          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
+            <IconLogout />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function cleanLabel(str = "") {
   return str
     .replace(/^(Browsing|Browse|Fiction|Nonfiction)\s*/i, "")
@@ -55,7 +113,18 @@ function Skeleton({ w = "100%", h = "20px", r = "6px" }) {
 export default function BookOverviewPage() {
   const { bookId: rawBookId } = useParams();
   const navigate              = useNavigate();
-  const { token, logout }     = useAuth();
+  const { token, username, logout } = useAuth();
+
+  const resolvedEmail = useMemo(() => {
+    try {
+      const t = sessionStorage.getItem("shelf_token");
+      if (!t) return "";
+      const payload = JSON.parse(atob(t.split(".")[1]));
+      return payload.email || "";
+    } catch { return ""; }
+  }, [token]);
+
+  const handleLogout = useCallback(() => { logout(); navigate("/"); }, [logout, navigate]);
 
   const bookId = rawBookId ? decodeURIComponent(rawBookId) : "";
 
@@ -138,7 +207,13 @@ export default function BookOverviewPage() {
     if (!token) { navigate("/login"); return; }
     setSaving(true);
     try {
-      await saveBookmark(token, bookId, source);
+      await saveBookmark(token, {
+        book_id: bookId,
+        source: source,
+        book_title: book.title,
+        book_author: book.author,
+        book_cover: book.coverUrl
+      });
       setSaved(true);
     } catch (_) {
       setSaved((s) => !s); // toggle optimistically if API fails
@@ -163,13 +238,11 @@ export default function BookOverviewPage() {
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
         </button>
-        <button className="bop-icon-btn" aria-label="profile">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </button>
-        <button className="bop-logout" onClick={() => { logout(); navigate("/"); }}>Logout</button>
+        <ProfileDropdown
+          username={username}
+          email={resolvedEmail}
+          onLogout={handleLogout}
+        />
       </div>
     </nav>
   );

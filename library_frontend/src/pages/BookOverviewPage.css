@@ -4,7 +4,7 @@
 /* ─── Root / Page ───────────────────────────────────────────────── */
 .bop-root {
   min-height: 100vh;
-  background: #f4f1ea;
+  background: #fff;
   color: #1a1815;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +18,7 @@
   padding: 0 48px;
   height: 60px;
   border-bottom: 1px solid #ddd8cf;
-  background: #f4f1ea;
+  background: #fff;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -91,19 +91,130 @@
 }
 .bop-icon-btn:hover { background: #eae6de; color: #1a1815; }
 
-.bop-logout {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #7a7368;
+/* ── Profile Dropdown ────────────────────────────────────────── */
+.profile-wrap {
+  position: relative;
+}
+
+.profile-trigger {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #111;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.profile-trigger:hover { opacity: 0.85; transform: scale(1.05); }
+
+.avatar-initials {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .7rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .04em;
+  line-height: 1;
+  user-select: none;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 230px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+  z-index: 500;
+  overflow: hidden;
+  animation: bop-dropdown-in 0.15s ease;
+}
+
+@keyframes bop-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.profile-dropdown-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+
+.profile-dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-dropdown-name {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .88rem;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .75rem;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0;
+}
+
+.profile-dropdown-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 16px;
-  border-radius: 6px;
-  transition: color 0.2s, background 0.2s;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  color: #555;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
 }
-.bop-logout:hover { color: #1a1815; background: #eae6de; }
+.profile-dropdown-logout:hover {
+  background: #fafafa;
+  color: #111;
+}
 
 /* ─── Main ──────────────────────────────────────────────────────── */
 .bop-main {
@@ -345,7 +456,7 @@
 
 /* Librarian's Note card */
 .bop-note-card {
-  background: #e8e4db;
+  background: #f5f5f5;
   border-radius: 14px;
   padding: 20px 20px 22px;
   position: relative;
@@ -417,7 +528,7 @@
 }
 
 .bop-specs-card {
-  background: #ece8e0;
+  background: #f5f5f5;
   border-radius: 16px;
   padding: 32px 40px;
   display: flex;
@@ -437,7 +548,7 @@
 
 .bop-spec-divider {
   width: 1px;
-  background: #d4cfc5;
+  background: #e0e0e0;
   flex-shrink: 0;
   align-self: stretch;
 }
@@ -562,7 +673,7 @@
 
 /* ─── Skeleton ──────────────────────────────────────────────────── */
 .bop-skeleton {
-  background: linear-gradient(90deg, #e8e4db 0%, #f0ece3 50%, #e8e4db 100%);
+  background: linear-gradient(90deg, #efefef 0%, #f8f8f8 50%, #efefef 100%);
   background-size: 200% 100%;
   animation: bop-shimmer 1.4s ease infinite;
 }
