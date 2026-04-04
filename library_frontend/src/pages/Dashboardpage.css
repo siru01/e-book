@@ -254,13 +254,21 @@
 .hc-stat { font-size: .7rem; font-weight: 700; color: #bbb; background: #f0f0f0; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
 
 .hc-content { 
-  transform: translateY(10px); 
-  transition: transform 0.3s ease-out; 
+  opacity: 0;
+  transform: translateY(15px); 
+  transition: opacity 0.4s ease-out, transform 0.5s cubic-bezier(0.2, 1, 0.3, 1); 
   flex: 1; 
-  overflow-y: auto; 
+  overflow-y: auto;
+  pointer-events: none;
+  visibility: hidden;
 }
 .hc-content::-webkit-scrollbar { display: none; }
-.hero-card--expanded .hc-content { transform: translateY(0); }
+.hero-card--expanded:not(.hero-card--animating) .hc-content { 
+  opacity: 1; 
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
 
 .hc-bottom { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 16px; flex-shrink: 0; }
 .hero-card--expanded .hc-icon { opacity: 1; color: #6366f1; }
@@ -340,53 +348,199 @@
   .book-card { width: 140px; }
   .book-card-cover { width: 140px; height: 210px; }
 }
-/* -- Calendar Heatmap -- */
-.cal-heatmap-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: #111;
-  padding: 16px;
-  border-radius: 12px;
-  color: #fff;
-  font-family: 'Inter', sans-serif;
-  overflow-x: auto;
+
+:root {
+  --cal-shade-1: #00d2ff;
+  --cal-shade-2: #3a7bd5;
+  --cal-shade-3: #004e92;
 }
-.cal-months {
-  display: flex;
-  margin-left: 32px;
-  gap: 32px;
-  font-size: 0.75rem;
-  color: #888;
+
+/* ── Monthly Calendar ── */
+.cal-monthly-wrap {
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 8px;
+  background: transparent;
+  color: #111;
 }
-.cal-grid-area {
+
+.cal-monthly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 5px;
+}
+
+.cal-month-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  text-transform: capitalize;
+}
+
+.cal-nav {
   display: flex;
   gap: 8px;
 }
-.cal-days-axis {
+
+.cal-nav button {
+  background: #f0f0f0;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  font-size: 0.75rem;
-  color: #888;
-  height: 98px; /* 7 boxes * 14px */
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #555;
+  transition: background 0.2s;
 }
-.cal-grid {
+
+.cal-nav button:hover {
+  background: #e5e5e5;
+  color: #111;
+}
+
+.cal-monthly-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.cal-weekday {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.05em;
+  padding-bottom: 8px;
+}
+
+.cal-day-cell {
+  aspect-ratio: 1;
   display: flex;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
-.cal-col {
+
+.cal-day-empty {
+  aspect-ratio: 1;
+}
+
+.cal-day-circle {
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #bbb; /* Light for past by default */
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+  position: relative;
+  background-color: #fcfcfc;
 }
-.cal-box {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background-color: #1e1e1e;
+
+.cal-day-circle[style*="background-color: var"] {
+  color: #fff; /* High contrast for filled days */
 }
-.cal-box:hover {
-  outline: 1px solid #fff;
-  outline-offset: 1px;
+
+.cal-day-circle:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
 }
+
+/* ── Tooltip ── */
+.cal-tooltip {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.cal-day-circle:hover .cal-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-5px);
+}
+
+.cal-day-holiday::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  background-color: #ff4757;
+  border-radius: 50%;
+}
+
+.cal-day-future {
+  opacity: 1;
+  color: #111 !important;
+  font-weight: 700;
+  background-color: #f0f0f0 !important;
+  cursor: default !important;
+  pointer-events: none;
+}
+
+.cal-event-footer {
+  margin-top: 15px;
+  padding: 10px;
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px dashed #eee;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cal-event-active {
+  color: #6366f1;
+  font-weight: 700;
+  animation: fadeIn 0.3s ease;
+}
+
+.cal-event-none {
+  color: #bbb;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -- Skeleton / Shimmer -- */
+.skeleton { position: relative; overflow: hidden; background-color: #f6f6f6; }
+.skeleton::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform: translateX(-100%); background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0)); animation: shimmer 2.5s infinite; }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+.skeleton-hero { height: 130px; border-radius: 20px; border: 2px solid #f0f0f0; flex: 1; min-width: 190px; }
+.skeleton-shelf { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+.skeleton-shelf-title { width: 220px; height: 32px; border-radius: 6px; margin-bottom: 4px; background: #f0f0f0; }
+.skeleton-book-row { display: flex; gap: 20px; overflow: hidden; }
+.skeleton-book-card { width: 160px; display: flex; flex-direction: column; gap: 10px; }
+.skeleton-book-cover { width: 160px; height: 240px; border-radius: 12px; border: 3.5px solid #f0f0f0; background: #fff; }
+.skeleton-line { height: 14px; border-radius: 4px; background: #eee; }
+.skeleton-line-title { width: 100%; }
+.skeleton-line-author { width: 60%; }

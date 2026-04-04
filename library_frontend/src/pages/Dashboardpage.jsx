@@ -171,6 +171,34 @@ function SearchResultCard({ book }) {
   );
 }
 
+/* ── Skeleton Loaders ── */
+function SkeletonHeroCard() {
+  return (
+    <div className="dash-hero-cards">
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="skeleton skeleton-hero" />
+      ))}
+    </div>
+  );
+}
+
+function SkeletonShelf() {
+  return (
+    <div className="skeleton-shelf">
+      <div className="skeleton skeleton-shelf-title" />
+      <div className="skeleton-book-row">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="skeleton-book-card">
+            <div className="skeleton skeleton-book-cover" />
+            <div className="skeleton skeleton-line skeleton-line-title" />
+            <div className="skeleton skeleton-line skeleton-line-author" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════
    HeroCard
 ══════════════════════════════════════════════════════════════════ */
@@ -296,52 +324,132 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
   );
 });
 
+/* ── Calendar Heatmap (Holidays Logic) ── */
+const HOLIDAYS_2026 = {
+  "01-01": "New Year's Day",
+  "01-12": "Swami Vivekananda Birthday",
+  "01-23": "Netaji's Birthday",
+  "01-26": "Republic Day",
+  "02-02": "Saraswati Puja",
+  "03-03": "Doljatra",
+  "03-21": "Eid-Ul-Fitr",
+  "03-26": "Ram Navami",
+  "03-31": "Mahavir Jayanti",
+  "04-03": "Good Friday",
+  "04-14": "Ambedkar Jayanti",
+  "04-15": "Bengali New Year (Nababarsha)",
+  "05-01": "May Day / Buddha Purnima",
+  "05-09": "Rabindranath Tagore Birthday",
+  "08-15": "Independence Day",
+  "08-26": "Id-E-Milad",
+  "10-02": "Gandhi Jayanti",
+  "10-16": "Maha Shashthi",
+  "10-17": "Maha Saptami",
+  "10-18": "Maha Ashtami",
+  "10-19": "Maha Navami",
+  "10-20": "Maha Dashami",
+  "10-21": "Vijayadashami",
+  "10-31": "Lakshmi Puja",
+  "11-08": "Kali Puja / Diwali",
+  "11-14": "Children's Day",
+  "12-25": "Christmas",
+};
+
 /* ── Calendar Heatmap ── */
 function CalendarHeatmap({ sessions }) {
-  const dates = [];
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    dates.push(d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0'));
-  }
+  const [viewDate, setViewDate] = useState(new Date());
+  const [hoverDate, setHoverDate] = useState(null); // String "MM-DD" or null
+
+  const year  = viewDate.getFullYear();
+  const month = viewDate.getMonth(); // 0-indexed
+
+  // Check if today is a holiday
+  const todayObj = new Date();
+  const todayKey = `${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+
+  const currentDisplayDate = hoverDate || todayKey;
+  const currentEvent = HOLIDAYS_2026[currentDisplayDate];
+
+  const todayStr = todayObj.toISOString().split('T')[0];
+
+  // Helper: Dates for the current month view
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay    = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon...
   
+  const startOffset = (firstDay === 0 ? 6 : firstDay - 1); 
+
   const sessMap = {};
   sessions.forEach(s => sessMap[s.date] = s.minutes_read);
 
   const getCol = (min) => {
-    if (!min) return "#1e1e1e";
-    if (min < 15) return "#0e4429";
-    if (min < 30) return "#006d32";
-    if (min < 60) return "#26a641";
-    return "#39d353";
+    if (!min) return "transparent";
+    if (min >= 60) return "var(--cal-shade-3)"; // 1h+
+    if (min >= 30) return "var(--cal-shade-2)"; // 30m+
+    if (min >= 1)  return "var(--cal-shade-1)"; // 1m+
+    return "transparent";
   };
 
-  const weeks = [];
-  for (let i = 0; i < 52; i++) {
-    const w = dates.slice(i * 7, (i + 1) * 7);
-    weeks.push(w);
+  const formatTime = (total) => {
+    if (!total) return "No reading recorded";
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h > 0) return `${h}h ${m}m read`;
+    return `${m}m read`;
+  };
+
+  const monthName = viewDate.toLocaleString('default', { month: 'long' });
+  const weekDays  = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+  // Navigation
+  const changeMonth = (offset) => setViewDate(new Date(year, month + offset, 1));
+
+  // Generate calendar cells (including leading padding)
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    const holidayKey = `${mm}-${dd}`;
+    cells.push({ day: d, dateStr, holidayKey, minutes: sessMap[dateStr] || 0 });
   }
 
   return (
-    <div className="cal-heatmap-wrapper">
-      <div className="cal-months">
-        <span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
+    <div className="cal-monthly-wrap">
+      <div className="cal-monthly-header">
+        <span className="cal-month-title">{monthName} {year}</span>
+        <div className="cal-nav">
+          <button onClick={() => changeMonth(-1)}>‹</button>
+          <button onClick={() => changeMonth(1)}>›</button>
+        </div>
       </div>
-      <div className="cal-grid-area">
-        <div className="cal-days-axis">
-          <span>Mon</span><span>Wed</span><span>Fri</span>
-        </div>
-        <div className="cal-grid">
-          {weeks.map((week, i) => (
-            <div key={i} className="cal-col">
-              {week.map(d => (
-                <div key={d} className="cal-box" style={{ backgroundColor: getCol(sessMap[d]) }} title={`${d}: ${sessMap[d]||0} mins`} />
-              ))}
+      
+      <div className="cal-monthly-grid">
+        {weekDays.map(d => <span key={d} className="cal-weekday">{d}</span>)}
+        {cells.map((cell, i) => {
+          const isFuture = cell && cell.dateStr > todayStr;
+          return !cell ? <div key={`pad-${i}`} className="cal-day-empty" /> : (
+            <div key={i} className="cal-day-cell">
+              <div 
+                className={`cal-day-circle ${HOLIDAYS_2026[cell.holidayKey] ? "cal-day-holiday" : ""} ${isFuture ? "cal-day-future" : ""}`} 
+                style={{ backgroundColor: getCol(cell.minutes) }}
+                onMouseEnter={() => !isFuture && setHoverDate(cell.holidayKey)}
+                onMouseLeave={() => setHoverDate(null)}
+              >
+                {cell.day}
+                {!isFuture && <div className="cal-tooltip">{formatTime(cell.minutes)}</div>}
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
+
+      <div className="cal-event-footer">
+        {currentEvent ? (
+          <span className="cal-event-active">✨ {currentEvent}</span>
+        ) : (
+          <span className="cal-event-none">Nothing today</span>
+        )}
       </div>
     </div>
   );
@@ -382,7 +490,7 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  const { data: summary = {} } = useDashboardSummary(token);
+  const { data: summary = {}, isLoading: summaryLoading } = useDashboardSummary(token);
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
   const counts = useMemo(() => {
@@ -481,18 +589,22 @@ export default function DashboardPage() {
         )}
 
         {!searched && (
-          <div className="dash-hero-cards">
-            {HERO_CARDS.map(card => (
-              <HeroCard
-                key={card.key}
-                card={card}
-                counts={counts}
-                panelContent={getPanelContent(card.key)}
-                onExpand={() => handleExpand(card.key)}
-                onCollapse={handleCollapse}
-              />
-            ))}
-          </div>
+          summaryLoading ? (
+            <SkeletonHeroCard />
+          ) : (
+            <div className="dash-hero-cards">
+              {HERO_CARDS.map(card => (
+                <HeroCard
+                  key={card.key}
+                  card={card}
+                  counts={counts}
+                  panelContent={getPanelContent(card.key)}
+                  onExpand={() => handleExpand(card.key)}
+                  onCollapse={handleCollapse}
+                />
+              ))}
+            </div>
+          )
         )}
 
         {searched ? (
@@ -511,7 +623,7 @@ export default function DashboardPage() {
         ) : (
           <div className="dash-shelves">
             {rowsLoading
-              ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
+              ? [1, 2, 3].map(i => <SkeletonShelf key={i} />)
               : shelfRows.map(row => (
                   <div key={row.label} className="dash-shelf">
                     <div className="dash-shelf-header">
