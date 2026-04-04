@@ -50,10 +50,16 @@ def search(query: str, page: int = 1):
     cached = get_cached("search", source="google", q=query, page=page)
     if cached:
         return cached
+
     start = (page - 1) * 20
     resp = requests.get(
         f"{BASE_URL}/volumes",
-        params=_get_params({"q": query, "startIndex": start}),
+        params=_get_params({
+            "q": query, 
+            "startIndex": start, 
+            "filter": "free-ebooks",
+            "langRestrict": "en"
+        }),
         timeout=8
     )
     resp.raise_for_status()

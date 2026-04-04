@@ -1,75 +1,53 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from . import openlibrary, google_books, gutendex, archive
-
-
-def _run_ordered(fn_list: list) -> list:
-    """Run fns in parallel but merge results in the given order."""
-    results_by_index = {}
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = {executor.submit(fn): i for i, fn in enumerate(fn_list)}
-        for future in as_completed(futures):
-            i = futures[future]
-            try:
-                results_by_index[i] = future.result()
-            except Exception as e:
-                print(f"[aggregator] source[{i}] failed: {e}")
-                results_by_index[i] = []
-    results = []
-    for i in range(len(fn_list)):
-        results.extend(results_by_index.get(i, []))
-    return results
-
-
-def _deduplicate(books: list) -> list:
-    seen   = set()
-    unique = []
-    for book in books:
-        title_key  = book.get("title",   "").lower().strip()[:40]
-        authors    = book.get("authors", [])
-        author_key = authors[0].lower().strip()[:20] if authors else ""
-        fp = f"{title_key}|{author_key}"
-        if fp not in seen:
-            seen.add(fp)
-            unique.append(book)
-    return unique
+from concurrent.futures import ThreadPoolExecutor
+from . import gutendex, google_books, openlibrary, archive
 
 
 def search_all(query: str, page: int = 1, sources: list = None) -> list:
-    # Order: gutendex → archive → openlibrary → google_books
-    results = _run_ordered([
+    """
+    Parallel search across all verified full-text sources.
+    Uses ThreadPoolExecutor to prevent sequential network bottlenecks.
+    """
+    all_results = []
+    
+    # Define search tasks
+    tasks = [
         lambda: gutendex.search(query, page),
-        lambda: archive.search(query, page),
+        lambda: google_books.search(query, page),
         lambda: openlibrary.search(query, page),
-        #lambda: google_books.search(query, page),
-    ])
-    return _deduplicate(results)
+        lambda: archive.search(query, page)
+    ]
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(t) for t in tasks]
+        for f in futures:
+            try:
+                res = f.result()
+                if res: all_results.extend(res)
+            except Exception as e:
+                print(f"[aggregator] source search failed: {e}")
+
+    # Deduplicate and sort by something useful (e.g., download count or relevance)
+    seen = set()
+    unique_results = []
+    for book in all_results:
+        bid = book.get("book_id")
+        if bid not in seen:
+            unique_results.append(book)
+            seen.add(bid)
+
+    return unique_results[:40]
 
 
 def trending_all() -> list:
-    # Order: gutendex → archive → openlibrary → google_books
-    results = _run_ordered([
-        lambda: gutendex.trending(),
-        lambda: archive.search("popular books", 1),
-        lambda: openlibrary.search("bestseller", 1),
-        #lambda: google_books.search("bestseller", 1),
-    ])
-    return _deduplicate(results)
-
+    """Combined trending books (Gutenberg prioritized)."""
+    return gutendex.trending()
 
 
 def category_all(genre: str, page: int = 1) -> list:
-    # Order: gutendex → openlibrary → google_books
-    results = _run_ordered([
-        lambda: gutendex.by_category(genre, page),
-        lambda: openlibrary.search(genre, page),
-        lambda: google_books.search(genre, page),
-    ])
-    return _deduplicate(results)
+    """Combined category view (Gutenberg prioritized)."""
+    return gutendex.by_category(genre, page)
+
 
 def new_arrivals_all() -> list:
-    results = _run_ordered([
-        lambda: gutendex.new_arrivals(),
-        lambda: archive.new_arrivals(),
-        lambda: openlibrary.new_arrivals(),
-    ])
-    return _deduplicate(results)
+    """Combined new arrivals (Gutenberg prioritized)."""
+    return gutendex.new_arrivals()

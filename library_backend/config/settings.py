@@ -139,9 +139,9 @@ else:
 
 # ─── Cache TTLs (seconds) ────────────────────────────────────
 CACHE_TTL = {
-    "trending":     6 * 60 * 60,    # 6 hours
-    "category":     2 * 60 * 60,    # 2 hours
-    "search":       30 * 60,        # 30 minutes
+    "trending":     12 * 60 * 60,   # 12 hours
+    "category":     12 * 60 * 60,   # 12 hours
+    "search":       12 * 60 * 60,   # 12 hours
     "new_arrivals": 12 * 60 * 60,   # 12 hours
     "detail":       24 * 60 * 60,   # 24 hours
 }

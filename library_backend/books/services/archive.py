@@ -42,8 +42,13 @@ def search(query: str, page: int = 1):
     cached = get_cached("search", source="archive", q=query, page=page)
     if cached:
         return cached
+
     start = (page - 1) * 20
-    docs = _search_request({"q": f"{query} AND mediatype:texts", "start": start})
+    # ── Strict API filtering for English & Open Access ──
+    # -access:protected excludes books that are locked/restricted
+    full_q = f"{query} AND language:eng AND -access:protected AND mediatype:texts"
+    
+    docs = _search_request({"q": full_q, "start": start})
     results = [_normalize(d) for d in docs]
     set_cached("search", results, source="archive", q=query, page=page)
     return results

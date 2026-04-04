@@ -15,6 +15,9 @@ def _normalize(book: dict) -> dict:
         formats.get("text/plain") or
         ""
     )
+    if not text_url:
+        return None  # Filter out books without full text!
+
     return {
         "book_id":        f"gutenberg:{gid}",
         "title":          book.get("title", ""),
@@ -34,36 +37,77 @@ def search(query: str, page: int = 1):
     cached = get_cached("search", source="gutenberg", q=query, page=page)
     if cached:
         return cached
-    with httpx.Client(timeout=10, follow_redirects=True) as client:
-        resp = client.get(f"{BASE_URL}/books", params={"search": query, "page": page})
-    resp.raise_for_status()
-    results = [_normalize(b) for b in resp.json().get("results", [])]
-    set_cached("search", results, source="gutenberg", q=query, page=page)
-    return results
+
+    try:
+        # Optimized API hit with direct filtering
+        # mime_type=text/plain asks Gutendex for Full Text only
+        with httpx.Client(timeout=45, follow_redirects=True) as client:
+            resp = client.get(
+                f"{BASE_URL}/books", 
+                params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}
+            )
+        resp.raise_for_status()
+        data = resp.json()
+        raw_results = data.get("results", [])
+        
+        # Normalize and filter for Full Text ONLY
+        results = []
+        for b in raw_results:
+            n = _normalize(b)
+            if n: results.append(n)
+            
+        set_cached("search", results, source="gutenberg", q=query, page=page)
+        return results
+    except Exception as e:
+        print(f"[gutendex] search failed for query '{query}': {e}")
+        return []
 
 
 def trending():
     cached = get_cached("trending", source="gutenberg")
     if cached:
         return cached
-    with httpx.Client(timeout=10, follow_redirects=True) as client:
-        resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
-    resp.raise_for_status()
-    results = [_normalize(b) for b in resp.json().get("results", [])]
-    set_cached("trending", results, source="gutenberg")
-    return results
+    try:
+        with httpx.Client(timeout=45, follow_redirects=True) as client:
+            resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
+        resp.raise_for_status()
+        raw_books = resp.json().get("results", [])
+        
+        # Use simple normalize, no DB
+        results = []
+        for b in raw_books:
+            n = _normalize(b)
+            if n: results.append(n)
+            
+        set_cached("trending", results, source="gutenberg")
+        return results
+    except Exception as e:
+        print(f"[gutendex] trending failed: {e}")
+        return []
 
 
 def by_category(genre: str, page: int = 1):
     cached = get_cached("category", source="gutenberg", genre=genre, page=page)
     if cached:
         return cached
-    with httpx.Client(timeout=10, follow_redirects=True) as client:
-        resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
-    resp.raise_for_status()
-    results = [_normalize(b) for b in resp.json().get("results", [])]
-    set_cached("category", results, source="gutenberg", genre=genre, page=page)
-    return results
+
+    try:
+        with httpx.Client(timeout=45, follow_redirects=True) as client:
+            resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
+        resp.raise_for_status()
+        raw_books = resp.json().get("results", [])
+        
+        # Use simple normalize, no DB
+        results = []
+        for b in raw_books:
+            n = _normalize(b)
+            if n: results.append(n)
+            
+        set_cached("category", results, source="gutenberg", genre=genre, page=page)
+        return results
+    except Exception as e:
+        print(f"[gutendex] by_category failed for genre '{genre}': {e}")
+        return []
 
 
 def new_arrivals():

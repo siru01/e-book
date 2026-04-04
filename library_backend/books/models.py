@@ -28,6 +28,30 @@ class Book(models.Model):
         return self.title
 
 
+class GutenbergIndex(models.Model):
+    """
+    Local cache of Gutenberg book metadata for instant search results.
+    """
+    gut_id      = models.IntegerField(unique=True)
+    title       = models.CharField(max_length=500, blank=True)
+    authors     = models.JSONField(default=list)  # List of strings
+    cover_url   = models.URLField(blank=True, default='')
+    read_url    = models.URLField(blank=True, default='')
+    subjects    = models.JSONField(default=list)
+    bookshelves = models.JSONField(default=list)
+    download_count = models.IntegerField(default=0)
+    indexed_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-download_count']
+        indexes  = [
+            models.Index(fields=['title']),
+        ]
+
+    def __str__(self):
+        return f"Gutenberg:{self.gut_id} | {self.title}"
+
+
 class ReadingActivity(models.Model):
     """
     Unified reading tracker — covers both 'currently reading' and 'finished'.

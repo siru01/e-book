@@ -34,11 +34,14 @@ def search(query: str, page: int = 1):
     cached = get_cached("search", source="openlibrary", q=query, page=page)
     if cached:
         return cached
+    
+    # ── Strict API filtering for English & Full Text ──
+    full_query = f"{query} AND language:eng AND has_fulltext:true"
+
     resp = requests.get(
         f"{BASE_URL}/search.json",
         params={
-            "q": query, "page": page, "limit": 20,
-            # ── added ia to get Internet Archive IDs ──
+            "q": full_query, "page": page, "limit": 20,
             "fields": "key,title,author_name,cover_i,subject,first_publish_year,first_sentence,ia"
         },
         timeout=15

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ const getGreeting = (username) => {
   const hour = new Date().getHours();
   const displayName = username ? capitalizeFirst(username) : "";
   const name = displayName ? `, ${displayName}` : "";
-  if (hour >= 5  && hour < 12) return `Good Morning 🌅${name}`;
+  if (hour >= 5 && hour < 12) return `Good Morning 🌅${name}`;
   if (hour >= 12 && hour < 17) return `Good Afternoon ☕${name}`;
   if (hour >= 17 && hour < 21) return `Good Evening 🌙${name}`;
   return `Night Owl 🦉${name} – rest is productive too!`;
@@ -52,26 +53,26 @@ const SUBTITLES = [
 ];
 
 /* ── Icons ── */
-const IconBook     = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
-const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
-const IconCal      = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
-const IconHistory  = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>;
-const IconCheck    = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
-const IconSearch   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
-const IconBell     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
-const IconLogout   = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+const IconBook = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>;
+const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>;
+const IconCal = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
+const IconHistory = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-4.5" /></svg>;
+const IconCheck = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
+const IconSearch = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+const IconBell = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+const IconLogout = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
 
 const HERO_CARDS = [
-  { key: "recent",          label: "RECENT READINGS", sub: "Continue",  Icon: IconBook,     stat: (c) => `${c.books} BOOKS`   },
-  { key: "bookmarks",       label: "BOOKMARKS",        sub: "Saved",     Icon: IconBookmark, stat: (c) => `${c.marks} MARKS`   },
-  { key: "calendar",        label: "CALENDAR",         sub: "Routine",   Icon: IconCal,      stat: (c) => `STREAK ${c.streak}` },
-  { key: "history",         label: "HISTORY",          sub: "Journey",   Icon: IconHistory,  stat: ()  => "FULL LOG"           },
-  { key: "previously_read", label: "FINISHED",         sub: "Completed", Icon: IconCheck,    stat: (c) => `${c.done} DONE`     },
+  { key: "recent", label: "RECENT READINGS", sub: "Continue", Icon: IconBook, stat: (c) => `${c.books} BOOKS` },
+  { key: "bookmarks", label: "BOOKMARKS", sub: "Saved", Icon: IconBookmark, stat: (c) => `${c.marks} MARKS` },
+  { key: "calendar", label: "CALENDAR", sub: "Routine", Icon: IconCal, stat: (c) => `STREAK ${c.streak}` },
+  { key: "history", label: "HISTORY", sub: "Journey", Icon: IconHistory, stat: () => "FULL LOG" },
+  { key: "previously_read", label: "FINISHED", sub: "Completed", Icon: IconCheck, stat: (c) => `${c.done} DONE` },
 ];
 
 /* ══════════════════════════════════════════════════════════════════
    Profile Dropdown
-══════════════════════════════════════════════════════════════════ */
+ ══════════════════════════════════════════════════════════════════ */
 function ProfileDropdown({ username, email, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -145,7 +146,7 @@ function BookCard({ book }) {
         {book.cover
           ? <img src={book.cover} alt={book.title} loading="lazy" />
           : <div className="book-card-placeholder">📖</div>}
-        <div className="book-card-hover"><span>View Book</span></div>
+        <div className="book-card-hover"><span>Read Now</span></div>
       </div>
       <div className="book-card-meta">
         <span className="book-card-title">{book.title}</span>
@@ -201,12 +202,11 @@ function SkeletonShelf() {
 
 /* ══════════════════════════════════════════════════════════════════
    HeroCard
-══════════════════════════════════════════════════════════════════ */
+ ══════════════════════════════════════════════════════════════════ */
 const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
   const navigate = useNavigate();
   const containerRef = useRef(null);
-  
-  // Status: 'idle' | 'opening' | 'open' | 'closing'
+
   const [status, setStatus] = useState('idle');
   const [cardStyle, setCardStyle] = useState({});
   const [wrapperStyle, setWrapperStyle] = useState({});
@@ -214,21 +214,27 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
   const isActive = status !== 'idle';
   const isExpanded = status === 'open' || status === 'closing' || status === 'opening';
 
+  useEffect(() => {
+    if (isExpanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isExpanded]);
+
   const open = useCallback(() => {
     if (isActive) return;
     setStatus('opening');
-    
-    // Capture precise fractional dimensions
+
     const rect = containerRef.current.getBoundingClientRect();
-    
-    // Keep the grid placeholder stable using EXACT dimensions (both W and H)
-    setWrapperStyle({ 
-      width: `${rect.width}px`, 
-      height: `${rect.height}px`, 
-      flex: 'none' 
+    setWrapperStyle({
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      flex: 'none',
+      zIndex: 500
     });
-    
-    // Set initial fixed position exactly over the current spot
+
     setCardStyle({
       position: "fixed",
       top: `${rect.top}px`,
@@ -239,7 +245,7 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       zIndex: 400,
       transition: "none"
     });
-    
+
     onExpand();
 
     requestAnimationFrame(() => {
@@ -258,7 +264,7 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
           boxShadow: "0 32px 80px rgba(0,0,0,0.3)",
           transition: "all 0.4s ease-out"
         });
-        
+
         setTimeout(() => setStatus('open'), 400);
       });
     });
@@ -268,9 +274,8 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
     if (status !== 'open') return;
     setStatus('closing');
 
-    // Recalculate target position using raw fractional values
     const rect = containerRef.current.getBoundingClientRect();
-    
+
     setCardStyle(prev => ({
       ...prev,
       top: `${rect.top}px`,
@@ -292,34 +297,49 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
 
   return (
     <div className="hero-card-wrapper" ref={containerRef} style={wrapperStyle}>
-      {status !== 'idle' && (
-        <div 
-          className="hc-backdrop" 
-          onMouseDown={close} 
-          style={{ background: "transparent", pointerEvents: "auto" }} 
-        />
-      )}
-      <div 
-        className={`hero-card ${isExpanded ? "hero-card--expanded" : ""} ${(status === 'opening' || status === 'closing') ? "hero-card--animating" : ""}`} 
-        style={cardStyle} 
+      <div
+        className={`hero-card ${status !== 'idle' ? "hero-card--ghost" : ""}`}
         onClick={status === 'idle' ? open : undefined}
       >
         <div className="hc-top">
           <span className="hc-label">{card.label}</span>
           <span className="hc-stat">{card.stat(counts)}</span>
         </div>
-        
-        {/* Always keep container to maintain 3-item flex layout stability */}
-        <div className="hc-content">
-          {status !== 'idle' && panelContent}
-        </div>
-        
         <div className="hc-bottom">
           <span className="hc-sub">{card.sub}</span>
           <div className="hc-icon"><card.Icon /></div>
         </div>
-        {status === 'open' && <button className="hc-close" onMouseDown={close}>✕</button>}
       </div>
+
+      {status !== 'idle' && createPortal(
+        <div className="hc-portal-root">
+          <div
+            className="hc-backdrop"
+            onMouseDown={close}
+            style={{ opacity: status === 'open' ? 1 : 0 }}
+          />
+          <div
+            className={`hero-card ${status === 'open' ? "hero-card--expanded" : "hero-card--animating"}`}
+            style={cardStyle}
+          >
+            <div className="hc-top">
+              <span className="hc-label">{card.label}</span>
+              <span className="hc-stat">{card.stat(counts)}</span>
+            </div>
+
+            <div className="hc-content">
+              {panelContent}
+            </div>
+
+            <div className="hc-bottom">
+              <span className="hc-sub">{card.sub}</span>
+              <div className="hc-icon"><card.Icon /></div>
+            </div>
+            {status === 'open' && <button className="hc-close" onMouseDown={close}>✕</button>}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 });
@@ -358,35 +378,34 @@ const HOLIDAYS_2026 = {
 /* ── Calendar Heatmap ── */
 function CalendarHeatmap({ sessions }) {
   const [viewDate, setViewDate] = useState(new Date());
-  const [hoverDate, setHoverDate] = useState(null); // String "MM-DD" or null
+  const [hoverDate, setHoverDate] = useState(null); 
 
-  const year  = viewDate.getFullYear();
-  const month = viewDate.getMonth(); // 0-indexed
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth(); 
 
-  // Check if today is a holiday
   const todayObj = new Date();
   const todayKey = `${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
 
   const currentDisplayDate = hoverDate || todayKey;
   const currentEvent = HOLIDAYS_2026[currentDisplayDate];
 
-  const todayStr = todayObj.toISOString().split('T')[0];
+  const todayInKolkata = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const todayStr = `${todayInKolkata.getFullYear()}-${String(todayInKolkata.getMonth() + 1).padStart(2, '0')}-${String(todayInKolkata.getDate()).padStart(2, '0')}`;
 
-  // Helper: Dates for the current month view
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay    = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon...
-  
-  const startOffset = (firstDay === 0 ? 6 : firstDay - 1); 
+  const firstDay = new Date(year, month, 1).getDay(); 
+  const startOffset = (firstDay === 0 ? 6 : firstDay - 1);
 
   const sessMap = {};
   sessions.forEach(s => sessMap[s.date] = s.minutes_read);
 
   const getCol = (min) => {
-    if (!min) return "transparent";
-    if (min >= 60) return "var(--cal-shade-3)"; // 1h+
-    if (min >= 30) return "var(--cal-shade-2)"; // 30m+
-    if (min >= 1)  return "var(--cal-shade-1)"; // 1m+
-    return "transparent";
+    if (!min) return "var(--cal-shade-empty)";
+    if (min >= 60) return "var(--cal-shade-4)"; 
+    if (min >= 30) return "var(--cal-shade-3)"; 
+    if (min >= 15) return "var(--cal-shade-2)"; 
+    if (min >= 1) return "var(--cal-shade-1)"; 
+    return "var(--cal-shade-empty)";
   };
 
   const formatTime = (total) => {
@@ -398,12 +417,9 @@ function CalendarHeatmap({ sessions }) {
   };
 
   const monthName = viewDate.toLocaleString('default', { month: 'long' });
-  const weekDays  = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-  // Navigation
+  const weekDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   const changeMonth = (offset) => setViewDate(new Date(year, month + offset, 1));
 
-  // Generate calendar cells (exactly 42 for a uniform 6-row grid)
   const cells = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
@@ -413,7 +429,6 @@ function CalendarHeatmap({ sessions }) {
     const holidayKey = `${mm}-${dd}`;
     cells.push({ day: d, dateStr, holidayKey, minutes: sessMap[dateStr] || 0 });
   }
-  // Pad with nulls to reach exactly 42 cells (6 weeks * 7 days)
   while (cells.length < 42) cells.push(null);
 
   return (
@@ -425,15 +440,16 @@ function CalendarHeatmap({ sessions }) {
           <button onClick={() => changeMonth(1)}>›</button>
         </div>
       </div>
-      
+
       <div className="cal-monthly-grid">
         {weekDays.map(d => <span key={d} className="cal-weekday">{d}</span>)}
         {cells.map((cell, i) => {
           const isFuture = cell && cell.dateStr > todayStr;
+          const isHoliday = cell && HOLIDAYS_2026[cell.holidayKey];
           return !cell ? <div key={`pad-${i}`} className="cal-day-empty" /> : (
             <div key={i} className="cal-day-cell">
               <div 
-                className={`cal-day-circle ${HOLIDAYS_2026[cell.holidayKey] ? "cal-day-holiday" : ""} ${isFuture ? "cal-day-future" : ""}`} 
+                className={`cal-day-circle ${isHoliday ? "cal-day-holiday" : ""} ${isFuture ? "cal-day-future" : ""} ${cell.dateStr === todayStr ? "cal-day-today" : ""}`} 
                 style={{ backgroundColor: getCol(cell.minutes) }}
                 onMouseEnter={() => setHoverDate(cell.holidayKey)}
                 onMouseLeave={() => setHoverDate(null)}
@@ -446,11 +462,11 @@ function CalendarHeatmap({ sessions }) {
         })}
       </div>
 
-      <div className="cal-event-footer">
+      <div className="cal-event-footer-mini">
         {currentEvent ? (
-          <span className="cal-event-active">✨ {currentEvent}</span>
+          <span className="cal-event-msg active">✨ {currentEvent}</span>
         ) : (
-          <span className="cal-event-none">Nothing today</span>
+          <span className="cal-event-msg">Hover a date with a • for info</span>
         )}
       </div>
     </div>
@@ -459,13 +475,12 @@ function CalendarHeatmap({ sessions }) {
 
 /* ══════════════════════════════════════════════════════════════════
    Dashboard Page
-══════════════════════════════════════════════════════════════════ */
+ ══════════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
   const { token, logout, username } = useAuth();
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Decode email from JWT (it's in the payload but not stored separately in context)
   const resolvedEmail = useMemo(() => {
     try {
       const t = sessionStorage.getItem("shelf_token");
@@ -475,17 +490,17 @@ export default function DashboardPage() {
     } catch { return ""; }
   }, [token]);
 
-  const [activePanel,   setActivePanel]   = useState("");
-  const [searchQuery,   setSearchQuery]   = useState("");
+  const [activePanel, setActivePanel] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searched,      setSearched]      = useState(false);
-  const [phIndex,       setPhIndex]       = useState(0);
+  const [searched, setSearched] = useState(false);
+  const [phIndex, setPhIndex] = useState(0);
 
   const greeting = useMemo(() => getGreeting(username), [username]);
   const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)]);
 
-  const PLACEHOLDER_WORDS = ["literature","mystery","sci-fi","fantasy","history","philosophy"];
+  const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
 
   useEffect(() => {
     const t = setInterval(() => setPhIndex(i => (i + 1) % PLACEHOLDER_WORDS.length), 2800);
@@ -497,10 +512,10 @@ export default function DashboardPage() {
 
   const counts = useMemo(() => {
     return {
-      books : toArray(summary.activity).length,
-      marks : toArray(summary.bookmarks).length,
+      books: toArray(summary.activity).length,
+      marks: toArray(summary.bookmarks).length,
       streak: summary.streak || 0,
-      done  : toArray(summary.finished).length,
+      done: toArray(summary.finished).length,
     };
   }, [summary]);
 
@@ -514,15 +529,15 @@ export default function DashboardPage() {
     setSearchLoading(false);
   }, [token]);
 
-  const clearSearch    = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
-  const handleExpand   = useCallback((key) => setActivePanel(key), []);
-  const handleCollapse = useCallback(()    => setActivePanel(""),  []);
-  const handleLogout   = useCallback(() => { queryClient.clear(); logout(); navigate("/"); }, [queryClient, logout, navigate]);
+  const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
+  const handleExpand = useCallback((key) => setActivePanel(key), []);
+  const handleCollapse = useCallback(() => setActivePanel(""), []);
+  const handleLogout = useCallback(() => { queryClient.clear(); logout(); navigate("/"); }, [queryClient, logout, navigate]);
 
   const getPanelContent = useCallback((key) => {
     const activity = toArray(summary.activity);
     const finished = toArray(summary.finished);
-    const marks    = toArray(summary.bookmarks);
+    const marks = toArray(summary.bookmarks);
     const sessions = toArray(summary.sessions);
 
     switch (key) {
@@ -530,7 +545,7 @@ export default function DashboardPage() {
         const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
         const filteredRecent = activity.filter(b => new Date(b.last_read_at).getTime() > fortyEightHoursAgo);
         return filteredRecent.length > 0
-          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{ b.progress_percent < 100 && <span style={{color:"#f59e0b", marginLeft: "auto"}}>{parseInt(b.progress_percent)}%</span> }</div>} />)
+          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{b.progress_percent < 100 && <span style={{ color: "#f59e0b", marginLeft: "auto" }}>{parseInt(b.progress_percent)}%</span>}</div>} />)
           : <p className="panel-empty">No readings in the last 48 hours.</p>;
       }
       case "bookmarks":
@@ -589,7 +604,7 @@ export default function DashboardPage() {
         {!searched && (
           <div className="dash-heading-block">
             <h1 className="dash-greeting">{greeting}</h1>
-            <p className="dash-subtitle">{subtitle}</p>
+            <p className="dash-subtitle">{subtitle} </p>
           </div>
         )}
 
@@ -619,10 +634,16 @@ export default function DashboardPage() {
               <button onClick={clearSearch}>✕ Clear</button>
             </div>
             {searchLoading
-              ? <div className="dash-spinner-wrap"><div className="dash-spinner" /></div>
-              : <div className="dash-src-grid">
-                  {searchResults.map((b, i) => <SearchResultCard key={i} book={b} />)}
+              ? (
+                <div className="dash-search-loading-hero">
+                  <div className="dash-search-spinner" />
+                  <p className="dash-loading-wait-msg">PLEASE WAIT PATIENTLY </p>
+                  <p className="dash-loading-detail">TILL YOU PREFERENCE IS BEING SEARCHED</p>
                 </div>
+              )
+              : <div className="dash-src-grid">
+                {searchResults.map((b, i) => <SearchResultCard key={i} book={b} />)}
+              </div>
             }
           </div>
         ) : (
@@ -630,16 +651,16 @@ export default function DashboardPage() {
             {rowsLoading
               ? [1, 2, 3].map(i => <SkeletonShelf key={i} />)
               : shelfRows.map(row => (
-                  <div key={row.label} className="dash-shelf">
-                    <div className="dash-shelf-header">
-                      <h2 className="dash-shelf-label">{row.label}</h2>
-                      <span className="dash-shelf-all" onClick={() => { setSearchQuery(row.label); handleSearch(row.label); }}>VIEW ALL</span>
-                    </div>
-                    <div className="dash-shelf-scroll">
-                      {row.books.map((book, i) => <BookCard key={i} book={book} />)}
-                    </div>
+                <div key={row.label} className="dash-shelf">
+                  <div className="dash-shelf-header">
+                    <h2 className="dash-shelf-label">{row.label}</h2>
+                    <span className="dash-shelf-all" onClick={() => { setSearchQuery(row.label); handleSearch(row.label); }}>VIEW ALL</span>
                   </div>
-                ))
+                  <div className="dash-shelf-scroll">
+                    {row.books.map((book, i) => <BookCard key={i} book={book} />)}
+                  </div>
+                </div>
+              ))
             }
           </div>
         )}

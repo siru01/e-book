@@ -44,11 +44,13 @@ export const searchBooks = (token, q) =>
   apiFetch(`/books/search/?q=${encodeURIComponent(q)}`, token);
 
 // ── Shelf genres ─────────────────────────────────────────────────
+// ── Shelf genres (Gutenberg Focus) ─────────────────────────────
 const SHELF_GENRES = [
-  { label: "Trending Now",        endpoint: "/books/trending/" },
-  { label: "New Arrivals",        endpoint: "/books/new-arrivals/" },
+  { label: "Trending Classics",   endpoint: "/books/trending/" },
+  { label: "Classic Literature",  endpoint: "/books/category/?genre=literature" },
   { label: "Science Fiction",     endpoint: "/books/category/?genre=science+fiction" },
-  { label: "Mystery & Detective", endpoint: "/books/category/?genre=mystery" },
+  { label: "Mystery & Ghost",     endpoint: "/books/category/?genre=mystery" },
+  { label: "Philosophy & Zen",    endpoint: "/books/category/?genre=philosophy" },
 ];
 
 // ── Normalise a BFF book into the shape the UI expects ───────────
@@ -66,18 +68,27 @@ export function parseBFFBook(b) {
 }
 
 export async function fetchShelfRows() {
-  const rows = await Promise.all(
-    SHELF_GENRES.map(async ({ label, endpoint }) => {
-      try {
-        const res   = await fetch(`${BASE}${endpoint}`);
+  const rows = [];
+  for (const { label, endpoint } of SHELF_GENRES) {
+    try {
+      const res   = await fetch(`${BASE}${endpoint}`);
+      if (res.status === 429) {
+        // If rate limited, wait 2s and try one more time
+        await new Promise(r => setTimeout(r, 2000));
+        const res2 = await fetch(`${BASE}${endpoint}`);
+        if (!res2.ok) throw new Error();
+        const data = await res2.json();
+        rows.push({ label, books: (data.results || []).slice(0, 12).map(parseBFFBook) });
+      } else {
         const data  = await res.json();
-        const books = (data.results || []).slice(0, 12).map(parseBFFBook);
-        return { label, books };
-      } catch (_) {
-        return { label, books: [] };
+        rows.push({ label, books: (data.results || []).slice(0, 12).map(parseBFFBook) });
       }
-    })
-  );
+    } catch (_) {
+      rows.push({ label, books: [] });
+    }
+    // Small stagger delay between each genre
+    await new Promise(r => setTimeout(r, 300));
+  }
   return rows.filter((r) => r.books.length > 0);
 }
 
