@@ -403,7 +403,7 @@ function CalendarHeatmap({ sessions }) {
   // Navigation
   const changeMonth = (offset) => setViewDate(new Date(year, month + offset, 1));
 
-  // Generate calendar cells (including leading padding)
+  // Generate calendar cells (exactly 42 for a uniform 6-row grid)
   const cells = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
@@ -413,6 +413,8 @@ function CalendarHeatmap({ sessions }) {
     const holidayKey = `${mm}-${dd}`;
     cells.push({ day: d, dateStr, holidayKey, minutes: sessMap[dateStr] || 0 });
   }
+  // Pad with nulls to reach exactly 42 cells (6 weeks * 7 days)
+  while (cells.length < 42) cells.push(null);
 
   return (
     <div className="cal-monthly-wrap">
@@ -433,7 +435,7 @@ function CalendarHeatmap({ sessions }) {
               <div 
                 className={`cal-day-circle ${HOLIDAYS_2026[cell.holidayKey] ? "cal-day-holiday" : ""} ${isFuture ? "cal-day-future" : ""}`} 
                 style={{ backgroundColor: getCol(cell.minutes) }}
-                onMouseEnter={() => !isFuture && setHoverDate(cell.holidayKey)}
+                onMouseEnter={() => setHoverDate(cell.holidayKey)}
                 onMouseLeave={() => setHoverDate(null)}
               >
                 {cell.day}
@@ -524,10 +526,13 @@ export default function DashboardPage() {
     const sessions = toArray(summary.sessions);
 
     switch (key) {
-      case "recent":
-        return activity.length > 0
-          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{ b.progress_percent < 100 && <span style={{color:"#f59e0b", marginLeft: "auto"}}>{parseInt(b.progress_percent)}%</span> }</div>} />)
-          : <p className="panel-empty">No recent readings.</p>;
+      case "recent": {
+        const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+        const filteredRecent = activity.filter(b => new Date(b.last_read_at).getTime() > fortyEightHoursAgo);
+        return filteredRecent.length > 0
+          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{ b.progress_percent < 100 && <span style={{color:"#f59e0b", marginLeft: "auto"}}>{parseInt(b.progress_percent)}%</span> }</div>} />)
+          : <p className="panel-empty">No readings in the last 48 hours.</p>;
+      }
       case "bookmarks":
         return marks.length > 0
           ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
@@ -535,9 +540,9 @@ export default function DashboardPage() {
       case "calendar":
         return <CalendarHeatmap sessions={sessions} />;
       case "history":
-        return finished.length > 0
-          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.finished_at || b.last_read_at)}</span></div>} />)
-          : <p className="panel-empty">No full history recorded yet.</p>;
+        return activity.length > 0
+          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.last_read_at)}</span></div>} />)
+          : <p className="panel-empty">No reading history recorded yet.</p>;
       case "previously_read":
         return finished.length > 0
           ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>COMPLETED</span></div>} />)

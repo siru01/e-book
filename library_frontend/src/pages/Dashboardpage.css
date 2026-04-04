@@ -429,6 +429,7 @@
 
 .cal-day-empty {
   aspect-ratio: 1;
+  width: 100%;
 }
 
 .cal-day-circle {
@@ -497,8 +498,8 @@
   color: #111 !important;
   font-weight: 700;
   background-color: #f0f0f0 !important;
-  cursor: default !important;
-  pointer-events: none;
+  cursor: pointer !important;
+  pointer-events: auto;
 }
 
 .cal-event-footer {

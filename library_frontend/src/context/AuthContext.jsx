@@ -6,11 +6,13 @@ import {
   useEffect,
   useRef,
 } from "react";
+import { useLocation } from "react-router-dom";
 
 const AuthContext = createContext(null);
 
 // ── Config ─────────────────────────────────────────────────────
-const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes in ms
+const DEFAULT_LIMIT = 5  * 60 * 1000; // 5 minutes
+const READER_LIMIT  = 20 * 60 * 1000; // 20 minutes
 
 // ── Storage keys ───────────────────────────────────────────────
 // Using sessionStorage instead of localStorage so everything is
@@ -59,6 +61,7 @@ export function AuthProvider({ children }) {
   const [token,    setToken]    = useState(initialAuth.token);
   const [username, setUsername] = useState(initialAuth.username);
   const [userRole, setUserRole] = useState(initialAuth.userRole);
+  const location = useLocation();
 
   // ── Inactivity timer ref ─────────────────────────────────────
   const inactivityTimer = useRef(null);
@@ -76,10 +79,14 @@ export function AuthProvider({ children }) {
   // ── Reset inactivity timer on any user activity ──────────────
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    
+    // Dynamic limit: 20m for Reader, 5m for others
+    const limit = location.pathname.startsWith("/read/") ? READER_LIMIT : DEFAULT_LIMIT;
+
     inactivityTimer.current = setTimeout(() => {
-      logout(); // auto-logout after INACTIVITY_LIMIT of no activity
-    }, INACTIVITY_LIMIT);
-  }, [logout]);
+      logout(); // auto-logout after limit of no activity
+    }, limit);
+  }, [logout, location.pathname]);
 
   // ── Attach / detach activity listeners whenever token changes ─
   useEffect(() => {
@@ -99,7 +106,7 @@ export function AuthProvider({ children }) {
       events.forEach((e) => window.removeEventListener(e, resetInactivityTimer));
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, [token, resetInactivityTimer]);
+  }, [token, resetInactivityTimer, location.pathname]);
 
   // ── Login ────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {

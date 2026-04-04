@@ -194,8 +194,8 @@ class DashboardSummaryView(APIView):
     def get(self, request):
         user = request.user
         
-        # 1. Activities (last 6)
-        activities = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:6]
+        # 1. Activities (last 15 for history log)
+        activities = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:15]
         
         # 2. Finished (last 8)
         finished = ReadingActivity.objects.filter(user=user, is_finished=True).order_by('-finished_at')[:8]
