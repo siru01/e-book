@@ -28,6 +28,18 @@ function splitIntoPages(text) {
   return pages;
 }
 
+/* ── useMediaQuery hook ── ✦ NEW */
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const handler = (e) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}
+
 /* ── Icons ── */
 const IconAppearance = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -56,7 +68,7 @@ const capitalizeFirst = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
 /* ══════════════════════════════════════════════════════
-   Profile Dropdown (shared with Dashboard)
+   Profile Dropdown
 ══════════════════════════════════════════════════════ */
 function ProfileDropdown({ username, email, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -93,9 +105,7 @@ function ProfileDropdown({ username, email, onLogout }) {
               <span className="profile-dropdown-email">{email || "—"}</span>
             </div>
           </div>
-
           <div className="profile-dropdown-divider" />
-
           <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
             <IconLogout />
             Sign out
@@ -123,6 +133,9 @@ export default function ReaderPage() {
   const { token, username, logout } = useAuth();
   const navigate = useNavigate();
 
+  /* ✦ NEW — detect mobile */
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const resolvedEmail = useMemo(() => {
     try {
       const t = sessionStorage.getItem("shelf_token");
@@ -146,10 +159,13 @@ export default function ReaderPage() {
   const [sliding,       setSliding]       = useState(null);
   const [jumpValue,     setJumpValue]     = useState("");
 
-  const totalPages   = pages.length;
-  const leftPage     = pages[spreadIndex]     || "";
-  const rightPage    = pages[spreadIndex + 1] || "";
-  const leftPageNum  = spreadIndex + 1;
+  const totalPages  = pages.length;
+
+  /* ✦ CHANGED — mobile shows 1 page, desktop shows 2 (spread) */
+  const step        = isMobile ? 1 : 2;
+  const leftPage    = pages[spreadIndex]     || "";
+  const rightPage   = pages[spreadIndex + 1] || "";
+  const leftPageNum = spreadIndex + 1;
   const rightPageNum = spreadIndex + 2;
 
   const bookId     = rawBookId ? decodeURIComponent(rawBookId) : "";
@@ -188,13 +204,11 @@ export default function ReaderPage() {
         const endMarker = text.indexOf("*** END OF");
         if (endMarker !== -1) text = text.slice(0, endMarker);
         setPages(splitIntoPages(text));
-        
-        // Restore progress if available
+
         if (data.user_progress > 0) {
-            const total = splitIntoPages(text).length;
-            const targetIdx = Math.floor((data.user_progress / 100) * total);
-            // Ensure we land on a spread start (even index)
-            setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+          const total = splitIntoPages(text).length;
+          const targetIdx = Math.floor((data.user_progress / 100) * total);
+          setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
         }
       } catch (e) {
         if (!cancelled) setError(e.message);
@@ -205,24 +219,26 @@ export default function ReaderPage() {
     return () => { cancelled = true; };
   }, [bookId]);
 
-  /* ── Navigation ── */
+  /* ── Navigation ✦ CHANGED — uses step ── */
   function goNext() {
-    if (spreadIndex + 2 >= pages.length || sliding) return;
+    if (spreadIndex + step >= pages.length || sliding) return;
     setSliding("left");
-    setTimeout(() => { setSpreadIndex(s => s + 2); setSliding(null); }, 350);
+    setTimeout(() => { setSpreadIndex(s => s + step); setSliding(null); }, 350);
   }
 
   function goPrev() {
     if (spreadIndex <= 0 || sliding) return;
     setSliding("right");
-    setTimeout(() => { setSpreadIndex(s => Math.max(0, s - 2)); setSliding(null); }, 350);
+    setTimeout(() => { setSpreadIndex(s => Math.max(0, s - step)); setSliding(null); }, 350);
   }
 
   function handleJump(e) {
     if (e.key !== "Enter") return;
     const target = parseInt(jumpValue, 10);
     if (!isNaN(target) && target >= 1 && target <= totalPages) {
-      const idx = target % 2 === 0 ? target - 2 : target - 1;
+      const idx = isMobile
+        ? target - 1                                          // ✦ mobile: go to exact page
+        : (target % 2 === 0 ? target - 2 : target - 1);     // desktop: land on spread start
       setSpreadIndex(Math.max(0, idx));
     }
     setJumpValue("");
@@ -236,10 +252,26 @@ export default function ReaderPage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [spreadIndex, pages.length, sliding]);
+  }, [spreadIndex, pages.length, sliding, isMobile]);
+
+  /* ── Touch swipe support ✦ NEW — swipe left/right on mobile ── */
+  const touchStartX = useRef(null);
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+    touchStartX.current = null;
+  }
 
   /* ── Actions ── */
-  /* ── Actions & Auto-tracking ── */
   async function handleBookmark() {
     if (!token || !bookMeta) return;
     try {
@@ -272,9 +304,9 @@ export default function ReaderPage() {
     } catch {}
   }
 
-
+  /* ✦ CHANGED — progress uses step */
   const progressPct = pages.length > 0
-    ? Math.min(100, ((spreadIndex + 2) / pages.length) * 100)
+    ? Math.min(100, ((spreadIndex + step) / pages.length) * 100)
     : 0;
 
   const queryClient = useQueryClient();
@@ -299,7 +331,6 @@ export default function ReaderPage() {
 
   useEffect(() => {
     if (!token) return;
-    // Heartbeat every 60 seconds (1 min) of reading time
     const interval = setInterval(() => {
       recordSession(token, 1).catch(() => {});
     }, 60000);
@@ -344,13 +375,6 @@ export default function ReaderPage() {
           >
             <IconBookmark />
           </button>
-          {/* No share icon */}
-          <button
-            className={`toolbar-action-btn ${finishedSaved ? "toolbar-action-btn--done" : ""}`}
-            onClick={handleMarkFinished}
-          >
-            {finishedSaved ? "✅ Finished" : "Mark as Finished"}
-          </button>
           <ProfileDropdown
             username={username}
             email={resolvedEmail}
@@ -367,7 +391,11 @@ export default function ReaderPage() {
       )}
 
       {/* ── Main ── */}
-      <main className="reader-main-wrapper">
+      <main
+        className="reader-main-wrapper"
+        onTouchStart={handleTouchStart}   /* ✦ NEW */
+        onTouchEnd={handleTouchEnd}       /* ✦ NEW */
+      >
         {loading ? (
           <div className="reader-center">
             <div className="reader-spinner" />
@@ -405,7 +433,7 @@ export default function ReaderPage() {
               sliding === "left"  ? "slide-out-left"  :
               sliding === "right" ? "slide-out-right" : ""
             }`}>
-              {/* Left column */}
+              {/* Left column — always visible */}
               <div className="reading-column reading-column--left">
                 <header className="column-header">
                   <span className="chapter-label">CHAPTER {chapterNum}</span>
@@ -421,24 +449,26 @@ export default function ReaderPage() {
                 </div>
               </div>
 
-              {/* Right column */}
-              <div className="reading-column reading-column--right">
-                <header className="column-header">
-                  <span className="liquid-label">{bookMeta?.title?.toUpperCase()}</span>
-                  <span className="page-num">{rightPage ? rightPageNum : ""}</span>
-                </header>
-                <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
-                  {rightPage
-                    ? rightPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)
-                    : <p className="reader-end-text">~ End ~</p>
-                  }
+              {/* Right column — ✦ hidden on mobile */}
+              {!isMobile && (
+                <div className="reading-column reading-column--right">
+                  <header className="column-header">
+                    <span className="liquid-label">{bookMeta?.title?.toUpperCase()}</span>
+                    <span className="page-num">{rightPage ? rightPageNum : ""}</span>
+                  </header>
+                  <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
+                    {rightPage
+                      ? rightPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)
+                      : <p className="reader-end-text">~ End ~</p>
+                    }
+                  </div>
+                  <div className="column-footer" />
                 </div>
-                <div className="column-footer" />
-              </div>
+              )}
             </div>
 
             <button
-              className={`reader-nav-arrow reader-nav-arrow--right ${spreadIndex + 2 >= pages.length ? "hidden" : ""}`}
+              className={`reader-nav-arrow reader-nav-arrow--right ${spreadIndex + step >= pages.length ? "hidden" : ""}`}
               onClick={goNext}
             ><IconArrowRight /></button>
           </>
@@ -453,7 +483,7 @@ export default function ReaderPage() {
               <IconArrowLeft />
             </button>
             <span className="page-range">Page {leftPageNum} of {totalPages}</span>
-            <button className="nav-arrow-btn" onClick={goNext} disabled={spreadIndex + 2 >= pages.length}>
+            <button className="nav-arrow-btn" onClick={goNext} disabled={spreadIndex + step >= pages.length}>
               <IconArrowRight />
             </button>
           </div>
