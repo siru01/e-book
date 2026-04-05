@@ -146,8 +146,24 @@ export function AuthProvider({ children }) {
     return role;
   }, []);
 
-  // ── Sign Up (Optimized - uses tokens directly from response) ──
-  const signup = useCallback(async (username, email, password) => {
+  // ── Send OTP ──
+  const sendOtp = useCallback(async (email) => {
+    const response = await fetch("http://127.0.0.1:8000/api/send-otp/", {
+      method : "POST",
+      headers: { "Content-Type": "application/json" },
+      body   : JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `Error ${response.status}`);
+    }
+
+    return true;
+  }, []);
+
+  // ── Sign Up ──
+  const signup = useCallback(async (username, email, password, otp) => {
     const response = await fetch("http://127.0.0.1:8000/api/register/", {
       method : "POST",
       headers: { "Content-Type": "application/json" },
@@ -156,6 +172,7 @@ export function AuthProvider({ children }) {
         email: email, 
         password: password,
         phone: "",
+        otp: otp,
         role: "STUDENT"
       }),
     });
@@ -169,39 +186,11 @@ export function AuthProvider({ children }) {
       throw new Error(err.message || err.detail || `Error ${response.status}`);
     }
 
-    const data = await response.json();
-    
-    // Extract tokens and user data from response
-    const access = data.access || "";
-    let role = "STUDENT";
-    let name = username;
-
-    try {
-      const payload = JSON.parse(atob(access.split(".")[1]));
-      role = payload.role || data.user?.role || "STUDENT";
-      name = payload.full_name || data.user?.full_name || username;
-    } catch (_) {
-      // If token parsing fails, use data from response
-      role = data.user?.role || "STUDENT";
-      name = data.user?.full_name || username;
-    }
-
-    // Update state
-    setToken(access);
-    setUsername(name);
-    setUserRole(role);
-
-    // Persist to sessionStorage
-    sessionStorage.setItem(KEYS.token, access);
-    sessionStorage.setItem(KEYS.username, name);
-    sessionStorage.setItem(KEYS.role, role);
-    if (data.refresh) sessionStorage.setItem(KEYS.refresh, data.refresh);
-
-    return role;
+    return true;
   }, []);
 
   return (
-    <AuthContext.Provider value={{ token, username, userRole, login, signup, logout }}>
+    <AuthContext.Provider value={{ token, username, userRole, login, signup, logout, sendOtp }}>
       {children}
     </AuthContext.Provider>
   );

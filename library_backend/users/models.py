@@ -49,3 +49,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class OTPVerification(models.Model):
+    email = models.EmailField(unique=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    attempts = models.IntegerField(default=0)
+    blocked_until = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"OTP for {self.email}"

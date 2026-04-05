@@ -10,7 +10,7 @@ custom_token_view = TokenObtainPairView.as_view(serializer_class=CustomTokenObta
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/register/', RegisterView.as_view(), name='register'),
+    path('api/', include('users.urls')),
     path('api/token/', custom_token_view, name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include('transactions.urls')),
