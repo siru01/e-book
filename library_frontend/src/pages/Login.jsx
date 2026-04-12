@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
 import './Login.css';
 
+//const [isDark, setIsDark] = useState(true);
+//const toggleDarkMode = () => setIsDark(!isDark);
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
