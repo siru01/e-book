@@ -110,7 +110,7 @@ export function AuthProvider({ children }) {
 
   // ── Login ────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {
-    const response = await fetch("http://127.0.0.1:8000/api/token/", {
+    const response = await fetch("/api/token/", {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ email, password }),
@@ -148,7 +148,7 @@ export function AuthProvider({ children }) {
 
   // ── Send OTP ──
   const sendOtp = useCallback(async (email) => {
-    const response = await fetch("http://127.0.0.1:8000/api/send-otp/", {
+    const response = await fetch("/api/send-otp/", {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ email }),
@@ -164,7 +164,7 @@ export function AuthProvider({ children }) {
 
   // ── Sign Up ──
   const signup = useCallback(async (username, email, password, otp) => {
-    const response = await fetch("http://127.0.0.1:8000/api/register/", {
+    const response = await fetch("/api/register/", {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ 

@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000'
+const BASE_URL = '' // Uses Vite proxy in development
 
 export async function loginUser(email, password) {
   const response = await fetch(`${BASE_URL}/api/token/`, {

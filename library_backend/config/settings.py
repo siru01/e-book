@@ -34,7 +34,27 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [ 'localhost',
+    '127.0.0.1',
+    '192.168.1.3',  # Your local network range
+    '*',     # Common for mobile hotspots
+     ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://192.168.1.3:5173',  # Your Vite dev server IPs
+    'http://10.0.0.*:5173',
+]
+
+
+
+CSRF_COOKIE_SECURE = False      # False for HTTP (development)
+SESSION_COOKIE_SECURE = False   # False for HTTP (development)
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False     # Allow JavaScript to read CSRF token
+SESSION_COOKIE_HTTPONLY = True
 
 
 # Application definition
@@ -215,6 +235,10 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'AUTH_COOKIE': 'access',
+    'AUTH_COOKIE_SECURE': False,  # Set to True if using HTTPS
+    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_HTTPONLY': False,  # Allow frontend to read the cookie
 }
 
 

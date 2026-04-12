@@ -1,4 +1,4 @@
-const BASE = "http://127.0.0.1:8000/api";
+const BASE = "/api";
 
 // ── Generic authenticated fetch ──────────────────────────────────
 async function apiFetch(path, token, options = {}) {

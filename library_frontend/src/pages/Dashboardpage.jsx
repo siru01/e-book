@@ -38,18 +38,19 @@ const getGreeting = (username) => {
 };
 
 const SUBTITLES = [
-  "What are you in the mood for?",
-  "What's on your reading list?",
-  "What do you want to pick up?",
-  "Any preferences for today?",
-  "What type of stories are you looking for?",
-  "What's your pick for today?",
-  "What are you keen to delve into?",
-  "What are you in the market for?",
-  "What is your preference for today's reading?",
-  "What materials would you like to examine?",
-  "What topic would you like to explore?",
-  "Do you have a preference for current literature?",
+"What's next?",
+"Reading now?",
+"Pick a book.",
+"Current list?",
+"What's the mood?",
+"Today's pick?",
+"Start reading.",
+"Explore what?",
+"Next read?",
+"Pick a story?",
+"What materials would you like to examine?",
+"What topic would you like to explore?",
+"Do you have a preference for current literature?",
 ];
 
 /* ── Icons ── */
