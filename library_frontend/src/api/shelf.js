@@ -68,36 +68,13 @@ export function parseBFFBook(b) {
 }
 
 export async function fetchShelfRows() {
-  const results = await Promise.allSettled(
-    SHELF_GENRES.map(async ({ label, endpoint }, index) => {
-      // Small stagger (150ms per item) to prevent blasting the backend simultaneously
-      if (index > 0) {
-        await new Promise(r => setTimeout(r, index * 150));
-      }
-
-      try {
-        const res = await fetch(`${BASE}${endpoint}`);
-        if (res.status === 429) {
-          // If rate limited, wait 2s and try one more time
-          await new Promise(r => setTimeout(r, 2000));
-          const res2 = await fetch(`${BASE}${endpoint}`);
-          if (!res2.ok) throw new Error();
-          const data = await res2.json();
-          return { label, books: (data.results || []).slice(0, 12).map(parseBFFBook) };
-        } else {
-          if (!res.ok) throw new Error();
-          const data = await res.json();
-          return { label, books: (data.results || []).slice(0, 12).map(parseBFFBook) };
-        }
-      } catch (_) {
-        return { label, books: [] };
-      }
-    })
-  );
-
-  return results
-    .filter(r => r.status === "fulfilled" && r.value.books.length > 0)
-    .map(r => r.value);
+  try {
+    const res = await fetch(`${BASE}/books/shelf-rows/`);
+    if (!res.ok) throw new Error();
+    return await res.json();
+  } catch (_) {
+    return [];
+  }
 }
 
 export async function fetchBookOverview(bookId) {

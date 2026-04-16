@@ -21,7 +21,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 import httpx
 
-SHELF_CACHE_TTL = 60 * 60 * 24   # 86400 seconds
+SHELF_CACHE_TTL = 60 * 60 * 24 * 30  # 30 Days (2,592,000 seconds)
 
 
 # ─────────────────────────────────────────────

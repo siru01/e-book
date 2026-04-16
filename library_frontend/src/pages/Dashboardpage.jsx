@@ -34,7 +34,7 @@ const getGreeting = (username) => {
   if (hour >= 5 && hour < 12) return `Good Morning 🌅${name}`;
   if (hour >= 12 && hour < 17) return `Good Afternoon ☕${name}`;
   if (hour >= 17 && hour < 21) return `Good Evening 🌙${name}`;
-  return `Night Owl 🦉${name} – rest is productive too!`;
+  return `Night Owl 🦉${name}`;
 };
 
 const SUBTITLES = [
@@ -48,9 +48,9 @@ const SUBTITLES = [
 "Explore what?",
 "Next read?",
 "Pick a story?",
-"What materials would you like to examine?",
-"What topic would you like to explore?",
-"Do you have a preference for current literature?",
+"Any materials to examine?",
+"Topic you would like to explore?",
+"Preference for current literature?",
 ];
 
 /* ── Icons ── */
@@ -499,7 +499,13 @@ export default function DashboardPage() {
   const [phIndex, setPhIndex] = useState(0);
 
   const greeting = useMemo(() => getGreeting(username), [username]);
-  const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)]);
+  const [subtitle] = useState(() => {
+    const saved = sessionStorage.getItem("shelf_dashboard_subtitle");
+    if (saved) return saved;
+    const picked = SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)];
+    sessionStorage.setItem("shelf_dashboard_subtitle", picked);
+    return picked;
+  });
 
   const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
 
@@ -533,7 +539,12 @@ export default function DashboardPage() {
   const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
   const handleExpand = useCallback((key) => setActivePanel(key), []);
   const handleCollapse = useCallback(() => setActivePanel(""), []);
-  const handleLogout = useCallback(() => { queryClient.clear(); logout(); navigate("/"); }, [queryClient, logout, navigate]);
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem("shelf_dashboard_subtitle");
+    queryClient.clear();
+    logout();
+    navigate("/");
+  }, [queryClient, logout, navigate]);
 
   const getPanelContent = useCallback((key) => {
     const activity = toArray(summary.activity);
