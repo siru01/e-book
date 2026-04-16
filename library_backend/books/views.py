@@ -746,3 +746,4 @@ class BookReadView(APIView):
             f"Visit: https://books.google.com/books?id={google_id}"
         )
         return Response({**_base(), "text": preview_text})
+

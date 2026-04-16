@@ -10,6 +10,8 @@ import Login              from "./pages/Login";
 import SignUp             from "./pages/SignUp";
 import BookOverviewPage   from "./pages/BookOverviewPage";
 import "./App.css";
+import ForgotPasswordPage from './pages/Forgotpasswordpage';
+
 
 // ── React Query client ────────────────────────────────────────────
 const queryClient = new QueryClient({
@@ -50,7 +52,8 @@ function AppRoutes() {
       {/* Public Routes - accessible without login */}
       <Route path="/"      element={<PublicRoute><HomePage /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />  {/* ← ADD THIS LINE */}
+      <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} /> 
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Protected Routes - require login */}
       <Route path="/dashboard"         element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
