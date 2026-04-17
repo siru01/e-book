@@ -517,6 +517,9 @@ export default function DashboardPage() {
   const { data: summary = {}, isLoading: summaryLoading } = useDashboardSummary(token);
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
+  // Combine loading states for simultaneous rendering
+  const pageLoading = (summaryLoading || rowsLoading) && !searched;
+
   const counts = useMemo(() => {
     return {
       books: toArray(summary.activity).length,
@@ -621,7 +624,7 @@ export default function DashboardPage() {
         )}
 
         {!searched && (
-          summaryLoading ? (
+          pageLoading ? (
             <SkeletonHeroCard />
           ) : (
             <div className="dash-hero-cards">
@@ -660,7 +663,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="dash-shelves">
-            {rowsLoading
+            {pageLoading
               ? [1, 2, 3].map(i => <SkeletonShelf key={i} />)
               : shelfRows.map(row => (
                 <div key={row.label} className="dash-shelf">

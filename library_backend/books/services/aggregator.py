@@ -65,15 +65,33 @@ def fetch_all_shelves(genres_map: list) -> list:
                 books = trending_all()
             else:
                 books = category_all(genre)
-            return {"label": label, "books": books[:12]}
+            # return more candidates so deduplication has something to work with
+            return {"label": label, "books": books[:30]} 
         except Exception:
             return {"label": label, "books": []}
 
     with ThreadPoolExecutor(max_workers=len(genres_map)) as executor:
+        # executor.map preserves the order of the genres_map
         results = list(executor.map(_fetch_one, genres_map))
+        
+        seen_ids = set()
         for res in results:
             if res and res.get("books"):
-                final_output.append(res)
+                unique_books = []
+                for b in res["books"]:
+                    bid = b.get("book_id")
+                    if bid not in seen_ids:
+                        unique_books.append(b)
+                        seen_ids.add(bid)
+                    if len(unique_books) >= 12:
+                        break
+                
+                # Only add the shelf if it still has books after deduplication
+                if unique_books:
+                    final_output.append({
+                        "label": res["label"],
+                        "books": unique_books
+                    })
 
     return final_output
 
