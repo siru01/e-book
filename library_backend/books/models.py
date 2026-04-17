@@ -65,10 +65,10 @@ class ReadingActivity(models.Model):
     book_author      = models.CharField(max_length=300, blank=True, default='')
     book_cover       = models.URLField(blank=True, default='')
     started_at       = models.DateTimeField(auto_now_add=True)
-    last_read_at     = models.DateTimeField(auto_now=True)
+    last_read_at     = models.DateTimeField(auto_now=True, db_index=True)
     progress_percent = models.FloatField(default=0.0)            # 0.0 – 100.0
     is_finished      = models.BooleanField(default=False)
-    finished_at      = models.DateTimeField(null=True, blank=True)
+    finished_at      = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         unique_together = ('user', 'book_id')
@@ -88,7 +88,7 @@ class Bookmarks(models.Model):
     book_title   = models.CharField(max_length=500, blank=True, default='')
     book_author  = models.CharField(max_length=300, blank=True, default='')
     book_cover   = models.URLField(blank=True, default='')
-    created_at   = models.DateTimeField(auto_now_add=True)
+    created_at   = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         unique_together = ('user', 'book_id')
@@ -105,7 +105,7 @@ class ReadingSession(models.Model):
     Posted from the Reader page via a periodic heartbeat (every ~60 s).
     """
     user         = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions')
-    date         = models.DateField()                            # local date of the session
+    date         = models.DateField(db_index=True)                            # local date of the session
     minutes_read = models.PositiveIntegerField(default=0)        # accumulated minutes for that day
 
     class Meta:

@@ -1,5 +1,7 @@
 import re
 from datetime import timedelta, date as date_type
+from concurrent.futures import ThreadPoolExecutor
+from django.db import close_old_connections
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -103,6 +105,9 @@ class MyActivityView(APIView):
             obj.is_finished = is_finished
             obj.save()
 
+        # Invalidate dashboard summary cache
+        cache.delete(f"user_summary_{request.user.id}")
+
         serializer = ReadingActivitySerializer(obj)
         return Response(
             serializer.data,
@@ -165,6 +170,9 @@ class MyBookmarksView(APIView):
             if book_cover and not obj.book_cover:   obj.book_cover  = book_cover
             obj.save()
 
+        # Invalidate cache
+        cache.delete(f"user_summary_{request.user.id}")
+
         serializer = BookmarkSerializer(obj)
         return Response(
             serializer.data,
@@ -177,6 +185,7 @@ class MyBookmarksView(APIView):
             user=request.user, book_id=book_id
         ).delete()
         if deleted:
+            cache.delete(f"user_summary_{request.user.id}")
             return Response({"message": "Bookmark removed"})
         return Response({"error": "Bookmark not found"}, status=404)
 
@@ -188,46 +197,65 @@ class DashboardSummaryView(APIView):
     """
     Returns a unified object for the dashboard to reduce API calls.
     Includes: bookmarks, activity, finished books, sessions, and streak.
+    Parallel fetching + caching optimization.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        
-        # 1. Activities (last 15 for history log)
-        activities = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:15]
-        
-        # 2. Finished (last 8)
-        finished = ReadingActivity.objects.filter(user=user, is_finished=True).order_by('-finished_at')[:8]
-        
-        # 3. Bookmarks
-        bookmarks = Bookmarks.objects.filter(user=user)
-        
-        # 4. Sessions (last 365 days)
-        since = date_type.today() - timedelta(days=364)
-        sessions_qs = ReadingSession.objects.filter(user=user, date__gte=since).order_by('date')
-        
-        # 5. Streak (consecutive days reading ending today/yesterday)
-        # Using a list for faster lookup in Python for streak calculation
-        session_dates = set(sessions_qs.values_list('date', flat=True))
-        streak = 0
-        current_check = date_type.today()
-        
-        # Check if they read today or yesterday to continue streak
-        if current_check in session_dates or (current_check - timedelta(days=1)) in session_dates:
-            # Start from the most recent day read
-            test_day = current_check if current_check in session_dates else current_check - timedelta(days=1)
-            while test_day in session_dates:
-                streak += 1
-                test_day -= timedelta(days=1)
+        cache_key = f"user_summary_{user.id}"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached)
 
-        payload = {
-            "activity": ReadingActivitySerializer(activities, many=True).data,
-            "finished": ReadingActivitySerializer(finished, many=True).data,
-            "bookmarks": BookmarkSerializer(bookmarks, many=True).data,
-            "sessions": ReadingSessionSerializer(sessions_qs, many=True).data,
-            "streak": streak,
-        }
+        since = date_type.today() - timedelta(days=364)
+
+        def get_activities():
+            close_old_connections()
+            qs = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:15]
+            return ReadingActivitySerializer(qs, many=True).data
+
+        def get_finished():
+            close_old_connections()
+            qs = ReadingActivity.objects.filter(user=user, is_finished=True).order_by('-finished_at')[:8]
+            return ReadingActivitySerializer(qs, many=True).data
+
+        def get_bookmarks():
+            close_old_connections()
+            qs = Bookmarks.objects.filter(user=user)
+            return BookmarkSerializer(qs, many=True).data
+
+        def get_sessions_and_streak():
+            close_old_connections()
+            qs_list = list(ReadingSession.objects.filter(user=user, date__gte=since).order_by('date'))
+            serial_data = ReadingSessionSerializer(qs_list, many=True).data
+            
+            # Streak calculation
+            session_dates = set(s.date for s in qs_list)
+            streak = 0
+            current_check = date_type.today()
+            if current_check in session_dates or (current_check - timedelta(days=1)) in session_dates:
+                test_day = current_check if current_check in session_dates else current_check - timedelta(days=1)
+                while test_day in session_dates:
+                    streak += 1
+                    test_day -= timedelta(days=1)
+            return serial_data, streak
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            f_act = executor.submit(get_activities)
+            f_fin = executor.submit(get_finished)
+            f_bmk = executor.submit(get_bookmarks)
+            f_ses = executor.submit(get_sessions_and_streak)
+
+            payload = {
+                "activity": f_act.result(),
+                "finished": f_fin.result(),
+                "bookmarks": f_bmk.result(),
+                "sessions": f_ses.result()[0],
+                "streak": f_ses.result()[1],
+            }
+
+        cache.set(cache_key, payload, 300) # 5 min cache
         return Response(payload)
 
 
@@ -252,6 +280,9 @@ class MySessionsView(APIView):
         if not created:
             obj.minutes_read += minutes
             obj.save()
+
+        # Invalidate cache
+        cache.delete(f"user_summary_{request.user.id}")
 
         serializer = ReadingSessionSerializer(obj)
         return Response(
