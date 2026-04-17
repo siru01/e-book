@@ -48,6 +48,36 @@ def category_all(genre: str, page: int = 1) -> list:
     return gutendex.by_category(genre, page)
 
 
+def fetch_all_shelves(genres_map: list) -> list:
+    """
+    Fetches multiple genres in parallel on the server.
+    genres_map: list of {"label": "...", "genre": "...", "type": "category|trending"}
+    """
+    final_output = []
+
+    def _fetch_one(item):
+        label = item["label"]
+        g_type = item.get("type", "category")
+        genre = item.get("genre", "")
+        
+        try:
+            if g_type == "trending":
+                books = trending_all()
+            else:
+                books = category_all(genre)
+            return {"label": label, "books": books[:12]}
+        except Exception:
+            return {"label": label, "books": []}
+
+    with ThreadPoolExecutor(max_workers=len(genres_map)) as executor:
+        results = list(executor.map(_fetch_one, genres_map))
+        for res in results:
+            if res and res.get("books"):
+                final_output.append(res)
+
+    return final_output
+
+
 def new_arrivals_all() -> list:
     """Combined new arrivals (Gutenberg prioritized)."""
     return gutendex.new_arrivals()

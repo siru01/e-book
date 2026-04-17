@@ -21,7 +21,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 import httpx
 
-SHELF_CACHE_TTL = 60 * 60 * 24 * 30  # 30 Days (2,592,000 seconds)
+SHELF_CACHE_TTL = 60 * 60 * 24 * 7  # 7 Days (604,800 seconds)
 
 
 # ─────────────────────────────────────────────
@@ -318,6 +318,35 @@ class CategoryView(APIView):
         payload = {"results": results, "genre": genre, "page": page, "count": len(results)}
         cache.set(cache_key, payload, SHELF_CACHE_TTL)
         return Response(payload)
+
+
+class ShelfRowsView(APIView):
+    """
+    BFF Aggregator: Returns multiple shelf rows in one single request.
+    Greatly improves initial dashboard load time by reducing network round-trips.
+    """
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        cache_key = "shelf:all_rows:v2"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached)
+
+        # Define the shelves we want on the dashboard
+        shelves_to_fetch = [
+            {"label": "Trending Classics", "type": "trending"},
+            {"label": "Classic Literature", "genre": "literature"},
+            {"label": "Science Fiction",    "genre": "science fiction"},
+            {"label": "Mystery & Ghost",    "genre": "mystery"},
+            {"label": "Philosophy & Zen",   "genre": "philosophy"},
+        ]
+
+        rows = aggregator.fetch_all_shelves(shelves_to_fetch)
+        cache.set(cache_key, rows, SHELF_CACHE_TTL)
+        
+        return Response(rows)
 
 
 class NewArrivalsView(APIView):

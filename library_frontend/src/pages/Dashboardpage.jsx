@@ -31,9 +31,9 @@ const getGreeting = (username) => {
   const hour = new Date().getHours();
   const displayName = username ? capitalizeFirst(username) : "";
   const name = displayName ? `, ${displayName}` : "";
-  if (hour >= 5 && hour < 12) return `Good Morning 🌅${name}`;
-  if (hour >= 12 && hour < 17) return `Good Afternoon ☕${name}`;
-  if (hour >= 17 && hour < 21) return `Good Evening 🌙${name}`;
+  if (hour >= 5 && hour < 12) return `Good Morning ${name}`;
+  if (hour >= 12 && hour < 17) return `Good Afternoon ${name}`;
+  if (hour >= 17 && hour < 21) return `Good Evening ${name}`;
   return `Night Owl 🦉${name}`;
 };
 

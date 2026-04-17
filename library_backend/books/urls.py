@@ -14,6 +14,7 @@ from .views import (
     NewArrivalsView,
     BookReadView,
     DashboardSummaryView,
+    ShelfRowsView,
 )
 from .forgot_password_views import forgot_password_request, reset_password   # ← NEW
 
@@ -27,6 +28,7 @@ urlpatterns = [
 
     # ── BFF book endpoints ────────────────────────────────────
     path("books/read/",         BookReadView.as_view(),    name="book-read"),
+    path("books/shelf-rows/",   ShelfRowsView.as_view(),   name="shelf-rows"),
     path("books/search/",       BookSearchView.as_view(),  name="book-search"),
     path("books/trending/",     TrendingView.as_view(),    name="book-trending"),
     path("books/category/",     CategoryView.as_view(),    name="book-category"),

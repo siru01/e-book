@@ -71,7 +71,11 @@ export async function fetchShelfRows() {
   try {
     const res = await fetch(`${BASE}/books/shelf-rows/`);
     if (!res.ok) throw new Error();
-    return await res.json();
+    const rows = await res.json();
+    return rows.map(row => ({
+      ...row,
+      books: row.books.map(parseBFFBook)
+    }));
   } catch (_) {
     return [];
   }
