@@ -2,10 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/Authcontext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import HomePage           from "./pages/HomePage";
-import DashboardPage      from "./pages/DashboardPage";
+import DashboardPage      from "./pages/Dashboardpage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import DiscoverPage       from "./pages/DiscoverPage";
-import ReaderPage         from "./pages/ReaderPage";
+import ReaderPage         from "./pages/Readerpage";
 import Login              from "./pages/Login";
 import SignUp             from "./pages/SignUp";
 import BookOverviewPage   from "./pages/BookOverviewPage";
@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime:           5  * 60 * 1000,
-      cacheTime:           10 * 60 * 1000,
+      gcTime:              10 * 60 * 1000,
       refetchOnWindowFocus: false,
       retry:               1,
     },
