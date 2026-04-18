@@ -1,5 +1,6 @@
 import random
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.core.cache import cache
 from django.contrib.auth.hashers import make_password
 from rest_framework.decorators import api_view, permission_classes
@@ -32,6 +33,10 @@ def forgot_password_request(request):
     if user:
         otp = _generate_otp()
         cache.set(_otp_cache_key(email), otp, timeout=OTP_TTL)
+        html_content = render_to_string('emails/password_reset_email.html', {
+            'otp': otp,
+            'name': user.full_name or 'there'
+        })
         send_mail(
             subject="SHELF — Your Password Reset Code",
             message=(
@@ -44,6 +49,7 @@ def forgot_password_request(request):
             ),
             from_email=None,  # uses EMAIL_HOST_USER from settings
             recipient_list=[email],
+            html_message=html_content,
             fail_silently=False,
         )
 

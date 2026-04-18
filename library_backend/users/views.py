@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.utils import timezone
+from django.template.loader import render_to_string
 from datetime import timedelta
 from .models import OTPVerification, User
 from .serializers import RegisterSerializer, SendOTPSerializer
@@ -23,7 +24,7 @@ class SendOTPView(generics.GenericAPIView):
         if User.objects.filter(email=email).exists():
             return Response({'error': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        otp_record, created = OTPVerification.objects.get_or_create(email=email)
+        otp_record, created = OTPVerification.objects.get_or_create(email=email, purpose='REGISTER')
 
         # Check blocking
         if otp_record.blocked_until and timezone.now() < otp_record.blocked_until:
@@ -38,11 +39,16 @@ class SendOTPView(generics.GenericAPIView):
 
         # Send Email
         try:
+            html_content = render_to_string('emails/otp_email.html', {
+                'otp': otp_code,
+                'email': email
+            })
             send_mail(
                 subject='Your Registration OTP for Library',
                 message=f'Your One-Time Password is: {otp_code}\n\nThis code is required to complete your registration.',
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[email],
+                html_message=html_content,
                 fail_silently=False,
             )
         except Exception as e:
@@ -63,7 +69,7 @@ class RegisterView(generics.CreateAPIView):
         otp = request.data.get('otp')
 
         try:
-            otp_record = OTPVerification.objects.get(email=email)
+            otp_record = OTPVerification.objects.get(email=email, purpose='REGISTER')
         except OTPVerification.DoesNotExist:
             return Response({'error': 'You must request an OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
 

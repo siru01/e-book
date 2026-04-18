@@ -94,7 +94,7 @@ export default function HomePage() {
 
           <ul className="shelf-nav-links">
             <li><a href="#">Browse</a></li>
-            <li><a href="#">My Library</a></li>
+            <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
             <li><a href="#">About</a></li>
           </ul>
 

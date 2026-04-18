@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SHELF{% endblock %}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff; color: #1a1a1b;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 40px 0 20px 0;">
+                <!-- Brand logo/name at the very top -->
+                <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 2px; color: #000000; text-transform: uppercase;">
+                    SHELF
+                </h1>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; border: 1px solid #e1e1e1; border-radius: 12px; overflow: hidden;">
+                    <tr>
+                        <td style="padding: 40px; background-color: #ffffff;">
+                            {% block content %}
+                            {% endblock %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" style="padding: 30px 0;">
+                <p style="margin: 0; font-size: 12px; color: #888888; line-height: 1.5;">
+                    &copy; 2026 SHELF Library. All rights reserved.<br>
+                    This is an automated message, please do not reply.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
