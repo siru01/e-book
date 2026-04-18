@@ -1,0 +1,36 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Change your email - SHELF{% endblock %}
+
+{% block content %}
+<h2 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 600; color: #000000; text-align: center;">
+    {% if is_old %}Verify Current Email{% elif is_new %}Verify New Email{% else %}Verification Code{% endif %}
+</h2>
+
+<p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.6; color: #444444;">
+    Hi {{ name }},<br><br>
+    {% if is_old %}
+    Someone (hopefully you) requested to change your SHELF account email address. To continue, please verify your <strong>current</strong> email address using the code below.
+    {% else %}
+    We received a request to change your SHELF account email to <strong>{{ email }}</strong>. Please verify this new address to complete the change.
+    {% endif %}
+</p>
+
+<p style="margin: 0 0 30px 0; font-size: 15px; line-height: 1.6; color: #444444;">
+    Use this code to verify this new email address and complete the change:
+</p>
+
+<div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; margin-bottom: 30px; text-align: center;">
+    <span style="font-family: 'Courier New', Courier, monospace; font-size: 42px; font-weight: 700; color: #000000; letter-spacing: 12px; display: block; margin-left: 12px;">
+        {{ otp }}
+    </span>
+</div>
+
+<p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #666666;">
+    This code will expire in 10 minutes. 
+</p>
+
+<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #999999; font-style: italic;">
+    If you didn't request this change, you can safely ignore this email. Your account email will remain unchanged.
+</p>
+{% endblock %}

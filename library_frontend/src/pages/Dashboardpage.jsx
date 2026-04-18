@@ -62,6 +62,7 @@ const IconCheck = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="no
 const IconSearch = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
 const IconBell = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
 const IconLogout = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+const IconMail = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
 
 const HERO_CARDS = [
   { key: "recent", label: "RECENT READINGS", sub: "Continue", Icon: IconBook, stat: (c) => `${c.books} BOOKS` },
@@ -74,7 +75,7 @@ const HERO_CARDS = [
 /* ══════════════════════════════════════════════════════════════════
    Profile Dropdown
  ══════════════════════════════════════════════════════════════════ */
-function ProfileDropdown({ username, email, onLogout }) {
+function ProfileDropdown({ username, email, onLogout, onChangeEmail }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -111,6 +112,11 @@ function ProfileDropdown({ username, email, onLogout }) {
           </div>
 
           <div className="profile-dropdown-divider" />
+
+          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onChangeEmail(); }}>
+            <IconMail />
+            Change Email
+          </button>
 
           <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
             <IconLogout />
@@ -581,6 +587,67 @@ export default function DashboardPage() {
     }
   }, [summary]);
 
+  const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newEmailOtp, setNewEmailOtp] = useState("");
+  const [oldEmailOtp, setOldEmailOtp] = useState("");
+  const [showEmailOtpStep, setShowEmailOtpStep] = useState(false);
+  const [emailChangeStatus, setEmailChangeStatus] = useState({ loading: false, error: "" });
+
+  const handleRequestEmailChange = async (e) => {
+    e.preventDefault();
+    setEmailChangeStatus({ loading: true, error: "" });
+    try {
+      const resp = await fetch(`/api/request-email-change/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ new_email: newEmail }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed to send code.");
+      setShowEmailOtpStep(true);
+    } catch (err) {
+      setEmailChangeStatus({ loading: false, error: err.message });
+    } finally {
+      setEmailChangeStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleConfirmEmailChange = async (e) => {
+    e.preventDefault();
+    setEmailChangeStatus({ loading: true, error: "" });
+    try {
+      const resp = await fetch(`/api/confirm-email-change/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ 
+          new_email: newEmail, 
+          old_otp: oldEmailOtp, 
+          new_otp: newEmailOtp 
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Verification failed.");
+      
+      // Success - Automatic Logout
+      alert("Email changed successfully. Please log in with your new email.");
+      handleLogout();
+    } catch (err) {
+      setEmailChangeStatus({ loading: false, error: err.message });
+    } finally {
+      setEmailChangeStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const closeEmailModal = () => {
+    setIsChangeEmailOpen(false);
+    setShowEmailOtpStep(false);
+    setNewEmail("");
+    setNewEmailOtp("");
+    setOldEmailOtp("");
+    setEmailChangeStatus({ loading: false, error: "" });
+  };
+
   return (
     <div className="dash-root">
       <nav className="dash-navbar">
@@ -611,6 +678,7 @@ export default function DashboardPage() {
             username={username}
             email={resolvedEmail}
             onLogout={handleLogout}
+            onChangeEmail={() => setIsChangeEmailOpen(true)}
           />
         </div>
       </nav>
@@ -680,6 +748,70 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* ── Email Change Modal ── */}
+      {isChangeEmailOpen && createPortal(
+        <div className="email-modal-overlay">
+          <div className="email-modal-card" onClick={e => e.stopPropagation()}>
+            <button className="email-modal-close" onClick={closeEmailModal}>✕</button>
+            <div className="email-modal-header">
+              <h2>{showEmailOtpStep ? "Final Verification" : "Change Email"}</h2>
+              <p>{showEmailOtpStep ? "We've sent codes to both your current and new inbox." : "Enter your new email address below."}</p>
+            </div>
+
+            <form className="email-modal-form" onSubmit={showEmailOtpStep ? handleConfirmEmailChange : handleRequestEmailChange}>
+              {emailChangeStatus.error && <div className="email-modal-err">{emailChangeStatus.error}</div>}
+              
+              {!showEmailOtpStep ? (
+                <div className="email-input-group">
+                  <label>NEW EMAIL ADDRESS</label>
+                  <input 
+                    type="email" 
+                    placeholder="name@example.com"
+                    required
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                    disabled={emailChangeStatus.loading}
+                  />
+                </div>
+              ) : (
+                <div className="email-dual-otp-container">
+                  <div className="email-input-group">
+                    <label>CODE SENT TO {resolvedEmail.toUpperCase()}</label>
+                    <input 
+                      type="text" 
+                      maxLength="6"
+                      placeholder="000000"
+                      required
+                      value={oldEmailOtp}
+                      onChange={e => setOldEmailOtp(e.target.value.replace(/\D/g, ''))}
+                      disabled={emailChangeStatus.loading}
+                    />
+                  </div>
+
+                  <div className="email-input-group">
+                    <label>CODE SENT TO {newEmail.toUpperCase()}</label>
+                    <input 
+                      type="text" 
+                      maxLength="6"
+                      placeholder="000000"
+                      required
+                      value={newEmailOtp}
+                      onChange={e => setNewEmailOtp(e.target.value.replace(/\D/g, ''))}
+                      disabled={emailChangeStatus.loading}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button className="email-modal-submit" type="submit" disabled={emailChangeStatus.loading}>
+                {emailChangeStatus.loading ? "PROCESSING..." : (showEmailOtpStep ? "CONFIRM CHANGE" : "SEND CODE")}
+              </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

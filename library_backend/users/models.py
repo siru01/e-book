@@ -55,6 +55,7 @@ class OTPVerification(models.Model):
     PURPOSE_CHOICES = (
         ('REGISTER', 'Registration'),
         ('LOGOUT_OTHER', 'Logout from other device'),
+        ('EMAIL_CHANGE', 'Email Change'),
     )
     email = models.EmailField() # Not unique here, combined in unique_together
     otp = models.CharField(max_length=6)

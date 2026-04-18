@@ -610,3 +610,75 @@
   color: #196127;
   font-style: normal;
 }
+/* ── Email Change Modal ── */
+.email-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: modal-fade-in 0.3s ease;
+}
+
+.email-modal-card {
+  width: 100%; max-width: 400px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.2);
+  animation: modal-slide-up 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.email-modal-close {
+  position: absolute; top: 20px; right: 20px;
+  background: #f5f5f5; border: none; width: 32px; height: 32px;
+  border-radius: 50%; cursor: pointer; color: #666; font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.email-modal-close:hover { background: #eee; transform: rotate(90deg); color: #000; }
+
+.email-modal-header { text-align: center; margin-bottom: 32px; }
+.email-modal-header h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+.email-modal-header p { font-size: 0.88rem; color: #888; line-height: 1.5; }
+
+.email-modal-form { display: flex; flex-direction: column; gap: 24px; }
+
+.email-modal-err {
+  background: #fff5f5; color: #e53e3e;
+  padding: 12px 16px; border-radius: 12px;
+  font-size: 0.85rem; font-weight: 600;
+  border-left: 4px solid #e53e3e;
+}
+
+.email-input-group { display: flex; flex-direction: column; gap: 8px; }
+.email-input-group label { font-size: 0.72rem; font-weight: 700; color: #999; letter-spacing: 0.08em; }
+.email-input-group input {
+  width: 100%; background: #f9f9f9; border: 2px solid transparent;
+  padding: 14px 18px; border-radius: 14px;
+  font-size: 1rem; font-weight: 600; color: #111;
+  transition: all 0.2s;
+}
+.email-input-group input:focus { background: #fff; border-color: #000; outline: none; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+.email-input-group input::placeholder { color: #ccc; letter-spacing: 0; }
+
+.email-modal-submit {
+  width: 100%; background: #000; color: #fff;
+  border: none; padding: 16px; border-radius: 14px;
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em;
+  cursor: pointer; transition: all 0.2s;
+  margin-top: 8px;
+}
+.email-modal-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.email-modal-submit:active { transform: translateY(0); }
+.email-modal-submit:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.email-dual-otp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-slide-up { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
