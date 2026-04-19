@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
 import { searchBooks, parseBFFBook } from "../api/shelf";
@@ -147,12 +147,29 @@ function PanelBookRow({ book, extra }) {
 /* ── Book Card ── */
 function BookCard({ book }) {
   const navigate = useNavigate();
+  const handleImgError = (e) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
+  };
+
   return (
     <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
       <div className="book-card-cover">
-        {book.cover
-          ? <img src={book.cover} alt={book.title} loading="lazy" />
-          : <div className="book-card-placeholder">📖</div>}
+        {book.cover && (
+          <img 
+            src={book.cover} 
+            alt={book.title} 
+            loading="lazy" 
+            referrerPolicy="no-referrer"
+            onError={handleImgError}
+          />
+        )}
+        <div className="book-card-placeholder" style={{ display: book.cover ? 'none' : 'flex' }}>
+          <div className="placeholder-content">
+            <span className="placeholder-title">{book.title}</span>
+            <span className="placeholder-icon">📖</span>
+          </div>
+        </div>
         <div className="book-card-hover"><span>Read Now</span></div>
       </div>
       <div className="book-card-meta">
@@ -166,10 +183,29 @@ function BookCard({ book }) {
 /* ── Search Result Card ── */
 function SearchResultCard({ book }) {
   const navigate = useNavigate();
+  const handleImgError = (e) => {
+    e.target.style.display = 'none';
+    e.target.nextSibling.style.display = 'flex';
+  };
+
   return (
     <div className="src-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
       <div className="src-card-cover">
-        {book.cover ? <img src={book.cover} alt="" loading="lazy" /> : <span>📖</span>}
+        {book.cover && (
+          <img 
+            src={book.cover} 
+            alt={book.title} 
+            loading="lazy" 
+            referrerPolicy="no-referrer"
+            onError={handleImgError}
+          />
+        )}
+        <div className="src-card-placeholder" style={{ display: book.cover ? 'none' : 'flex' }}>
+          <div className="placeholder-content">
+            <span className="placeholder-title">{book.title}</span>
+            <span className="placeholder-icon">📖</span>
+          </div>
+        </div>
       </div>
       <div className="src-card-info">
         <span className="src-card-title">{book.title}</span>
@@ -486,6 +522,7 @@ function CalendarHeatmap({ sessions }) {
 export default function DashboardPage() {
   const { token, logout, username } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   const resolvedEmail = useMemo(() => {
@@ -498,10 +535,10 @@ export default function DashboardPage() {
   }, [token]);
 
   const [activePanel, setActivePanel] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(() => !!new URLSearchParams(window.location.search).get("q"));
   const [phIndex, setPhIndex] = useState(0);
 
   const greeting = useMemo(() => getGreeting(username), [username]);
@@ -535,17 +572,40 @@ export default function DashboardPage() {
     };
   }, [summary]);
 
-  const handleSearch = useCallback(async (q) => {
-    if (!q.trim()) return;
-    setSearched(true); setSearchLoading(true);
-    try {
-      const data = await searchBooks(token, q);
-      setSearchResults((data.results || []).map(parseBFFBook));
-    } catch { setSearchResults([]); }
-    setSearchLoading(false);
-  }, [token]);
+  const handleSearch = useCallback((q) => {
+    if (!q || !q.trim()) return;
+    setSearchParams({ q }, { replace: true });
+  }, [setSearchParams]);
 
-  const clearSearch = () => { setSearched(false); setSearchQuery(""); setSearchResults([]); };
+  // Unified Search Logic: React to URL changes
+  useEffect(() => {
+    const qParam = searchParams.get("q");
+    
+    if (qParam) {
+      const performSearch = async () => {
+        setSearched(true);
+        setSearchLoading(true);
+        setSearchQuery(qParam);
+        try {
+          const data = await searchBooks(token, qParam);
+          setSearchResults((data.results || []).map(parseBFFBook));
+        } catch {
+          setSearchResults([]);
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+      performSearch();
+    } else {
+      setSearched(false);
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [searchParams, token]);
+
+  const clearSearch = () => { 
+    setSearchParams({}, { replace: true });
+  };
   const handleExpand = useCallback((key) => setActivePanel(key), []);
   const handleCollapse = useCallback(() => setActivePanel(""), []);
   const handleLogout = useCallback(() => {

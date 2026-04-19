@@ -7,7 +7,7 @@ COVERS_URL = "https://covers.openlibrary.org/b/id"
 
 def _normalize(doc: dict) -> dict:
     cover_id = doc.get("cover_i")
-    cover_url = f"{COVERS_URL}/{cover_id}-M.jpg" if cover_id else ""
+    cover_url = f"{COVERS_URL}/{cover_id}-L.jpg" if cover_id else ""
     ol_key  = doc.get("key", "")
     book_id = ol_key.replace("/works/", "")
 
