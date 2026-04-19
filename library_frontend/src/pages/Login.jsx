@@ -20,7 +20,7 @@ const Login = () => {
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError('Email or password is incorrect');
     } finally {
       setLoading(false);
     }
@@ -34,8 +34,6 @@ const Login = () => {
         <p className="subtitle">Log in to continue your journey</p>
 
         <form onSubmit={handleSubmit}>
-          {error && <p style={{ color: 'red', marginBottom: '12px', fontSize: '0.9rem' }}>{error}</p>}
-
           <div className="input-group">
             <label>Email</label>
             <input
@@ -64,6 +62,7 @@ const Login = () => {
             />
           </div>
 
+          {error && <p style={{ color: 'red', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
           <button type="submit" className="btn-black" disabled={loading}>
             {loading ? 'LOGGING IN...' : 'LOG IN'}
           </button>

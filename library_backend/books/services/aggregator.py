@@ -9,9 +9,6 @@ def search_all_stream(query: str, page: int = 1):
     """
     tasks = {
         "Gutenberg":      lambda: gutendex.search(query, page),
-        "Google Books":   lambda: google_books.search(query, page),
-        "Open Library":   lambda: openlibrary.search(query, page),
-        "Archive.org":    lambda: archive.search(query, page)
     }
 
     seen = set()
