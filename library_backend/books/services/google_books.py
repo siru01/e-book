@@ -10,6 +10,12 @@ def _normalize(item: dict) -> dict:
     access  = item.get("accessInfo", {})
     images  = info.get("imageLinks", {})
     cover_url = images.get("thumbnail", images.get("smallThumbnail", ""))
+    
+    # MUST HAVE COVER AND MUST BE DOWNLOADABLE (EPUB/PDF)
+    is_available = access.get("epub", {}).get("isAvailable") or access.get("pdf", {}).get("isAvailable")
+    if not cover_url or not is_available:
+        return None 
+    
     cover_url = cover_url.replace("http://", "https://")
 
     # ── Get best available read URL ──────────────────────────

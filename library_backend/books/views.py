@@ -1,7 +1,8 @@
-import re
+import re, json
 from datetime import timedelta, date as date_type
 from concurrent.futures import ThreadPoolExecutor
 from django.db import close_old_connections
+from django.http import StreamingHttpResponse
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -315,6 +316,32 @@ class BookSearchView(APIView):
             cache.set(cache_key, payload, 60 * 30)
 
         return Response(payload)
+
+
+class BookStreamView(APIView):
+    """
+    Streaming BFF Aggregator: Returns results as they are found.
+    """
+    permission_classes     = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        if not query:
+            return Response({"error": "q parameter required"}, status=400)
+
+        def event_stream():
+            try:
+                # Yield results chunk by chunk as they arrive
+                for chunk in aggregator.search_all_stream(query):
+                    yield f"data: {json.dumps(chunk)}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'  # Disable buffering for Nginx
+        return response
 
 
 class TrendingView(APIView):

@@ -7,7 +7,13 @@ COVERS_URL = "https://covers.openlibrary.org/b/id"
 
 def _normalize(doc: dict) -> dict:
     cover_id = doc.get("cover_i")
-    cover_url = f"{COVERS_URL}/{cover_id}-L.jpg" if cover_id else ""
+    ia_ids   = doc.get("ia", [])
+    
+    # MUST HAVE BOTH COVER AND READABLE TEXT (IA ID)
+    if not cover_id or not ia_ids:
+        return None 
+    
+    cover_url = f"{COVERS_URL}/{cover_id}-L.jpg"
     ol_key  = doc.get("key", "")
     book_id = ol_key.replace("/works/", "")
 
@@ -35,8 +41,8 @@ def search(query: str, page: int = 1):
     if cached:
         return cached
     
-    # ── Strict API filtering for English & Full Text ──
-    full_query = f"{query} AND language:eng AND has_fulltext:true"
+    # ── Strict API filtering for English & Public Domain Full Text ──
+    full_query = f"{query} AND language:eng AND has_fulltext:true AND ebook_access:public"
 
     resp = requests.get(
         f"{BASE_URL}/search.json",
@@ -82,8 +88,13 @@ def by_category(genre: str, page: int = 1):
     results = []
     for w in works:
         cover_id = w.get("cover_id")
-        ol_key   = w.get("key", "")
         ia_list  = w.get("ia", [])
+        
+        # MUST HAVE BOTH COVER AND READABLE TEXT (IA ID)
+        if not cover_id or not ia_list:
+            continue
+        
+        ol_key   = w.get("key", "")
         ia_id    = ia_list[0] if ia_list else None
         read_url = f"https://archive.org/stream/{ia_id}" if ia_id else f"{BASE_URL}{ol_key}"
 

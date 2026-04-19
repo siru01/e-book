@@ -8,6 +8,9 @@ def _normalize(book: dict) -> dict:
     gid     = book.get("id", "")
     formats = book.get("formats", {})
     cover_url = formats.get("image/jpeg", "")
+    if not cover_url:
+        return None # MUST HAVE COVER
+    
     authors   = [a.get("name", "") for a in book.get("authors", [])]
     text_url = (
         formats.get("text/plain; charset=utf-8") or
@@ -41,7 +44,7 @@ def search(query: str, page: int = 1):
     try:
         # Optimized API hit with direct filtering
         # mime_type=text/plain asks Gutendex for Full Text only
-        with httpx.Client(timeout=45, follow_redirects=True) as client:
+        with httpx.Client(timeout=10, follow_redirects=True) as client:
             resp = client.get(
                 f"{BASE_URL}/books", 
                 params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}
@@ -68,7 +71,7 @@ def trending():
     if cached:
         return cached
     try:
-        with httpx.Client(timeout=45, follow_redirects=True) as client:
+        with httpx.Client(timeout=10, follow_redirects=True) as client:
             resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
         resp.raise_for_status()
         raw_books = resp.json().get("results", [])
@@ -92,7 +95,7 @@ def by_category(genre: str, page: int = 1):
         return cached
 
     try:
-        with httpx.Client(timeout=45, follow_redirects=True) as client:
+        with httpx.Client(timeout=10, follow_redirects=True) as client:
             resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
         resp.raise_for_status()
         raw_books = resp.json().get("results", [])

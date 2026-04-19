@@ -38,6 +38,40 @@ export const borrowBook = (token, bookId) =>
 export const searchBooks = (token, q) =>
   apiFetch(`/books/search/?q=${encodeURIComponent(q)}`, token);
 
+// Streaming Search: Yields chunks of {source, books}
+export async function* searchBooksStream(token, q) {
+  const url = `${BASE}/books/search-stream/?q=${encodeURIComponent(q)}`;
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
+  if (!response.ok) throw new Error("Stream failed");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n\n");
+    buffer = lines.pop(); // Keep the last incomplete line
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        try {
+          const chunk = JSON.parse(line.slice(6));
+          yield chunk;
+        } catch (e) {
+          console.error("JSON parse failed", e);
+        }
+      }
+    }
+  }
+}
+
 // ── Shelf genres ─────────────────────────────────────────────────
 // ── Shelf genres (Gutenberg Focus) ─────────────────────────────
 const SHELF_GENRES = [

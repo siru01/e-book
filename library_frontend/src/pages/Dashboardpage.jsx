@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { searchBooks, parseBFFBook } from "../api/shelf";
+import { searchBooks, searchBooksStream, parseBFFBook } from "../api/shelf";
 import "./DashboardPage.css";
 import {
   useDashboardSummary,
@@ -586,11 +586,30 @@ export default function DashboardPage() {
         setSearched(true);
         setSearchLoading(true);
         setSearchQuery(qParam);
+        setSearchResults([]); // Reset results before starting
+        
         try {
-          const data = await searchBooks(token, qParam);
-          setSearchResults((data.results || []).map(parseBFFBook));
-        } catch {
-          setSearchResults([]);
+          // Consume the stream generator
+          for await (const chunk of searchBooksStream(token, qParam)) {
+            if (chunk.error) {
+              console.error("Stream chunk error:", chunk.error);
+              continue;
+            }
+            if (chunk.books) {
+              const newBooks = chunk.books.map(parseBFFBook);
+              setSearchResults(prev => {
+                // Deduplicate against already rendered results just in case
+                const existingIds = new Set(prev.map(b => b.bookId));
+                const filtered = newBooks.filter(b => !existingIds.has(b.bookId));
+                return [...prev, ...filtered];
+              });
+              // Turn off loading spinner as soon as first source arrives
+              setSearchLoading(false);
+            }
+          }
+        } catch (err) {
+          console.error("Search stream failed:", err);
+          // If searchResults is still empty, show nothing found later
         } finally {
           setSearchLoading(false);
         }

@@ -1,41 +1,80 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from . import gutendex, google_books, openlibrary, archive
+
+
+def search_all_stream(query: str, page: int = 1):
+    """
+    Parallel search that YIELDS results as soon as each source is ready.
+    This allows the frontend to show books piece-by-piece.
+    """
+    tasks = {
+        "Gutenberg":      lambda: gutendex.search(query, page),
+        "Google Books":   lambda: google_books.search(query, page),
+        "Open Library":   lambda: openlibrary.search(query, page),
+        "Archive.org":    lambda: archive.search(query, page)
+    }
+
+    seen = set()
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit all tasks
+        future_to_source = {executor.submit(func): name for name, func in tasks.items()}
+        
+        # ── PRIORITY: Yield Gutenberg first if it's available ────────
+        guten_future = next((f for f, name in future_to_source.items() if name == "Gutenberg"), None)
+        if guten_future:
+            try:
+                results = guten_future.result(timeout=10) # Wait for it specifically
+                if results:
+                    unique_batch = []
+                    for b in results:
+                        bid = b.get("book_id")
+                        if bid and bid not in seen:
+                            unique_batch.append(b)
+                            seen.add(bid)
+                    if unique_batch:
+                        yield {"source": "Gutenberg", "books": unique_batch}
+            except Exception as e:
+                print(f"[aggregator] Gutenberg priority wait failed: {e}")
+
+        # ── Then yield everything else as they complete ──────────────
+        for future in as_completed(future_to_source):
+            source_name = future_to_source[future]
+            if source_name == "Gutenberg":
+                continue # Already handled above
+                
+            try:
+                results = future.result()
+                if not results:
+                    continue
+                
+                # Deduplicate on the fly
+                unique_batch = []
+                for b in results:
+                    bid = b.get("book_id")
+                    if bid and bid not in seen:
+                        unique_batch.append(b)
+                        seen.add(bid)
+                
+                if unique_batch:
+                    yield {
+                        "source": source_name,
+                        "books": unique_batch
+                    }
+                    
+            except Exception as e:
+                print(f"[aggregator] {source_name} search failed: {e}")
 
 
 def search_all(query: str, page: int = 1, sources: list = None) -> list:
     """
-    Parallel search across all verified full-text sources.
-    Uses ThreadPoolExecutor to prevent sequential network bottlenecks.
+    Sequential-looking but actually runs search_all_stream 
+    and flattens for legacy non-streaming endpoints.
     """
-    all_results = []
-    
-    # Define search tasks
-    tasks = [
-        lambda: gutendex.search(query, page),
-        lambda: google_books.search(query, page),
-        lambda: openlibrary.search(query, page),
-        lambda: archive.search(query, page)
-    ]
-
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(t) for t in tasks]
-        for f in futures:
-            try:
-                res = f.result()
-                if res: all_results.extend(res)
-            except Exception as e:
-                print(f"[aggregator] source search failed: {e}")
-
-    # Deduplicate and sort by something useful (e.g., download count or relevance)
-    seen = set()
-    unique_results = []
-    for book in all_results:
-        bid = book.get("book_id")
-        if bid not in seen:
-            unique_results.append(book)
-            seen.add(bid)
-
-    return unique_results[:40]
+    combined = []
+    for chunk in search_all_stream(query, page):
+        combined.extend(chunk["books"])
+    return combined[:40]
 
 
 def trending_all() -> list:

@@ -9,6 +9,7 @@ from .views import (
     MyBookmarksView,
     MySessionsView,
     BookSearchView,
+    BookStreamView,
     TrendingView,
     CategoryView,
     NewArrivalsView,
@@ -29,7 +30,8 @@ urlpatterns = [
     # ── BFF book endpoints ────────────────────────────────────
     path("books/read/",         BookReadView.as_view(),    name="book-read"),
     path("books/shelf-rows/",   ShelfRowsView.as_view(),   name="shelf-rows"),
-    path("books/search/",       BookSearchView.as_view(),  name="book-search"),
+    path("books/search/",         BookSearchView.as_view(),  name="book-search"),
+    path("books/search-stream/",  BookStreamView.as_view(),  name="book-search-stream"),
     path("books/trending/",     TrendingView.as_view(),    name="book-trending"),
     path("books/category/",     CategoryView.as_view(),    name="book-category"),
     path("books/new-arrivals/", NewArrivalsView.as_view(), name="book-new-arrivals"),

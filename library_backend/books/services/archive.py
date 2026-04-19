@@ -6,8 +6,16 @@ BASE_URL = "https://archive.org"
 
 def _normalize(doc: dict) -> dict:
     identifier = doc.get("identifier", "")
-    cover_url = f"https://archive.org/services/img/{identifier}" if identifier else ""
-    read_url  = f"https://archive.org/details/{identifier}" if identifier else ""
+    if not identifier:
+        return None
+    
+    # Strictly exclude restricted or protected content that doesn't allow full text
+    if doc.get("access-restricted-item") or doc.get("is_restricted"):
+        return None
+
+    # Archive covers are reliable via services/img/
+    cover_url = f"https://archive.org/services/img/{identifier}"
+    read_url  = f"https://archive.org/details/{identifier}"
     year = doc.get("year") or doc.get("date", "")
     if year and len(str(year)) > 4:
         year = str(year)[:4]
@@ -33,7 +41,8 @@ def _search_request(params: dict):
         "rows":      20,
     }
     base_params.update(params)
-    resp = requests.get(f"{BASE_URL}/advancedsearch.php", params=base_params, timeout=10)
+    # Using 8 second timeout for faster response
+    resp = requests.get(f"{BASE_URL}/advancedsearch.php", params=base_params, timeout=8)
     resp.raise_for_status()
     return resp.json().get("response", {}).get("docs", [])
 
