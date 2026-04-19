@@ -3,8 +3,7 @@ import { AuthProvider, useAuth } from "./context/Authcontext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import HomePage           from "./pages/HomePage";
 import DashboardPage      from "./pages/Dashboardpage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
-import DiscoverPage       from "./pages/DiscoverPage";
+
 import ReaderPage         from "./pages/Readerpage";
 import Login              from "./pages/Login";
 import SignUp             from "./pages/SignUp";
@@ -27,7 +26,7 @@ const queryClient = new QueryClient({
 
 // ── Helpers ───────────────────────────────────────────────────────
 const isAdmin  = (role) => ["ADMIN", "LIBRARIAN"].includes(role);
-const adminHome = "/admin-dashboard";
+const adminHome = "/dashboard";
 const userHome  = "/dashboard";
 
 // ── Protected route ───────────────────────────────────────────────
@@ -57,11 +56,11 @@ function AppRoutes() {
 
       {/* Protected Routes - require login */}
       <Route path="/dashboard"         element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/admin-dashboard"   element={<ProtectedRoute adminOnly><AdminDashboardPage /></ProtectedRoute>} />
+
       <Route path="/read/:bookId"       element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
 
       {/* Public but requires no auth protection */}
-      <Route path="/discover" element={<DiscoverPage />} />
+
       <Route path="/book/:bookId" element={<BookOverviewPage />} />
       {/* Catch all - redirect to home */}
       <Route path="*"         element={<Navigate to="/" replace />} />

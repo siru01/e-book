@@ -17,15 +17,10 @@ async function apiFetch(path, token, options = {}) {
   return res.json();
 }
 
-// ── Books ────────────────────────────────────────────────────────
-export const fetchBooks = (token) => apiFetch("/books/", token);
-export const addBook = (token, body) =>
-  apiFetch("/books/", token, { method: "POST", body: JSON.stringify(body) });
-export const deleteBook = (token, id) =>
-  apiFetch(`/books/${id}/`, token, { method: "DELETE" });
+
 
 // ── Dashboard stats ──────────────────────────────────────────────
-export const fetchAdminDashboard = (token) => apiFetch("/dashboard/", token);
+
 export const fetchMyActivity  = (token) => apiFetch("/my-activity/",  token);
 export const fetchMyFinished  = (token) => apiFetch("/my-finished/",  token);
 export const fetchMyBookmarks = (token) => apiFetch("/my-bookmarks/", token);
@@ -141,8 +136,6 @@ export const recordSession = (token, minutes = 1) =>
 export const searchOpenLibrary = (q) =>
   apiFetch(`/openlibrary/search/?q=${encodeURIComponent(q)}`, null);
 
-export const importBooks = (token, books) =>
-  apiFetch("/openlibrary/import/", token, {
-    method: "POST",
-    body:   JSON.stringify({ books }),
-  });
+
+
+

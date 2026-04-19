@@ -17,12 +17,8 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const role = await login(email, password);
-      if (role === 'ADMIN' || role === 'LIBRARIAN') {
-        navigate('/admin-dashboard', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      await login(email, password);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
