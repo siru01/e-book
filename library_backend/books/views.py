@@ -834,3 +834,88 @@ class BookReadView(APIView):
         )
         return Response({**_base(), "text": preview_text})
 
+from django.http import StreamingHttpResponse
+
+class BookStreamTextView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        book_id = request.GET.get('book_id', '').strip()
+        if not book_id:
+            return Response({'error': 'book_id required'}, status=400)
+            
+        if ":" in book_id:
+            source, raw_id = book_id.split(":", 1)
+        else:
+            source = "gutenberg"
+            raw_id = book_id
+
+        # Use the existing _fetch_* methods from BookReadView to obtain the text string
+        view = BookReadView()
+        
+        try:
+            if source == "gutenberg":
+                resp = view._fetch_gutenberg(raw_id)
+            elif source == "archive":
+                resp = view._fetch_archive(raw_id)
+            elif source == "openlibrary":
+                resp = view._fetch_openlibrary(raw_id)
+            elif source == "google":
+                resp = view._fetch_google(raw_id)
+            else:
+                return Response({'error': 'Unknown source'}, status=400)
+                
+            text = resp.data.get('text', '')
+            
+            def chunk_generator():
+                chunk_size = 4096
+                for i in range(0, len(text), chunk_size):
+                    yield text[i:i+chunk_size]
+
+            response = StreamingHttpResponse(chunk_generator(), content_type='text/plain; charset=utf-8')
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'
+            return response
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+
+
+from django.http import HttpResponse
+from .models import CachedCover
+
+class CoverProxyView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        url = request.GET.get('url')
+        if not url:
+            return Response({'error': 'url required'}, status=400)
+
+        # Check if already cached
+        cached = CachedCover.objects.filter(source_url=url).first()
+        if cached:
+            response = HttpResponse(cached.image_data, content_type=cached.content_type)
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+        
+        # Download and save
+        try:
+            with httpx.Client(timeout=10.0, follow_redirects=True) as client:
+                r = client.get(url)
+                r.raise_for_status()
+                image_data = r.content
+                content_type = r.headers.get('Content-Type', 'image/jpeg')
+                
+                CachedCover.objects.create(
+                    source_url=url,
+                    content_type=content_type,
+                    image_data=image_data
+                )
+                response = HttpResponse(image_data, content_type=content_type)
+                response['Cache-Control'] = 'public, max-age=86400'
+                return response
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)

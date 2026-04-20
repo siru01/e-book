@@ -72,6 +72,12 @@ export async function* searchBooksStream(token, q) {
   }
 }
 
+// Helper to reliably retrieve cached cover
+export function getCoverUrl(originalUrl) {
+  if (!originalUrl) return "";
+  return `${BASE}/books/cover/?url=${encodeURIComponent(originalUrl)}`;
+}
+
 // ── Shelf genres ─────────────────────────────────────────────────
 // ── Shelf genres (Gutenberg Focus) ─────────────────────────────
 const SHELF_GENRES = [
@@ -88,7 +94,7 @@ export function parseBFFBook(b) {
     bookId:      b.book_id,
     title:       b.title                      || "Untitled",
     author:      (b.authors || []).join(", ") || "Unknown",
-    cover:       b.cover_url                  || "",
+    cover:       getCoverUrl(b.cover_url)     || "",
     readUrl:     b.read_url                   || "",
     source:      b.source                     || "openlibrary",
     description: b.description                || "",
@@ -130,6 +136,20 @@ export async function fetchBookContent(bookId) {
   const res = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
   if (!res.ok) throw new Error("Book not found");
   return res.json();
+}
+
+export async function* streamBookContent(bookId) {
+  const res = await fetch(`${BASE}/books/read-stream/?book_id=${encodeURIComponent(bookId)}`);
+  if (!res.ok) throw new Error("Could not load book content");
+  
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    yield decoder.decode(value, { stream: true });
+  }
 }
 
 export async function fetchBookText(readUrl) {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent } from "../api/shelf";
+import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent, streamBookContent } from "../api/shelf";
 import "./ReaderPage.css";
 
 const CHARS_PER_PAGE = 1200;
@@ -193,23 +193,45 @@ export default function ReaderPage() {
         });
         setBookmarkSaved(data.is_bookmarked || false);
         setFinishedSaved(data.is_finished   || false);
-        if (!data.text || data.text.trim().length === 0) {
-          setError("No readable text available for this book.");
-          setLoading(false);
-          return;
-        }
-        let text = data.text;
-        const startMarker = text.indexOf("*** START OF");
-        if (startMarker !== -1) text = text.slice(text.indexOf("\n", startMarker) + 1);
-        const endMarker = text.indexOf("*** END OF");
-        if (endMarker !== -1) text = text.slice(0, endMarker);
-        setPages(splitIntoPages(text));
+        
+        let textBuffer = "";
+        let isFirstSet = true;
 
-        if (data.user_progress > 0) {
-          const total = splitIntoPages(text).length;
-          const targetIdx = Math.floor((data.user_progress / 100) * total);
-          setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+        for await (const chunk of streamBookContent(bookId)) {
+          if (cancelled) return;
+          textBuffer += chunk;
+          
+          let processedText = textBuffer;
+          const startMarker = processedText.indexOf("*** START OF");
+          if (startMarker !== -1) processedText = processedText.slice(processedText.indexOf("\n", startMarker) + 1);
+          const endMarker = processedText.indexOf("*** END OF");
+          if (endMarker !== -1) processedText = processedText.slice(0, endMarker);
+
+          const newPages = splitIntoPages(processedText);
+          setPages(newPages);
+
+          if (isFirstSet && newPages.length > 3) {
+            setLoading(false);
+            isFirstSet = false;
+            
+            // set target index based on progress
+            if (data.user_progress > 0) {
+              const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
+              setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+            }
+          }
         }
+        
+        if (isFirstSet) {
+          setLoading(false);
+          // if very small book, apply progress here
+          if (data.user_progress > 0 && splitIntoPages(textBuffer).length > 0) {
+             const newPages = splitIntoPages(textBuffer);
+             const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
+             setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+          }
+        }
+
       } catch (e) {
         if (!cancelled) setError(e.message);
       }

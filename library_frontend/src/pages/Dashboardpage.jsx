@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { searchBooks, searchBooksStream, parseBFFBook } from "../api/shelf";
+import { searchBooks, searchBooksStream, parseBFFBook, getCoverUrl } from "../api/shelf";
 import "./DashboardPage.css";
 import {
   useDashboardSummary,
@@ -645,22 +645,22 @@ export default function DashboardPage() {
         const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
         const filteredRecent = activity.filter(b => new Date(b.last_read_at).getTime() > fortyEightHoursAgo);
         return filteredRecent.length > 0
-          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra">{b.progress_percent < 100 && <span style={{ color: "#f59e0b", marginLeft: "auto" }}>{parseInt(b.progress_percent)}%</span>}</div>} />)
+          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra">{b.progress_percent < 100 && <span style={{ color: "#f59e0b", marginLeft: "auto" }}>{parseInt(b.progress_percent)}%</span>}</div>} />)
           : <p className="panel-empty">No readings in the last 48 hours.</p>;
       }
       case "bookmarks":
         return marks.length > 0
-          ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
+          ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
           : <p className="panel-empty">No bookmarks saved.</p>;
       case "calendar":
         return <CalendarHeatmap sessions={sessions} />;
       case "history":
         return activity.length > 0
-          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.last_read_at)}</span></div>} />)
+          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.last_read_at)}</span></div>} />)
           : <p className="panel-empty">No reading history recorded yet.</p>;
       case "previously_read":
         return finished.length > 0
-          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: b.book_cover }} extra={<div className="panel-row-extra"><span>COMPLETED</span></div>} />)
+          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span>COMPLETED</span></div>} />)
           : <p className="panel-empty">No books finished yet.</p>;
       default: return null;
     }

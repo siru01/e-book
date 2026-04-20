@@ -16,6 +16,8 @@ from .views import (
     BookReadView,
     DashboardSummaryView,
     ShelfRowsView,
+    CoverProxyView,
+    BookStreamTextView,
 )
 from .forgot_password_views import forgot_password_request, reset_password   # ← NEW
 
@@ -28,7 +30,9 @@ urlpatterns = [
     path("auth/reset-password/",  reset_password,          name="reset-password"),    # ← NEW
 
     # ── BFF book endpoints ────────────────────────────────────
+    path("books/cover/",        CoverProxyView.as_view(),  name="book-cover-proxy"),
     path("books/read/",         BookReadView.as_view(),    name="book-read"),
+    path("books/read-stream/",  BookStreamTextView.as_view(), name="book-read-stream"),
     path("books/shelf-rows/",   ShelfRowsView.as_view(),   name="shelf-rows"),
     path("books/search/",         BookSearchView.as_view(),  name="book-search"),
     path("books/search-stream/",  BookStreamView.as_view(),  name="book-search-stream"),

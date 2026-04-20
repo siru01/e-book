@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import { fetchBookOverview, searchBooks, saveBookmark } from "../api/shelf";
+import { fetchBookOverview, searchBooks, saveBookmark, getCoverUrl } from "../api/shelf";
 import "./BookOverviewPage.css";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -160,7 +160,7 @@ export default function BookOverviewPage() {
           id:           bookId,
           title:        data.title,
           author:       data.author,
-          coverUrl:     data.cover_url,
+          coverUrl:     getCoverUrl(data.cover_url),
           description:  data.description,
           source:       data.source || source,
           year:         data.year,
@@ -192,7 +192,7 @@ export default function BookOverviewPage() {
                   title:  b.title.length > 36 ? b.title.slice(0, 34) + "…" : b.title,
                   author: (b.authors || []).join(", ") || "Unknown",
                   year:   b.year || "",
-                  cover:  b.cover_url,
+                  cover:  getCoverUrl(b.cover_url),
                 }))
               );
             })

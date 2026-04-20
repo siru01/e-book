@@ -114,3 +114,15 @@ class ReadingSession(models.Model):
 
     def __str__(self):
         return f"{self.user.email} | {self.date} | {self.minutes_read} min"
+
+class CachedCover(models.Model):
+    """
+    Locally caches cover images from external URLs to prevent hotlinking and improve load times.
+    """
+    source_url   = models.URLField(unique=True, db_index=True, max_length=1000)
+    content_type = models.CharField(max_length=50)
+    image_data   = models.BinaryField()
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.source_url
