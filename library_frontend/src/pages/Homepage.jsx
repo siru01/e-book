@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
@@ -7,8 +7,36 @@ import "./HomePage.css";
 export default function HomePage() {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(true);
+  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
+  const [trail, setTrail] = useState([]);
+  const trailId = useRef(0);
+  const lastTrail = useRef(0);
 
   const toggleDarkMode = () => setIsDark((prev) => !prev);
+
+  // ── Mouse tracking: cursor + trail squares ────────────────
+  const handleMouseMove = useCallback((e) => {
+    setCursorPos({ x: e.clientX, y: e.clientY });
+
+    const now = Date.now();
+    if (now - lastTrail.current < 60) return;   // throttle ~16fps
+    lastTrail.current = now;
+
+    const id = ++trailId.current;
+    setTrail((prev) => [
+      ...prev.slice(-12),   // keep last 12 squares
+      { id, x: e.clientX, y: e.clientY },
+    ]);
+    // remove square after 600ms
+    setTimeout(() => {
+      setTrail((prev) => prev.filter((t) => t.id !== id));
+    }, 600);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [handleMouseMove]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -20,7 +48,33 @@ export default function HomePage() {
 
   return (
     <div className="shelf-wrapper" data-theme={isDark ? "dark" : "light"}>
-      <div className="shelf-root">
+      <div className="shelf-root shelf-cursor-hidden">
+
+        {/* ── Custom cursor ── */}
+        <div
+          className="shelf-cursor"
+          style={{ transform: `translate(${cursorPos.x}px, ${cursorPos.y}px)` }}
+        >
+          <svg width="24" height="28" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M2 2 L22 12 L13 14 L9 26 Z"
+              fill="#111"
+              stroke="#fff"
+              strokeWidth="2.2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
+        {/* ── Trail squares ── */}
+        {trail.map((t) => (
+          <div
+            key={t.id}
+            className="shelf-trail-sq"
+            style={{ left: t.x - 10, top: t.y - 10 }}
+          />
+        ))}
         {/* ── Nav: [links left] [brand center] [toggle right] ── */}
         <nav className="shelf-nav fade-1">
           {/* LEFT */}
