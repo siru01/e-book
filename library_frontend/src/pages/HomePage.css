@@ -2,28 +2,38 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ✦ Theme Variables */
-.shelf-wrapper[data-theme="light"] {
-  --bg: #f9f9f6;
-  --text: #111;
-  --sub-text: #555;
-  --nav-link: #333;
-  --btn-secondary: #ebebea;
-  --btn-secondary-text: #444;
-  --btn-primary-hover: #333;
-}
-
+/* ── Theme Variables ──────────────────────────────────────── */
 .shelf-wrapper[data-theme="dark"] {
-  --bg: #0f0f0e;
-  --text: #f9f9f6;
-  --sub-text: #aaa;
-  --nav-link: #ccc;
-  --btn-secondary: #222;
-  --btn-secondary-text: #eee;
-  --btn-primary-hover: #ddd;
+  --bg:                #2a2a2a;
+  --bg-secondary:      #222222;
+  --text:              #f0f0f0;
+  --text-muted:        #999;
+  --nav-link:          #bbb;
+  --nav-link-hover:    #fff;
+  --nav-border:        rgba(255,255,255,0.08);
+  --btn-primary-bg:    #f0f0f0;
+  --btn-primary-text:  #111;
+  --btn-primary-hover: #fff;
+  --btn-secondary-bg:  rgba(255,255,255,0.08);
+  --btn-secondary-text:#ddd;
 }
 
-/* ✦ Root: full viewport, no overflow/scrollbar */
+.shelf-wrapper[data-theme="light"] {
+  --bg:                #d6d6d6;
+  --bg-secondary:      #cbcbcb;
+  --text:              #111;
+  --text-muted:        #555;
+  --nav-link:          #444;
+  --nav-link-hover:    #000;
+  --nav-border:        rgba(0,0,0,0.08);
+  --btn-primary-bg:    #111;
+  --btn-primary-text:  #f0f0f0;
+  --btn-primary-hover: #333;
+  --btn-secondary-bg:  rgba(0,0,0,0.08);
+  --btn-secondary-text:#333;
+}
+
+/* ── Root ─────────────────────────────────────────────────── */
 .shelf-wrapper {
   width: 100%;
   height: 100%;
@@ -31,68 +41,82 @@
 
 .shelf-root {
   font-family: "Nova Square", sans-serif;
-  font-weight: 400;
   width: 100vw;
   height: 100vh;
   background: var(--bg);
   color: var(--text);
-  position: fixed;        /* ✦ fixed so nothing can scroll it */
+  position: fixed;
   inset: 0;
-  overflow: hidden;       /* ✦ no scrollbar ever */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: background 0.4s ease;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* ─── Nav ─── */
+/* ── Nav: 3-column grid so brand is always perfectly centred ── */
 .shelf-nav {
   position: relative;
   z-index: 10;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;   /* left | brand | right */
   align-items: center;
-  justify-content: space-between;
-  padding: 25px 50px;
+  padding: 22px 48px;
   flex-shrink: 0;
+  border-bottom: 1px solid var(--nav-border);
+  backdrop-filter: blur(4px);
 }
 
-.shelf-nav-logo {
-  font-weight: 1000;
-  font-size: 1.5rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
+/* LEFT column */
 .shelf-nav-links {
-  font-size: 1.2rem;
   display: flex;
-  gap: 60px;
+  gap: 8px;
   list-style: none;
-  font-weight: 1000;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .shelf-nav-links a {
   color: var(--nav-link);
   text-decoration: none;
-  font-size: 1.1rem;
-  transition: color 0.2s;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
-.shelf-nav-links a:hover { color: var(--text); }
+.shelf-nav-links a:hover {
+  color: var(--nav-link-hover);
+  border-color: var(--nav-border);
+  background: rgba(128,128,128,0.12);
+}
 
-/* ✦ Compact icon-only theme toggle button */
+/* CENTER column — brand */
+.shelf-nav-logo {
+  font-size: 1.4rem;
+  font-weight: 1000;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text);
+  user-select: none;
+  justify-self: center;
+}
+
+/* RIGHT column — toggle button */
 .shelf-nav-cta {
+  justify-self: flex-end;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1.5px solid var(--nav-link);
-  background: transparent;
+  border: 1.5px solid var(--nav-border);
+  background: rgba(128,128,128,0.1);
   color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
   cursor: pointer;
   transition: border-color 0.2s, transform 0.15s, background 0.2s;
   flex-shrink: 0;
@@ -100,94 +124,136 @@
 
 .shelf-nav-cta:hover {
   transform: scale(1.08);
-  background: var(--btn-secondary);
-  border-color: var(--text);
+  background: rgba(128,128,128,0.2);
+  border-color: var(--text-muted);
 }
 
-/* ─── Hero ─── */
+/* ── Hero ─────────────────────────────────────────────────── */
 .shelf-hero {
   position: relative;
   z-index: 5;
-  flex: 0.8;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 0 24px 40px;
+  padding: 0 24px 48px;
+  gap: 32px;
 }
 
-.shelf-eyebrow {
-  font-size: 0.78em;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--sub-text);
-  margin-bottom: 20px;
+/* ── Staggered headline wrapper ── */
+.shelf-headline-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.92;
+  gap: 0;
+}
+
+/* Line 1 — sits behind the image */
+.shelf-headline-line {
+  display: block;
+  font-size: clamp(3.8rem, 10vw, 8.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.shelf-headline-line--top {
+  position: relative;
+  z-index: 1;        /* behind the image */
+}
+
+/* Line 2 — sits in front of the image */
+.shelf-headline-line--bottom {
+  position: relative;
+  z-index: 3;        /* in front of the image */
+}
+
+/* ── Accent image (sandwiched between lines) ── */
+.shelf-hero-img-wrap {
+  position: relative;
+  z-index: 2;                  /* above line 1, below line 2 */
+  width: clamp(120px, 18vw, 240px);
+  height: clamp(100px, 14vw, 200px);
+  margin: -10px 0;             /* overlap the two lines */
+  pointer-events: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
-.shelf-eyebrow::before {
-  content: '';
-  width: 14px;
-  height: 1px;
-  background: var(--sub-text);
+/* Black placeholder — swap this for an <img> when you have the pic */
+.shelf-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
 }
 
-.shelf-headline {
-  font-size: 4rem;
-  font-weight: 600;
-  line-height: 1.08;
-  max-width: 740px;
-  letter-spacing: -0.02em;
-  margin-bottom: 44px;
+/* ── Subtext ── */
+.shelf-subtext {
+  font-size: 1rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  max-width: 420px;
+  line-height: 1.6;
 }
 
+/* ── Action Buttons ── */
 .shelf-actions {
   display: flex;
-  gap: 20px;
+  gap: 14px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .btn-primary {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   border: none;
-  padding: 16px 32px;
+  padding: 15px 32px;
   border-radius: 100px;
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.92rem;
+  font-weight: 700;
   cursor: pointer;
   font-family: "Nova Square", sans-serif;
+  letter-spacing: 0.04em;
   transition: transform 0.15s, box-shadow 0.2s, background 0.3s;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
   background: var(--btn-primary-hover);
 }
 
 .btn-secondary {
-  background: var(--btn-secondary);
+  background: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
-  border: none;
-  padding: 16px 32px;
+  border: 1.5px solid rgba(128,128,128,0.25);
+  padding: 15px 32px;
   border-radius: 100px;
-  font-size: 1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
   font-family: "Nova Square", sans-serif;
   cursor: pointer;
-  transition: transform 0.15s, background 0.3s;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s, background 0.3s, border-color 0.2s;
+  backdrop-filter: blur(4px);
 }
 
 .btn-secondary:hover {
   transform: translateY(-2px);
-  opacity: 0.9;
+  background: rgba(128,128,128,0.18);
+  border-color: rgba(128,128,128,0.45);
 }
 
-/* ─── Animations ─── */
+/* ── Animations ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -197,19 +263,30 @@
 .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
 .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
 
-/* ✦ Mobile */
-@media (max-width: 640px) {
+/* ── Mobile ── */
+@media (max-width: 768px) {
   .shelf-nav {
-    padding: 18px 20px;
+    padding: 16px 20px;
+    grid-template-columns: auto 1fr auto;
   }
 
   .shelf-nav-links {
     display: none;
   }
 
-  .shelf-headline {
-    font-size: clamp(1.8rem, 7vw, 3rem);
-    margin-bottom: 32px;
+  .shelf-nav-logo {
+    justify-self: center;
+    font-size: 1.1rem;
+  }
+
+  .shelf-headline-line {
+    font-size: clamp(2.4rem, 12vw, 4rem);
+    white-space: normal;
+    text-align: center;
+  }
+
+  .shelf-hero-img-wrap {
+    width: clamp(140px, 60vw, 260px);
   }
 
   .shelf-actions {
@@ -217,7 +294,7 @@
     align-items: center;
     width: 100%;
     max-width: 300px;
-    gap: 14px;
+    gap: 12px;
   }
 
   .btn-primary,

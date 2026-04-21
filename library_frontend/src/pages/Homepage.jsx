@@ -1,73 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
-/* ─── Particle canvas ─── */
-function ParticleCanvas({ isDark }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    let raf;
-    let particles = [];
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      particles = Array.from({ length: 260 }, () => ({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        r: Math.random() * 2.2 + 0.5,
-        dx: (Math.random() - 0.5) * 0.18,
-        dy: (Math.random() - 0.5) * 0.18,
-        alpha: Math.random() * 0.55 + 0.2,
-      }));
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    const draw = () => {
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((p) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = isDark
-          ? `rgba(140, 160, 255, ${p.alpha})`
-          : `rgba(60, 80, 160, ${p.alpha})`;
-        ctx.fill();
-
-        p.x += p.dx;
-        p.y += p.dy;
-
-        if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
-      });
-
-      raf = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, [isDark]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
-    />
-  );
-}
 
 /* ─── Main landing page ─── */
 export default function HomePage() {
@@ -87,18 +21,26 @@ export default function HomePage() {
   return (
     <div className="shelf-wrapper" data-theme={isDark ? "dark" : "light"}>
       <div className="shelf-root">
-        <ParticleCanvas isDark={isDark} />
-
+        {/* ── Nav: [links left] [brand center] [toggle right] ── */}
         <nav className="shelf-nav fade-1">
-          <span className="shelf-nav-logo">Shelf</span>
-
+          {/* LEFT */}
           <ul className="shelf-nav-links">
             <li><a href="#">Browse</a></li>
-            <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
+            <li>
+              <a
+                href="/dashboard"
+                onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
+              >
+                My Library
+              </a>
+            </li>
             <li><a href="#">About</a></li>
           </ul>
 
-          {/* ✦ Icon-only toggle: sun / moon SVG */}
+          {/* CENTER */}
+          <span className="shelf-nav-logo">Shelf</span>
+
+          {/* RIGHT */}
           <button
             className="shelf-nav-cta"
             onClick={toggleDarkMode}
@@ -106,7 +48,6 @@ export default function HomePage() {
             title={isDark ? "Light mode" : "Dark mode"}
           >
             {isDark ? (
-              /* Sun icon */
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="5"/>
@@ -120,7 +61,6 @@ export default function HomePage() {
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
               </svg>
             ) : (
-              /* Moon icon */
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -129,10 +69,32 @@ export default function HomePage() {
           </button>
         </nav>
 
+        {/* ── Hero ── */}
         <section className="shelf-hero">
-          <h1 className="shelf-headline fade-2">
-            Explore Unlimited Stories in One Digital Library
-          </h1>
+
+          {/* Staggered headline with image sandwiched between line 1 & line 2 */}
+          <div className="shelf-headline-wrap fade-2">
+
+            {/* Line 1 — z-index below the image */}
+            <span className="shelf-headline-line shelf-headline-line--top">
+              Explore Unlimited
+            </span>
+
+            {/* ── Placeholder: replace with your own image later ── */}
+            <div className="shelf-hero-img-wrap">
+              <div className="shelf-hero-placeholder" />
+            </div>
+
+            {/* Line 2 — z-index above the image */}
+            <span className="shelf-headline-line shelf-headline-line--bottom">
+              Stories
+            </span>
+          </div>
+
+          <p className="shelf-subtext fade-3">
+            One digital library for every kind of reader.
+          </p>
+
           <div className="shelf-actions fade-3">
             <button className="btn-primary" onClick={() => navigate("/login")}>
               Get Back To You
@@ -142,6 +104,7 @@ export default function HomePage() {
             </button>
           </div>
         </section>
+
       </div>
     </div>
   );
