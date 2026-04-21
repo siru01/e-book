@@ -1,6 +1,3 @@
-/* ─── Google Fonts ─────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
 /* ─── Root / Page ───────────────────────────────────────────────── */
 .bop-root {
   min-height: 100vh;
@@ -25,13 +22,14 @@
 }
 
 .bop-brand {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: 1.1rem;
   letter-spacing: 0.12em;
   color: #1a1815;
   cursor: pointer;
   transition: opacity 0.2s;
+  text-transform: uppercase;
 }
 .bop-brand:hover { opacity: 0.7; }
 
@@ -91,7 +89,7 @@
 }
 .bop-icon-btn:hover { background: #eae6de; color: #1a1815; }
 
-/* ── Profile Dropdown ────────────────────────────────────────── */
+/* ─── Profile Dropdown ────────────────────────────────────────── */
 .profile-wrap {
   position: relative;
 }
@@ -112,7 +110,7 @@
 .profile-trigger:hover { opacity: 0.85; transform: scale(1.05); }
 
 .avatar-initials {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: .7rem;
   font-weight: 700;
   color: #fff;
@@ -156,7 +154,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .04em;
@@ -171,7 +169,7 @@
 }
 
 .profile-dropdown-name {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: .88rem;
   font-weight: 700;
   color: #111;
@@ -181,7 +179,7 @@
 }
 
 .profile-dropdown-email {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: .75rem;
   color: #999;
   white-space: nowrap;
@@ -204,7 +202,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: .85rem;
   font-weight: 500;
   color: #555;
@@ -275,11 +273,12 @@
 }
 .bop-cover-placeholder span:first-child { font-size: 2.5rem; }
 .bop-cover-placeholder-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Anton', sans-serif;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 400;
   color: #a0b8ac;
   line-height: 1.4;
+  text-transform: uppercase;
 }
 
 /* Action buttons */
@@ -294,12 +293,13 @@
   color: #f4f1ea;
   border: none;
   border-radius: 100px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Anton', sans-serif;
   font-size: 0.83rem;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .bop-btn-read:hover:not(:disabled) {
   background: #1a1815;
@@ -321,12 +321,13 @@
   color: #1e4a5a;
   border: none;
   border-radius: 100px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Anton', sans-serif;
   font-size: 0.83rem;
-  font-weight: 500;
+  font-weight: 400;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .bop-btn-download:hover {
   background: #aed9e8;
@@ -360,13 +361,14 @@
 
 /* Title */
 .bop-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  line-height: 1.12;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1;
   color: #1a1815;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   margin: 0;
+  text-transform: uppercase;
 }
 
 /* Author */
@@ -484,14 +486,14 @@
   position: absolute;
   top: 8px;
   right: 16px;
-  font-family: Georgia, serif;
+  font-family: 'Anton', sans-serif;
   font-size: 3rem;
   color: #c8bfaa;
   line-height: 1;
 }
 
 .bop-note-text {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.82rem;
   font-style: italic;
   line-height: 1.7;
@@ -512,11 +514,12 @@
 }
 
 .bop-specs-heading {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Anton', sans-serif;
   font-size: 1.7rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1815;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .bop-specs-ver {
@@ -581,11 +584,12 @@
 }
 
 .bop-similar-heading {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Anton', sans-serif;
   font-size: 1.7rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1815;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .bop-view-all {
@@ -656,12 +660,13 @@
 }
 
 .bop-similar-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Anton', sans-serif;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1815;
   margin: 0 0 4px;
   line-height: 1.3;
+  text-transform: uppercase;
 }
 
 .bop-similar-byline {
@@ -694,11 +699,55 @@
 }
 .bop-error-emoji  { font-size: 3.5rem; }
 .bop-error-heading {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Anton', sans-serif;
   font-size: 1.8rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1815;
   margin: 0;
+  text-transform: uppercase;
+}
+.bop-error-msg { 
+  color: #7a7368; 
+  font-size: 0.9rem; 
+  margin: 0; 
+}
+
+.bop-similar-byline {
+  font-size: 0.78rem;
+  color: #9d9488;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ─── Skeleton ──────────────────────────────────────────────────── */
+.bop-skeleton {
+  background: linear-gradient(90deg, #efefef 0%, #f8f8f8 50%, #efefef 100%);
+  background-size: 200% 100%;
+  animation: bop-shimmer 1.4s ease infinite;
+}
+@keyframes bop-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Error state ───────────────────────────────────────────────── */
+.bop-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 60vh;
+  text-align: center;
+}
+.bop-error-emoji  { font-size: 3.5rem; }
+.bop-error-heading {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: #1a1815;
+  margin: 0;
+  text-transform: uppercase;
 }
 .bop-error-msg { color: #7a7368; font-size: 0.9rem; margin: 0; }
 

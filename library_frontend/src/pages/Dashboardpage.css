@@ -3,7 +3,7 @@
 
 .dash-root {
   background: #fff;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: #111;
   overflow-x: hidden;
   scrollbar-gutter: stable; /* Crucial: Prevents layout shift when body locks */
@@ -16,7 +16,7 @@
   padding: 0 48px; height: 60px;
   background: #fff;
 }
-.dash-brand { font-size: 1rem; font-weight: 800; letter-spacing: .15em; color: #111; flex-shrink: 0; }
+.dash-brand { font-family: 'Anton', sans-serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .15em; color: #111; flex-shrink: 0; text-transform: uppercase; }
 .dash-nav-links { display: flex; gap: 28px; flex-shrink: 0; }
 .dash-nav-link { font-size: .88rem; font-weight: 500; color: #888; cursor: pointer; transition: color .15s; }
 .dash-nav-link:hover { color: #111; }
@@ -185,24 +185,30 @@
 }
 
 .dash-greeting {
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 500;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
   color: #111;
   line-height: 1.2;
-  letter-spacing: -.02em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .dash-subtitle {
+  font-family: 'Anton', sans-serif;
   font-size: 45px;
-  letter-spacing: -.03em;
-  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-weight: 400;
   margin-top: 10px;
+  text-transform: uppercase;
 }
 
 .dash-heading {
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 800; color: #111; text-align: center;
-  line-height: 1.2; letter-spacing: -.02em;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400; color: #111; text-align: center;
+  line-height: 1.2; letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -303,7 +309,7 @@
 .dash-shelves { display: flex; flex-direction: column; gap: 40px; }
 .dash-shelf { display: flex; flex-direction: column; gap: 16px; }
 .dash-shelf-header { display: flex; align-items: baseline; justify-content: space-between; }
-.dash-shelf-label { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.dash-shelf-label { font-family: 'Anton', sans-serif; font-size: 1.6rem; font-weight: 400; letter-spacing: 0.02em; text-transform: uppercase; }
 .dash-shelf-all { font-size: .75rem; font-weight: 700; letter-spacing: .08em; color: #999; cursor: pointer; text-transform: uppercase; }
 .dash-shelf-all:hover { color: #111; }
 .dash-shelf-scroll { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; align-items: flex-start; padding: 20px 10px; margin: -20px -10px; }

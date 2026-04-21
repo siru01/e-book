@@ -3,36 +3,117 @@ import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
 
+import bulbIcon from "../assets/bulb.png";
+import bookIcon from "../assets/books.png";
+
 /* ─── Main landing page ─── */
+/* ── Canvas Grid Trail Component ── */
+function GridTrail({ visible }) {
+  const canvasRef = useRef(null);
+  const [cells, setCells] = useState({}); // { "col-row": opacity }
+  const requestRef = useRef();
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cellSize = 60;
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    const onMouseMove = (e) => {
+      if (!visible) return;
+      const col = Math.floor(e.clientX / cellSize);
+      const row = Math.floor(e.clientY / cellSize);
+      const key = `${col}-${row}`;
+      
+      setCells(prev => ({
+        ...prev,
+        [key]: 1.0
+      }));
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      setCells(prev => {
+        const next = { ...prev };
+        let changed = false;
+        
+        for (const key in next) {
+          next[key] -= 0.02; // Fading speed
+          if (next[key] <= 0) {
+            delete next[key];
+            changed = true;
+          } else {
+            const [col, row] = key.split('-').map(Number);
+            ctx.fillStyle = `rgba(255, 255, 255, ${next[key] * 0.15})`; // Subtle white squares
+            ctx.fillRect(col * cellSize + 1, row * cellSize + 1, cellSize - 2, cellSize - 2);
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+      
+      requestRef.current = requestAnimationFrame(animate);
+    };
+
+    requestRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', onMouseMove);
+      cancelAnimationFrame(requestRef.current);
+    };
+  }, [visible]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        pointerEvents: 'none',
+        zIndex: 1,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.5s ease'
+      }} 
+    />
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
-  const [trail, setTrail] = useState([]);
-  const trailId = useRef(0);
-  const lastTrail = useRef(0);
+  const [cursorVisible, setCursorVisible] = useState(false);
 
-  // ── Mouse tracking: cursor + trail squares ────────────────
+  // ── Mouse tracking ────────────────
   const handleMouseMove = useCallback((e) => {
     setCursorPos({ x: e.clientX, y: e.clientY });
-
-    const now = Date.now();
-    if (now - lastTrail.current < 60) return;   // throttle ~16fps
-    lastTrail.current = now;
-
-    const id = ++trailId.current;
-    setTrail((prev) => [
-      ...prev.slice(-12),   // keep last 12 squares
-      { id, x: e.clientX, y: e.clientY },
-    ]);
-    // remove square after 600ms
-    setTimeout(() => {
-      setTrail((prev) => prev.filter((t) => t.id !== id));
-    }, 600);
-  }, []);
+    if (!cursorVisible) setCursorVisible(true);
+  }, [cursorVisible]);
 
   useEffect(() => {
+    const handleMouseLeave = () => setCursorVisible(false);
+    const handleMouseEnter = () => setCursorVisible(true);
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseenter", handleMouseEnter);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseenter", handleMouseEnter);
+    };
   }, [handleMouseMove]);
 
   useEffect(() => {
@@ -42,10 +123,17 @@ export default function HomePage() {
   return (
     <div className="shelf-wrapper" data-theme="light">
       <div className="shelf-root shelf-cursor-hidden">
+        
+        {/* Interactive Grid Trail (MoMoney Style) */}
+        <GridTrail visible={cursorVisible} />
 
+        {/* Custom Interactive Cursor */}
         <div
           className="shelf-cursor"
-          style={{ transform: `translate(${cursorPos.x}px, ${cursorPos.y}px)` }}
+          style={{ 
+            transform: `translate(${cursorPos.x}px, ${cursorPos.y}px)`,
+            opacity: cursorVisible ? 1 : 0 
+          }}
         >
           <svg width="32" height="36" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -59,23 +147,6 @@ export default function HomePage() {
           </svg>
         </div>
 
-        {/* ── Grid overlay — revealed only near cursor ── */}
-        <div
-          className="shelf-grid-overlay"
-          style={{
-            maskImage: `radial-gradient(circle 250px at ${cursorPos.x}px ${cursorPos.y}px, black 0%, transparent 80%)`,
-            WebkitMaskImage: `radial-gradient(circle 250px at ${cursorPos.x}px ${cursorPos.y}px, black 0%, transparent 80%)`,
-          }}
-        />
-
-        {/* ── Trail squares ── */}
-        {trail.map((t) => (
-          <div
-            key={t.id}
-            className="shelf-trail-sq"
-            style={{ left: t.x - 10, top: t.y - 10 }}
-          />
-        ))}
         {/* ── Nav: [links left] [brand center] [toggle right] ── */}
         <nav className="shelf-nav fade-1">
           {/* LEFT */}
@@ -105,25 +176,14 @@ export default function HomePage() {
           {/* Staggered headline with image sandwiched between line 1 & line 2 */}
           <div className="shelf-headline-wrap fade-2">
 
-            {/* Pink bulb sticker — bottom-left */}
+            {/* Bulb sticker — bottom-left */}
             <div className="shelf-sticker shelf-sticker--bulb">
-              <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="42" r="22" fill="#ff4dba" stroke="#111" strokeWidth="3.5"/>
-                <rect x="38" y="62" width="24" height="7" rx="3" fill="#ff4dba" stroke="#111" strokeWidth="3"/>
-                <rect x="40" y="68" width="20" height="7" rx="3" fill="#ff4dba" stroke="#111" strokeWidth="3"/>
-                <line x1="50" y1="20" x2="50" y2="14" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="30" y1="27" x2="25" y2="22" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="70" y1="27" x2="75" y2="22" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="23" y1="42" x2="17" y2="42" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <line x1="77" y1="42" x2="83" y2="42" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M43 42 Q50 34 57 42" stroke="#111" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <line x1="50" y1="35" x2="50" y2="50" stroke="#111" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
+              <img src={bulbIcon} alt="Bulb" className="sticker-img" />
             </div>
 
             {/* Line 1 — z-index below the image */}
             <span className="shelf-headline-line shelf-headline-line--top">
-              Explore Unlimited
+              Unlock stories
             </span>
 
             {/* ── Placeholder: replace with your own image later ── */}
@@ -133,16 +193,12 @@ export default function HomePage() {
 
             {/* Line 2 — z-index above the image */}
             <span className="shelf-headline-line shelf-headline-line--bottom">
-              Stories
+              expand minds
             </span>
 
-            {/* Pink paper plane sticker — right */}
+            {/* Book sticker — right */}
             <div className="shelf-sticker shelf-sticker--plane">
-              <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 50 L90 15 L55 85 L45 58 Z" fill="#ff4dba" stroke="#111" strokeWidth="3.5" strokeLinejoin="round"/>
-                <path d="M45 58 L90 15" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M55 68 Q52 76 48 82" stroke="#111" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-              </svg>
+              <img src={bookIcon} alt="Book" className="sticker-img" />
             </div>
 
           </div>

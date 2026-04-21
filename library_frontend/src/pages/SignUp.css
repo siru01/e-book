@@ -1,11 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 /* ── SignUp Page Layout ── */
 .signup-container {
   min-height: 100vh;
@@ -34,8 +26,9 @@
 
 /* ── Logo ── */
 .signup-card .logo {
+  font-family: 'Anton', sans-serif;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 2px;
   color: #000;
   margin-bottom: 4px;
@@ -43,8 +36,9 @@
 
 /* ── Headings ── */
 .signup-card h2 {
+  font-family: 'Anton', sans-serif;
   font-size: 1.8rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #111;
   margin-top: 8px;
 }
@@ -118,12 +112,13 @@
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 1px;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
   margin-top: 8px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Anton', sans-serif;
+  text-transform: uppercase;
 }
 
 .btn-black:hover:not(:disabled) {
