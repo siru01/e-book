@@ -3,22 +3,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Theme Variables ──────────────────────────────────────── */
-.shelf-wrapper[data-theme="dark"] {
-  --bg:                #2a2a2a;
-  --bg-secondary:      #222222;
-  --text:              #f0f0f0;
-  --text-muted:        #999;
-  --nav-link:          #bbb;
-  --nav-link-hover:    #fff;
-  --nav-border:        rgba(255,255,255,0.08);
-  --btn-primary-bg:    #f0f0f0;
-  --btn-primary-text:  #111;
-  --btn-primary-hover: #fff;
-  --btn-secondary-bg:  rgba(255,255,255,0.08);
-  --btn-secondary-text:#ddd;
-}
-
-.shelf-wrapper[data-theme="light"] {
+.shelf-wrapper {
   --bg:                #d6d6d6;
   --bg-secondary:      #cbcbcb;
   --text:              #111;
@@ -72,7 +57,7 @@
 }
 
 /* ── Trail squares ─────────────────────────────────────── */
-.shelf-trail-sq {
+/*.shelf-trail-sq {
   position: fixed;
   width: 20px;
   height: 20px;
@@ -82,11 +67,24 @@
   z-index: 9998;
   opacity: 0.7;
   animation: trail-fade 0.6s ease-out forwards;
-}
+}*/
 
-@keyframes trail-fade {
+/*@keyframes trail-fade {
   0%   { opacity: 0.65; transform: scale(1) rotate(0deg); }
   100% { opacity: 0;    transform: scale(0.3) rotate(15deg); }
+}*/
+
+/* ── Grid reveal effect ───────────────────────────────────── */
+.shelf-grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128,128,128,0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  will-change: mask-image;
 }
 
 /* ── Nav: 3-column grid so brand is always perfectly centred ── */
@@ -141,27 +139,11 @@
   justify-self: center;
 }
 
-/* RIGHT column — toggle button */
-.shelf-nav-cta {
-  justify-self: flex-end;
+/* RIGHT column — removed toggle */
+.shelf-nav-right-placeholder {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  border: 1.5px solid var(--nav-border);
-  background: rgba(128,128,128,0.1);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s, background 0.2s;
-  flex-shrink: 0;
-}
-
-.shelf-nav-cta:hover {
-  transform: scale(1.08);
-  background: rgba(128,128,128,0.2);
-  border-color: var(--text-muted);
+  justify-self: flex-end;
 }
 
 /* ── Hero ─────────────────────────────────────────────────── */
@@ -213,6 +195,7 @@
 
 /* ── Pink stickers ── */
 .shelf-sticker {
+  
   position: absolute;
   z-index: 4;
   animation: sticker-float 4s ease-in-out infinite alternate;
@@ -262,13 +245,13 @@
   justify-content: center;
 }
 
-/* Black placeholder — swap this for an <img> when you have the pic */
+/* Grey placeholder — swap this for an <img> when you have the pic */
 .shelf-hero-placeholder {
   width: 100%;
   height: 100%;
-  background: #000;
+  background: #b5b5b5;
   border-radius: 0px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
   transform: rotate(7deg);   /* tilt right like the reference */
   transition: transform 0.4s ease;
 }

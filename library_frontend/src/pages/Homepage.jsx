@@ -6,13 +6,10 @@ import "./HomePage.css";
 /* ─── Main landing page ─── */
 export default function HomePage() {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(true);
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
   const [trail, setTrail] = useState([]);
   const trailId = useRef(0);
   const lastTrail = useRef(0);
-
-  const toggleDarkMode = () => setIsDark((prev) => !prev);
 
   // ── Mouse tracking: cursor + trail squares ────────────────
   const handleMouseMove = useCallback((e) => {
@@ -39,33 +36,37 @@ export default function HomePage() {
   }, [handleMouseMove]);
 
   useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (e.ctrlKey && e.key === "d") toggleDarkMode();
-    };
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
+    // Component logic here if needed
   }, []);
 
   return (
-    <div className="shelf-wrapper" data-theme={isDark ? "dark" : "light"}>
+    <div className="shelf-wrapper" data-theme="light">
       <div className="shelf-root shelf-cursor-hidden">
 
-        {/* ── Custom cursor ── */}
         <div
           className="shelf-cursor"
           style={{ transform: `translate(${cursorPos.x}px, ${cursorPos.y}px)` }}
         >
-          <svg width="24" height="28" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="32" height="36" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
-              d="M2 2 L22 12 L13 14 L9 26 Z"
+              d="M4 4 L20 12 C22 13 22 15 20 16 L13 18 L10 24 C9 26 7 26 6 24 Z"
               fill="#111"
               stroke="#fff"
-              strokeWidth="2.2"
+              strokeWidth="2.5"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
           </svg>
         </div>
+
+        {/* ── Grid overlay — revealed only near cursor ── */}
+        <div
+          className="shelf-grid-overlay"
+          style={{
+            maskImage: `radial-gradient(circle 250px at ${cursorPos.x}px ${cursorPos.y}px, black 0%, transparent 80%)`,
+            WebkitMaskImage: `radial-gradient(circle 250px at ${cursorPos.x}px ${cursorPos.y}px, black 0%, transparent 80%)`,
+          }}
+        />
 
         {/* ── Trail squares ── */}
         {trail.map((t) => (
@@ -94,33 +95,8 @@ export default function HomePage() {
           {/* CENTER */}
           <span className="shelf-nav-logo">Shelf</span>
 
-          {/* RIGHT */}
-          <button
-            className="shelf-nav-cta"
-            onClick={toggleDarkMode}
-            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            title={isDark ? "Light mode" : "Dark mode"}
-          >
-            {isDark ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5"/>
-                <line x1="12" y1="1" x2="12" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="23"/>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                <line x1="1" y1="12" x2="3" y2="12"/>
-                <line x1="21" y1="12" x2="23" y2="12"/>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            )}
-          </button>
+          {/* RIGHT — (Theme toggle removed) */}
+          <div className="shelf-nav-right-placeholder" />
         </nav>
 
         {/* ── Hero ── */}
