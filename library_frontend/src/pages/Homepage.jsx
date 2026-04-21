@@ -94,6 +94,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
   const [cursorVisible, setCursorVisible] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ── Mouse tracking ────────────────
   const handleMouseMove = useCallback((e) => {
@@ -166,8 +167,32 @@ export default function HomePage() {
           {/* CENTER */}
           <span className="shelf-nav-logo">Shelf</span>
 
-          {/* RIGHT — (Theme toggle removed) */}
-          <div className="shelf-nav-right-placeholder" />
+          {/* RIGHT — Hamburger for mobile */}
+          <div className="shelf-nav-right">
+            <button 
+              className="shelf-hamburger" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+            </button>
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="shelf-mobile-menu">
+              <a href="#" onClick={() => setMobileMenuOpen(false)}>Browse</a>
+              <a 
+                href="/dashboard" 
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}
+              >
+                My Library
+              </a>
+              <a href="#" onClick={() => setMobileMenuOpen(false)}>About</a>
+            </div>
+          )}
         </nav>
 
         {/* ── Hero ── */}
