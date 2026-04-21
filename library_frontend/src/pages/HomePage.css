@@ -2,11 +2,13 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+
+
 /* ── Theme Variables ──────────────────────────────────────── */
 .shelf-wrapper {
-  --bg:                #d6d6d6;
+  --bg:                #025badf3;
   --bg-secondary:      #cbcbcb;
-  --text:              #111;
+  --text:              #92c2ee;
   --text-muted:        #555;
   --nav-link:          #444;
   --nav-link-hover:    #000;
@@ -32,10 +34,18 @@
   color: var(--text);
   position: fixed;
   inset: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;   /* allow scrolling */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
   display: flex;
   flex-direction: column;
   transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Chrome, Safari, etc. — Hide scrollbar */
+.shelf-root::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Custom cursor ──────────────────────────────────────── */
@@ -81,8 +91,8 @@
   pointer-events: none;
   z-index: 1;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(128,128,128,0.1) 1px, transparent 1px);
+    linear-gradient(rgb(255, 0, 0) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255, 65, 65) 1px, transparent 1px);
   background-size: 40px 40px;
   will-change: mask-image;
 }
@@ -174,6 +184,7 @@
 .shelf-headline-line {
   display: block;
   font-size: clamp(3.5rem, 9.5vw, 8rem);
+  text-shadow: 0 4px 12px rgba(0,0,0,0.15); /* fixed syntax */
   font-weight: 900;
   letter-spacing: -0.06em;
   color: var(--text);
@@ -205,16 +216,37 @@
 
 .shelf-sticker--bulb {
   bottom: -10px;
-  left: -80px;
+  left: -50px;
   transform: rotate(-12deg);
   animation-delay: 0s;
+  width: 100px;        /* back to reasonable size */
+  height: 100px;
 }
 
 .shelf-sticker--plane {
   top: 0px;
-  right: -90px;
+  right: -60px;
   transform: rotate(18deg);
   animation-delay: 1.5s;
+  width: 100px;
+  height: 100px;
+}
+
+.shelf-sticker {
+  position: absolute;
+  z-index: 4;
+  pointer-events: auto;        /* allow hover */
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+  animation: sticker-float 4s ease-in-out infinite alternate;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* spring back */
+}
+
+.shelf-sticker--bulb:hover {
+  transform: rotate(18deg) translate(12px, -14px) scale(1.15);
+}
+
+.shelf-sticker--plane:hover { 
+  transform: rotate(-12deg) translate(-12px, -14px) scale(1.15);
 }
 
 @keyframes sticker-float {
