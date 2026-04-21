@@ -75,6 +75,22 @@ export default function HomePage() {
           {/* Staggered headline with image sandwiched between line 1 & line 2 */}
           <div className="shelf-headline-wrap fade-2">
 
+            {/* Pink bulb sticker — bottom-left */}
+            <div className="shelf-sticker shelf-sticker--bulb">
+              <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="42" r="22" fill="#ff4dba" stroke="#111" strokeWidth="3.5"/>
+                <rect x="38" y="62" width="24" height="7" rx="3" fill="#ff4dba" stroke="#111" strokeWidth="3"/>
+                <rect x="40" y="68" width="20" height="7" rx="3" fill="#ff4dba" stroke="#111" strokeWidth="3"/>
+                <line x1="50" y1="20" x2="50" y2="14" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="30" y1="27" x2="25" y2="22" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="70" y1="27" x2="75" y2="22" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="23" y1="42" x2="17" y2="42" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="77" y1="42" x2="83" y2="42" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <path d="M43 42 Q50 34 57 42" stroke="#111" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <line x1="50" y1="35" x2="50" y2="50" stroke="#111" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+
             {/* Line 1 — z-index below the image */}
             <span className="shelf-headline-line shelf-headline-line--top">
               Explore Unlimited
@@ -89,6 +105,16 @@ export default function HomePage() {
             <span className="shelf-headline-line shelf-headline-line--bottom">
               Stories
             </span>
+
+            {/* Pink paper plane sticker — right */}
+            <div className="shelf-sticker shelf-sticker--plane">
+              <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 50 L90 15 L55 85 L45 58 Z" fill="#ff4dba" stroke="#111" strokeWidth="3.5" strokeLinejoin="round"/>
+                <path d="M45 58 L90 15" stroke="#111" strokeWidth="3" strokeLinecap="round"/>
+                <path d="M55 68 Q52 76 48 82" stroke="#111" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+              </svg>
+            </div>
+
           </div>
 
           <p className="shelf-subtext fade-3">
