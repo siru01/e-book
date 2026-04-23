@@ -4,6 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/*just warnings about unused imports*/
+
 * { box-sizing: border-box; }
 
 html, body {
