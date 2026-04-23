@@ -6,11 +6,11 @@
 .shelf-wrapper {
   --bg:                hsl(17, 64%, 60%);
   --bg-secondary:      #cbcbcb;
-  --text:              #d1cac5;
+  --text:              #ffffff;
   --text-muted:        #eef1f3;
-  --nav-link:          #000000;
-  --nav-link-hover:    #000;
-  --nav-border:        rgba(0,0,0,0.08);
+  --nav-link:          #ffffff;
+  --nav-link-hover:    #666262;
+  --nav-border:        rgba(0,0,0,0);
   --btn-primary-bg:    #111;
   --btn-primary-text:  #f0f0f0;
   --btn-primary-hover: #333;
@@ -28,7 +28,7 @@
   font-family: "Inter", sans-serif;
   width: 100vw;
   height: 100vh;
-  background: url("../assets/background.jpg") no-repeat center center/cover;
+  background: transparent;
   color: var(--text);
   position: fixed;
   inset: 0;
@@ -56,13 +56,13 @@
   padding: 22px 48px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--nav-border);
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
 }
 
 /* LEFT column */
 .shelf-nav-links {
   display: flex;
-  gap: 8px;
+  gap: 24px; /* Stretched links */
   list-style: none;
   align-items: center;
   justify-content: flex-start;
@@ -71,14 +71,14 @@
 .shelf-nav-links a {
   color: var(--nav-link);
   text-decoration: none;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.2em; /* Stretched links */
   text-transform: uppercase;
-  padding: 7px 16px;
+  padding: 7px 20px;
   border-radius: 100px;
-  border: 1px solid transparent;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  border: 1px solid transparent; 
+  /*transition: color 0.2s, border-color 0.2s, background 0.2s;*/
 }
 
 .shelf-nav-links a:hover {
@@ -126,34 +126,9 @@
 .ham-bar--open:nth-child(2) { opacity: 0; }
 .ham-bar--open:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-.shelf-mobile-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--bg);
-  border-bottom: 1px solid var(--nav-border);
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 16px;
-  z-index: 1000;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  animation: slideDown 0.3s ease forwards;
-}
-
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.shelf-mobile-menu a {
-  color: var(--nav-link);
-  text-decoration: none;
-  font-family: "Anton", sans-serif;
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* ── Hero ─────────────────────────────────────────────────── */
@@ -370,36 +345,80 @@
 
 /* ── Mobile ── */
 @media (max-width: 800px) {
-  .shelf-root {
-    position: relative;
-    height: auto;
-    min-height: 100vh;
-  }
-
   .shelf-nav {
     padding: 16px 20px;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     position: sticky;
     top: 0;
-    background: var(--bg);
-  }
-
-  .shelf-hamburger {
-    margin-left: 17rem;
-    display: flex;
-  }
-
-  .shelf-nav-links {
-    display: none; /* Hide desktop links */
+    background: transparent;
+    /* backdrop-filter: blur(10px); */
   }
 
   .shelf-nav-logo {
     font-size: 1.5rem;
+    margin-left: 0;
+  }
+
+  .shelf-hamburger {
+    display: flex;
+    margin-left: 0;
+    z-index: 1001; /* Stay above the mobile menu overlay */
+  }
+
+  .shelf-mobile-menu {
+    position: absolute;
+    top: 100%; /* Perfectly align with the bottom of the navbar */
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.3); /* Slightly more opaque glass */
+    /* backdrop-filter: blur(35px); */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 30px 20px;
+    gap: 20px;
+    z-index: 998;
+    border-bottom: 1.5px solid rgba(128, 128, 128, 0.25);
+    animation: menuFadeDown 0.3s ease-out forwards;
+  }
+
+  .shelf-mobile-menu a {
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 400;
+    text-align: center;
+    text-decoration: none;
+    font-family: "Anton", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  .shelf-mobile-menu a:nth-child(1) { animation: linkEntry 0.4s ease forwards 0.1s; }
+  .shelf-mobile-menu a:nth-child(2) { animation: linkEntry 0.4s ease forwards 0.15s; }
+  .shelf-mobile-menu a:nth-child(3) { animation: linkEntry 0.4s ease forwards 0.2s; }
+
+  @keyframes menuFadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes linkEntry {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .shelf-nav-links {
+    display: none;
   }
 
   .shelf-headline-line {
     font-size: 3.5rem;
-    white-space: nowrap; /* FORCE ONE LINE */
+    white-space: nowrap;
     text-align: center;
     line-height: 1;
     letter-spacing: 0; 
@@ -410,7 +429,7 @@
   }
 
   .shelf-hero-img-wrap {
-    width: 38vw; /* even smaller */
+    width: 38vw;
     height: 30vw;
     margin-top: -22px;
   }
@@ -419,14 +438,14 @@
     width: 85px;
     height: 85px;
     bottom: -55px;
-    left: -15px; /* push outside */
+    left: -15px;
   }
 
   .shelf-sticker--plane {
     width: 80px;
     height: 85px;
     top: -50px;
-    right: -15px; /* push outside */
+    right: -15px;
   }
 
   .shelf-subtext {

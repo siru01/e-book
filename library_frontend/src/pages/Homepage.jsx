@@ -7,7 +7,7 @@ import bulbIcon from "../assets/bulb.png";
 import bookIcon from "../assets/books.png";
 
 /* ─── Main landing page ─── */
-/* ── Canvas Grid Trail Component ── */
+/* ── Canvas Grid Trail Component ── */ 
 export default function HomePage() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -74,9 +74,11 @@ export default function HomePage() {
           <div className="shelf-headline-wrap fade-2">
 
             {/* Bulb sticker — bottom-left */}
+            {/* 
             <div className="shelf-sticker shelf-sticker--bulb">
               <img src={bulbIcon} alt="Bulb" className="sticker-img" />
-            </div>
+            </div> 
+            */}
 
             {/* Line 1 — z-index below the image */}
             <span className="shelf-headline-line shelf-headline-line--top">
@@ -94,9 +96,11 @@ export default function HomePage() {
             </span>
 
             {/* Book sticker — right */}
+            {/* 
             <div className="shelf-sticker shelf-sticker--plane">
               <img src={bookIcon} alt="Book" className="sticker-img" />
-            </div>
+            </div> 
+            */}
 
           </div>
 
