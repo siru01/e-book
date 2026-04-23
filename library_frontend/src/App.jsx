@@ -10,6 +10,8 @@ import SignUp             from "./pages/SignUp";
 import BookOverviewPage   from "./pages/BookOverviewPage";
 import "./App.css";
 import ForgotPasswordPage from './pages/Forgotpasswordpage';
+import GlobalMouseEffect from "./components/GlobalMouseEffect";
+
 
 
 // ── React Query client ────────────────────────────────────────────
@@ -74,6 +76,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <GlobalMouseEffect />
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>

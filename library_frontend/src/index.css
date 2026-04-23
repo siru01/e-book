@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/*just warnings about unused imports*/
+/*just warnings about unused imports*/ 
 
 * { box-sizing: border-box; }
 
@@ -33,3 +33,33 @@ h1, h2, h3, h4, h5, h6 {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+/* ── Custom cursor ──────────────────────────────────────── */
+.shelf-cursor-hidden,
+.shelf-cursor-hidden * {
+  cursor: none !important;
+}
+
+.shelf-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+  /* offset so the tip of the arrow is at the hotspot */
+  margin-left: -2px;
+  margin-top: -2px;
+  transition: opacity 0.2s ease;
+}
+
+/* Hide custom cursor on mobile/touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .shelf-cursor {
+    display: none !important;
+  }
+  .shelf-cursor-hidden,
+  .shelf-cursor-hidden * {
+    cursor: auto !important;
+  }
+}

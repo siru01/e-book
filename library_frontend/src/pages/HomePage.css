@@ -46,68 +46,6 @@
   display: none;
 }
 
-/* ── Custom cursor ──────────────────────────────────────── */
-.shelf-cursor-hidden,
-.shelf-cursor-hidden * {
-  cursor: none !important;
-}
-
-.shelf-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 99999;
-  will-change: transform;
-  /* offset so the tip of the arrow is at the hotspot */
-  margin-left: -2px;
-  margin-top: -2px;
-  transition: opacity 0.2s ease;
-}
-
-/* Hide custom cursor on mobile/touch devices */
-@media (hover: none) and (pointer: coarse) {
-  .shelf-cursor {
-    display: none !important;
-  }
-  .shelf-cursor-hidden,
-  .shelf-cursor-hidden * {
-    cursor: auto !important;
-  }
-}
-
-/* ── Trail squares ─────────────────────────────────────── */
-/*.shelf-trail-sq {
-  position: fixed;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--text);
-  border-radius: 3px;
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.7;
-  animation: trail-fade 0.6s ease-out forwards;
-}*/
-
-/*@keyframes trail-fade {
-  0%   { opacity: 0.65; transform: scale(1) rotate(0deg); }
-  100% { opacity: 0;    transform: scale(0.3) rotate(15deg); }
-}*/
-
-/* ── Grid reveal effect ───────────────────────────────────── */
-.shelf-grid-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: 
-    linear-gradient(rgb(255, 0, 0) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255, 65, 65) 1px, transparent 1px);
-  background-size: 40px 40px;
-  will-change: mask-image;
-  transition: opacity 0.4s ease;
-}
-
 /* ── Nav: 3-column grid so brand is always perfectly centred ── */
 .shelf-nav {
   position: relative;
