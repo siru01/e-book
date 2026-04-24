@@ -98,18 +98,10 @@ export default function HomePage() {
           )}
         </nav>
 
-        {/* ── Hero ── */}
         <section className="shelf-hero">
 
           {/* Staggered headline with image sandwiched between line 1 & line 2 */}
           <div className="shelf-headline-wrap fade-2" ref={headlineRef}>
-
-            {/* Bulb sticker — bottom-left */}
-            {/* 
-            <div className="shelf-sticker shelf-sticker--bulb">
-              <img src={bulbIcon} alt="Bulb" className="sticker-img" />
-            </div> 
-            */}
 
             {/* Line 1 — z-index below the image */}
             <span className="shelf-headline-line shelf-headline-line--top">
@@ -131,13 +123,6 @@ export default function HomePage() {
               expand minds
             </span>
 
-            {/* Book sticker — right */}
-            {/* 
-            <div className="shelf-sticker shelf-sticker--plane">
-              <img src={bookIcon} alt="Book" className="sticker-img" />
-            </div> 
-            */}
-
             <p className="shelf-subtext fade-3" ref={subtextRef}>
               One digital library for every kind of reader.
             </p>
@@ -153,25 +138,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Scroll Section to enable scrolling ── */}
-        <section className="shelf-extra-content">
-          <div className="shelf-feature-grid">
-            <div className="shelf-feature-card">
-              <h3>Vast Collection</h3>
-              <p>Access thousands of titles across all genres, from classics to modern hits.</p>
-            </div>
-            <div className="shelf-feature-card">
-              <h3>Seamless Reading</h3>
-              <p>Pick up exactly where you left off on any device, anytime.</p>
-            </div>
-            <div className="shelf-feature-card">
-              <h3>Community First</h3>
-              <p>Share your thoughts and discover your next favorite book through fellow readers.</p>
-            </div>
-          </div>
-        </section>
-
       </div>
-    </div>
+    </div>        
   );
 }

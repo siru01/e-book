@@ -6,10 +6,10 @@
 .shelf-wrapper {
   --bg:                hsl(17, 64%, 60%);
   --bg-secondary:      #cbcbcb;
-  --text:              #ffffff;
+  --text:              #163024;
   --text-muted:        #eef1f3;
-  --nav-link:          #ffffff;
-  --nav-link-hover:    #666262;
+  --nav-link:          #163024;
+  --nav-link-hover:    #163024;
   --nav-border:        rgba(0,0,0,0);
   --btn-primary-bg:    #111;
   --btn-primary-text:  #f0f0f0;
@@ -62,8 +62,8 @@
 /* LEFT column */
 .shelf-nav-links {
   display: flex;
-  gap: 24px; /* Stretched links */
-  list-style: none;
+  gap: 10px; /* Stretched links */
+  list-style: none; 
   align-items: center;
   justify-content: flex-start;
 }
@@ -157,7 +157,6 @@
 
 /* Line 1 & Line 2 shared */
 .shelf-headline-line {
-  margin-top: 75px;
   display: block;
   font-family: "Anton", sans-serif;
   font-size: clamp(3.5rem, 12vw, 10rem);
@@ -298,16 +297,17 @@
 /* ── Subtext ── */
 .shelf-subtext {
   margin-top: 30px;
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   color: var(--text-muted);
   letter-spacing: 0.04em;
-  max-width: 420px;
+  max-width: 700px; 
   line-height: 1.6;
   will-change: transform;
 }
 
 /* ── Action Buttons ── */
 .shelf-actions {
+  margin-top: 30px;
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
@@ -315,7 +315,6 @@
 }
 
 .btn-primary {
-  margin-top: 40px;
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
   border: none;
@@ -341,7 +340,7 @@
   color: var(--btn-secondary-text);
   border: 1.5px solid rgba(128,128,128,0.25);
   padding: 15px 32px;
-  border-radius: 100px;
+  border-radius: 10px;
   font-size: 0.92rem;
   font-weight: 400;
   font-family: "Anton", sans-serif;
@@ -490,62 +489,5 @@
     width: 100%;
     padding: 16px;
     font-size: 0.85rem;
-  }
-}
-
-/* ── Extra Content Section ── */
-.shelf-extra-content {
-  padding: 120px 48px;
-  background: transparent; /* Remove background overlay */
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shelf-feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 40px;
-  max-width: 1200px;
-  width: 100%;
-}
-
-.shelf-feature-card {
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
-  /* Removed backdrop-blur for clarity */
-}
-
-.shelf-feature-card:hover {
-  transform: translateY(-10px);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.shelf-feature-card h3 {
-  font-family: "Anton", sans-serif;
-  font-size: 1.8rem;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.shelf-feature-card p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: var(--text-muted);
-  opacity: 0.8;
-}
-
-@media (max-width: 800px) {
-  .shelf-extra-content {
-    padding: 80px 24px;
-  }
-  
-  .shelf-feature-grid {
-    gap: 24px;
   }
 }

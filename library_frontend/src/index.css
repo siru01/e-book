@@ -13,14 +13,14 @@ html, body {
   font-family: "Inter", sans-serif;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  background: url("./assets/bg.jpg") no-repeat center center fixed;
+  background: url("./assets/bg1.png") no-repeat center center fixed;
   background-size: 100% 100%;
 }
 
 /* Correct background for mobile portrait */
 @media (max-width: 800px) {
   html, body {
-    background-image: url("./assets/mobile.png") !important;
+    background-image: url("./assets/mobile1.png") !important;
     background-attachment: fixed !important;
   }
 }
