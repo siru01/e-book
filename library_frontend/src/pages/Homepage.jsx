@@ -12,13 +12,47 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const scrollRef = useRef(null);
+  const heroImgRef = useRef(null);
+  const headlineRef = useRef(null);
+  const subtextRef = useRef(null);
+
   useEffect(() => {
-    // Component logic here if needed
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrolled = container.scrollTop;
+      // We want the effect to be most pronounced in the first 500px of scroll
+      const progress = Math.min(scrolled / 600, 1);
+      
+      if (heroImgRef.current) {
+        // Zoom in from scale 1 to 1.4 for more impact
+        heroImgRef.current.style.transform = `scale(${1 + progress * 0.45})`;
+        // Also fade out slightly as we scroll past
+        heroImgRef.current.style.opacity = `${1 - progress * 0.5}`;
+      }
+
+      if (headlineRef.current) {
+        // Move headlines up faster (parallax)
+        headlineRef.current.style.transform = `translateY(${-progress * 120}px)`;
+        headlineRef.current.style.opacity = `${1 - progress * 0.8}`;
+      }
+
+      if (subtextRef.current) {
+        // Subtext moves up even more subtly
+        subtextRef.current.style.transform = `translateY(${-progress * 60}px)`;
+        subtextRef.current.style.opacity = `${1 - progress * 0.9}`;
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <div className="shelf-wrapper" data-theme="light">
-      <div className="shelf-root">
+      <div className="shelf-root" ref={scrollRef}>
 
         {/* ── Nav: [links left] [brand center] [toggle right] ── */}
         <nav className="shelf-nav fade-1">
@@ -71,7 +105,7 @@ export default function HomePage() {
         <section className="shelf-hero">
 
           {/* Staggered headline with image sandwiched between line 1 & line 2 */}
-          <div className="shelf-headline-wrap fade-2">
+          <div className="shelf-headline-wrap fade-2" ref={headlineRef}>
 
             {/* Bulb sticker — bottom-left */}
             {/* 
@@ -85,9 +119,14 @@ export default function HomePage() {
               Unlock stories
             </span>
 
-            {/* ── Placeholder: replace with your own image later ── */}
-            <div className="shelf-hero-img-wrap">
-              <div className="shelf-hero-placeholder" />
+            {/* ── Glass Container: Standing alone with float effect ── */}
+            <div 
+              className="shelf-hero-img-wrap" 
+              ref={heroImgRef}
+            >
+              <div className="shelf-glass-inner">
+                {/* Frosted content area */}
+              </div>
             </div>
 
             {/* Line 2 — z-index above the image */}
@@ -104,7 +143,7 @@ export default function HomePage() {
 
           </div>
 
-          <p className="shelf-subtext fade-3">
+          <p className="shelf-subtext fade-3" ref={subtextRef}>
             One digital library for every kind of reader.
           </p>
 
@@ -115,6 +154,24 @@ export default function HomePage() {
             <button className="btn-secondary" onClick={() => navigate("/signup")}>
               First Time? Let's Get Started →
             </button>
+          </div>
+        </section>
+
+        {/* ── Scroll Section to enable scrolling ── */}
+        <section className="shelf-extra-content">
+          <div className="shelf-feature-grid">
+            <div className="shelf-feature-card">
+              <h3>Vast Collection</h3>
+              <p>Access thousands of titles across all genres, from classics to modern hits.</p>
+            </div>
+            <div className="shelf-feature-card">
+              <h3>Seamless Reading</h3>
+              <p>Pick up exactly where you left off on any device, anytime.</p>
+            </div>
+            <div className="shelf-feature-card">
+              <h3>Community First</h3>
+              <p>Share your thoughts and discover your next favorite book through fellow readers.</p>
+            </div>
           </div>
         </section>
 
