@@ -23,24 +23,21 @@ export default function HomePage() {
 
     const handleScroll = () => {
       const scrolled = container.scrollTop;
-      // We want the effect to be most pronounced in the first 500px of scroll
+      // Revert to simpler 600px progress for a more direct scroll feel
       const progress = Math.min(scrolled / 600, 1);
       
       if (heroImgRef.current) {
-        // Zoom in from scale 1 to 1.4 for more impact
+        // Zoom the glass container
         heroImgRef.current.style.transform = `scale(${1 + progress * 0.45})`;
-        // Also fade out slightly as we scroll past
         heroImgRef.current.style.opacity = `${1 - progress * 0.5}`;
       }
 
       if (headlineRef.current) {
-        // Move headlines up faster (parallax)
         headlineRef.current.style.transform = `translateY(${-progress * 120}px)`;
         headlineRef.current.style.opacity = `${1 - progress * 0.8}`;
       }
 
       if (subtextRef.current) {
-        // Subtext moves up even more subtly
         subtextRef.current.style.transform = `translateY(${-progress * 60}px)`;
         subtextRef.current.style.opacity = `${1 - progress * 0.9}`;
       }
@@ -119,13 +116,13 @@ export default function HomePage() {
               Unlock stories
             </span>
 
-            {/* ── Glass Container: Standing alone with float effect ── */}
+            {/* ── Glass Container: Tilted & Floating ── */}
             <div 
               className="shelf-hero-img-wrap" 
               ref={heroImgRef}
             >
               <div className="shelf-glass-inner">
-                {/* Frosted content area */}
+                {/* Content will be added later */}
               </div>
             </div>
 
@@ -141,19 +138,18 @@ export default function HomePage() {
             </div> 
             */}
 
-          </div>
+            <p className="shelf-subtext fade-3" ref={subtextRef}>
+              One digital library for every kind of reader.
+            </p>
 
-          <p className="shelf-subtext fade-3" ref={subtextRef}>
-            One digital library for every kind of reader.
-          </p>
-
-          <div className="shelf-actions fade-3">
-            <button className="btn-primary" onClick={() => navigate("/login")}>
-              Get Back To You
-            </button>
-            <button className="btn-secondary" onClick={() => navigate("/signup")}>
-              First Time? Let's Get Started →
-            </button>
+            <div className="shelf-actions fade-3">
+              <button className="btn-primary" onClick={() => navigate("/login")}>
+                Get Back To You
+              </button>
+              <button className="btn-secondary" onClick={() => navigate("/signup")}>
+                First Time? Let's Get Started →
+              </button>
+            </div>
           </div>
         </section>
 

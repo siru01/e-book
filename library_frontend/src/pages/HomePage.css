@@ -157,6 +157,7 @@
 
 /* Line 1 & Line 2 shared */
 .shelf-headline-line {
+  margin-top: 75px;
   display: block;
   font-family: "Anton", sans-serif;
   font-size: clamp(3.5rem, 12vw, 10rem);
@@ -296,7 +297,8 @@
 
 /* ── Subtext ── */
 .shelf-subtext {
-  font-size: 1rem;
+  margin-top: 30px;
+  font-size: 1.2rem;
   color: var(--text-muted);
   letter-spacing: 0.04em;
   max-width: 420px;
@@ -313,12 +315,13 @@
 }
 
 .btn-primary {
+  margin-top: 40px;
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
   border: none;
   padding: 15px 32px;
-  border-radius: 100px;
-  font-size: 0.92rem;
+  border-radius: 10px;
+  font-size: 0.92rem; 
   font-weight: 400;
   cursor: pointer;
   font-family: "Anton", sans-serif;
@@ -493,8 +496,7 @@
 /* ── Extra Content Section ── */
 .shelf-extra-content {
   padding: 120px 48px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
+  background: transparent; /* Remove background overlay */
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -514,7 +516,8 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
-  transition: transform 0.3s ease, background 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  /* Removed backdrop-blur for clarity */
 }
 
 .shelf-feature-card:hover {
