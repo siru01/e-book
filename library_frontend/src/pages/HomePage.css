@@ -48,8 +48,11 @@
 
 /* ── Nav: 3-column grid so brand is always perfectly centred ── */
 .shelf-nav {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
   display: grid;
   grid-template-columns: 1fr auto 1fr;   /* left | brand | right */
   align-items: center;
@@ -303,8 +306,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: rotate(12deg); /* Base tilt handled by wrapper */
   will-change: transform;
-  /* Outer container handles JS zoom */
 }
 
 .shelf-glass-inner {
@@ -320,21 +323,21 @@
     0 12px 40px rgba(0, 0, 0, 0.15),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   
-  /* Tilt & Animation */
-  transform: rotate(12deg);   /* Increased tilt to the right */
+  /* Animation handles floating only */
   animation: glass-float 6s ease-in-out infinite;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* When scrolling starts, smoothly untwist and stop floating */
+/* When scrolling starts, we stop floating and quickly snap translation to center */
 .is-scrolling .shelf-glass-inner {
   animation: none !important;
-  transform: rotate(0deg) !important;
+  transform: translateY(0) !important;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 @keyframes glass-float {
-  0%, 100% { transform: rotate(12deg) translateY(0); }
-  50%      { transform: rotate(13.5deg) translateY(-20px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-20px); }
 }
 
 .shelf-glass-inner:hover {
@@ -429,8 +432,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    width: 100%;
     background: transparent;
     /* backdrop-filter: blur(10px); */
   }
@@ -493,6 +498,10 @@
 
   .shelf-nav-links {
     display: none;
+  }
+
+  .shelf-headline-wrap {
+    margin-top: -80px; /* Push the whole content upwards a little */
   }
 
   .shelf-headline-line {

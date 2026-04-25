@@ -69,7 +69,13 @@ export default function HomePage() {
         // Zoom the glass container with an accelerating curve
         const cubicProgress = Math.pow(progress, 3);
         const scale = 1 + cubicProgress * 100; // Scale up massively
-        heroImgRef.current.style.transform = `scale(${scale})`;
+
+        // Smoothly rotate from 12deg to 0deg
+        // We want it to straighten out relatively early (by 30% progress)
+        const rotationProgress = Math.min(progress / 0.3, 1);
+        const currentRotation = 12 * (1 - rotationProgress);
+        
+        heroImgRef.current.style.transform = `scale(${scale}) rotate(${currentRotation}deg)`;
       }
 
       if (glassInnerRef.current) {

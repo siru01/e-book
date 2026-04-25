@@ -14,6 +14,7 @@ html, body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
   background: url("./assets/bg1.png") no-repeat center center fixed;
+  background-color: #8fcbb8; /* Match sky color to prevent white gap on overscroll */
   background-size: 100% 100%;
 }
 
@@ -22,6 +23,7 @@ html, body {
   html, body {
     background-image: url("./assets/mobile1.png") !important;
     background-attachment: fixed !important;
+    background-color: #92ceba !important; /* Mobile sky color match */
   }
 }
 
