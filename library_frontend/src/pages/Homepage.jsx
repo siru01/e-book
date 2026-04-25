@@ -65,11 +65,11 @@ export default function HomePage() {
          sticker.style.transform = `translateY(${textTranslate}px)`;
       });
 
-      if (heroImgRef.current) {
-        // Zoom the glass container with an accelerating curve
-        const cubicProgress = Math.pow(progress, 3);
-        const scale = 1 + cubicProgress * 100; // Scale up massively
+      // Calculate scale globally so we can use it to counteract blur magnification
+      const cubicProgress = Math.pow(progress, 3);
+      const scale = 1 + cubicProgress * 100; // Scale up massively
 
+      if (heroImgRef.current) {
         // Smoothly rotate from 12deg to 0deg
         // We want it to straighten out relatively early (by 30% progress)
         const rotationProgress = Math.min(progress / 0.3, 1);
@@ -88,8 +88,13 @@ export default function HomePage() {
          // Keep background exactly the same to match the initial glass blurriness
          glassInnerRef.current.style.background = `rgba(255, 255, 255, 0.08)`;
          
+         // **CRITICAL FIX**: Dynamically reduce the blur radius to counteract the scale magnification!
+         // Since the browser multiplies the blur by the scale, setting `12 / scale` 
+         // mathematically guarantees the blur on screen is ALWAYS exactly 12px!
+         glassInnerRef.current.style.backdropFilter = `blur(${12 / scale}px)`;
+         glassInnerRef.current.style.WebkitBackdropFilter = `blur(${12 / scale}px)`;
+         
          // Crossfade the scaled glass out while the second page fades in
-         // This replaces the artificially magnified blur with a true 12px blur
          const glassOpacity = Math.max(1 - (progress - 0.5) * 2, 0);
          glassInnerRef.current.style.opacity = glassOpacity;
       }
