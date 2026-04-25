@@ -131,18 +131,60 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Hero ─────────────────────────────────────────────────── */
-.shelf-hero {
+/* ── Hero & Scroll Container ────────────────────────────────── */
+.shelf-hero-scroll-container {
+  height: 250vh; /* Scrollable space for zoom transition */
   position: relative;
+  width: 100%;
+  flex-shrink: 0; /* Ensures the flex container respects the height */
+}
+
+.shelf-hero {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   z-index: 5;
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 24px 48px;  /* push headline block down */
+  padding: 40px 24px 48px;
   gap: 32px;
+  overflow: hidden; /* Prevent zoomed glass from causing scrollbars */
+}
+
+/* ── Second Page Content ── */
+.shelf-second-page {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  padding: 20px;
+}
+
+.second-page-title {
+  font-family: "Anton", sans-serif;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 20px;
+  text-shadow: 0 4px 12px rgba(255,255,255,0.4);
+}
+
+.second-page-text {
+  font-size: 1.4rem;
+  color: #222;
+  max-width: 600px;
+  margin-bottom: 40px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 /* ── Staggered headline wrapper ── */
@@ -281,7 +323,13 @@
   /* Tilt & Animation */
   transform: rotate(12deg);   /* Increased tilt to the right */
   animation: glass-float 6s ease-in-out infinite;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* When scrolling starts, smoothly untwist and stop floating */
+.is-scrolling .shelf-glass-inner {
+  animation: none !important;
+  transform: rotate(0deg) !important;
 }
 
 @keyframes glass-float {
@@ -366,6 +414,13 @@
 .fade-1 { animation: fadeUp 0.7s ease both 0.1s; }
 .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
 .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
+
+/* Cancel intro animations permanently after first scroll so JS inline styles work smoothly */
+.has-scrolled-once .fade-1,
+.has-scrolled-once .fade-2,
+.has-scrolled-once .fade-3 {
+  animation: none !important;
+}
 
 /* ── Mobile ── */
 @media (max-width: 800px) {
@@ -491,3 +546,17 @@
     font-size: 0.85rem;
   }
 }
+
+.glass-content{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: 700;
+  color: rgb(7, 6, 6);
+  letter-spacing: 0.05em;
+}
+

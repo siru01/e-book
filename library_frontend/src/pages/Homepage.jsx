@@ -14,8 +14,13 @@ export default function HomePage() {
 
   const scrollRef = useRef(null);
   const heroImgRef = useRef(null);
-  const headlineRef = useRef(null);
+  const glassInnerRef = useRef(null);
+  const line1Ref = useRef(null);
+  const line2Ref = useRef(null);
   const subtextRef = useRef(null);
+  const actionsRef = useRef(null);
+  const fictionTextRef = useRef(null);
+  const secondPageRef = useRef(null);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -23,23 +28,72 @@ export default function HomePage() {
 
     const handleScroll = () => {
       const scrolled = container.scrollTop;
-      // Revert to simpler 600px progress for a more direct scroll feel
-      const progress = Math.min(scrolled / 600, 1);
+      // Total scroll distance for the transition is 1000px
+      const progress = Math.min(scrolled / 1000, 1);
       
-      if (heroImgRef.current) {
-        // Zoom the glass container
-        heroImgRef.current.style.transform = `scale(${1 + progress * 0.45})`;
-        heroImgRef.current.style.opacity = `${1 - progress * 0.5}`;
+      if (scrolled > 10) {
+        container.classList.add('is-scrolling');
+        container.classList.add('has-scrolled-once');
+      } else {
+        container.classList.remove('is-scrolling');
       }
 
-      if (headlineRef.current) {
-        headlineRef.current.style.transform = `translateY(${-progress * 120}px)`;
-        headlineRef.current.style.opacity = `${1 - progress * 0.8}`;
-      }
+      // Fades out texts early on in the scroll
+      const textOpacity = Math.max(1 - progress * 3, 0); 
+      const textTranslate = -progress * 300;
 
+      if (line1Ref.current) {
+        line1Ref.current.style.transform = `translateY(${textTranslate}px)`;
+        line1Ref.current.style.opacity = textOpacity;
+      }
+      if (line2Ref.current) {
+        line2Ref.current.style.transform = `translateY(${textTranslate}px)`;
+        line2Ref.current.style.opacity = textOpacity;
+      }
       if (subtextRef.current) {
-        subtextRef.current.style.transform = `translateY(${-progress * 60}px)`;
-        subtextRef.current.style.opacity = `${1 - progress * 0.9}`;
+        subtextRef.current.style.transform = `translateY(${textTranslate}px)`;
+        subtextRef.current.style.opacity = textOpacity;
+      }
+      if (actionsRef.current) {
+        actionsRef.current.style.transform = `translateY(${textTranslate}px)`;
+        actionsRef.current.style.opacity = textOpacity;
+      }
+
+      // Fade stickers
+      document.querySelectorAll('.shelf-sticker').forEach(sticker => {
+         sticker.style.opacity = textOpacity;
+         sticker.style.transform = `translateY(${textTranslate}px)`;
+      });
+
+      if (heroImgRef.current) {
+        // Zoom the glass container with an accelerating curve
+        const cubicProgress = Math.pow(progress, 3);
+        const scale = 1 + cubicProgress * 100; // Scale up massively
+        heroImgRef.current.style.transform = `scale(${scale})`;
+      }
+
+      if (glassInnerRef.current) {
+         // Fade out border and shadow so they don't look thick when scaled
+         const borderOpacity = Math.max(0.25 - progress * 4, 0);
+         const shadowOpacity = Math.max(0.15 - progress * 2, 0);
+         glassInnerRef.current.style.borderColor = `rgba(255, 255, 255, ${borderOpacity})`;
+         glassInnerRef.current.style.boxShadow = `0 12px 40px rgba(0, 0, 0, ${shadowOpacity}), inset 0 0 0 1px rgba(255, 255, 255, ${borderOpacity})`;
+         
+         const bgOpacity = Math.min(0.08 + progress * 0.1, 0.2); 
+         glassInnerRef.current.style.background = `rgba(255, 255, 255, ${bgOpacity})`;
+      }
+
+      if (fictionTextRef.current) {
+         // Fade out the 'FICTION' text
+         fictionTextRef.current.style.opacity = Math.max(1 - progress * 2.5, 0);
+      }
+
+      if (secondPageRef.current) {
+        // Fade in the second page content once zoom is mostly done
+        const secondPageProgress = Math.max(0, (progress - 0.7) * 3.33); 
+        secondPageRef.current.style.opacity = Math.min(secondPageProgress, 1);
+        secondPageRef.current.style.transform = `translateY(${40 - Math.min(secondPageProgress, 1) * 40}px)`;
+        secondPageRef.current.style.pointerEvents = secondPageProgress > 0.5 ? 'auto' : 'none';
       }
     };
 
@@ -98,45 +152,61 @@ export default function HomePage() {
           )}
         </nav>
 
-        <section className="shelf-hero">
+        <div className="shelf-hero-scroll-container">
+          <section className="shelf-hero">
 
-          {/* Staggered headline with image sandwiched between line 1 & line 2 */}
-          <div className="shelf-headline-wrap fade-2" ref={headlineRef}>
+            {/* Staggered headline with image sandwiched between line 1 & line 2 */}
+            <div className="shelf-headline-wrap fade-2">
 
-            {/* Line 1 — z-index below the image */}
-            <span className="shelf-headline-line shelf-headline-line--top">
-              Unlock stories
-            </span>
+              {/* Line 1 — z-index below the image */}
+              <span className="shelf-headline-line shelf-headline-line--top" ref={line1Ref}>
+                Unlock stories
+              </span>
 
-            {/* ── Glass Container: Tilted & Floating ── */}
-            <div 
-              className="shelf-hero-img-wrap" 
-              ref={heroImgRef}
-            >
-              <div className="shelf-glass-inner">
-                {/* Content will be added later */}
+              {/* ── Glass Container: Tilted & Floating ── */}
+              <div 
+                className="shelf-hero-img-wrap" 
+                ref={heroImgRef}
+              >
+                <div className="shelf-glass-inner" ref={glassInnerRef}>
+                  <span className="glass-content" ref={fictionTextRef}>
+                    FICTION
+                  </span>
+                </div>
+              </div>
+
+              {/* Line 2 — z-index above the image */}
+              <span className="shelf-headline-line shelf-headline-line--bottom" ref={line2Ref}>
+                expand minds
+              </span>
+
+              <p className="shelf-subtext fade-3" ref={subtextRef}>
+                One digital library for every kind of reader.
+              </p>
+
+              <div className="shelf-actions fade-3" ref={actionsRef}>
+                <button className="btn-primary" onClick={() => navigate("/login")}>
+                  Get Back To You
+                </button>
+                <button className="btn-secondary" onClick={() => navigate("/signup")}>
+                  First Time? Let's Get Started →
+                </button>
               </div>
             </div>
 
-            {/* Line 2 — z-index above the image */}
-            <span className="shelf-headline-line shelf-headline-line--bottom">
-              expand minds
-            </span>
-
-            <p className="shelf-subtext fade-3" ref={subtextRef}>
-              One digital library for every kind of reader.
-            </p>
-
-            <div className="shelf-actions fade-3">
-              <button className="btn-primary" onClick={() => navigate("/login")}>
-                Get Back To You
-              </button>
-              <button className="btn-secondary" onClick={() => navigate("/signup")}>
-                First Time? Let's Get Started →
-              </button>
+            {/* ── Second Page Content (Fades in over the zoomed glass) ── */}
+            <div className="shelf-second-page" ref={secondPageRef}>
+              <h2 className="second-page-title">Welcome to the Collection</h2>
+              <p className="second-page-text">Explore an endless universe of stories curated just for you.</p>
+              <div className="shelf-actions">
+                <button className="btn-primary" onClick={() => navigate("/dashboard")}>
+                  Browse Library
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
+
+          </section>
+        </div>
 
       </div>
     </div>        
