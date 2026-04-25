@@ -85,18 +85,23 @@ export default function HomePage() {
          glassInnerRef.current.style.borderColor = `rgba(255, 255, 255, ${borderOpacity})`;
          glassInnerRef.current.style.boxShadow = `0 12px 40px rgba(0, 0, 0, ${shadowOpacity}), inset 0 0 0 1px rgba(255, 255, 255, ${borderOpacity})`;
          
-         const bgOpacity = Math.min(0.08 + progress * 0.1, 0.2); 
-         glassInnerRef.current.style.background = `rgba(255, 255, 255, ${bgOpacity})`;
+         // Keep background exactly the same to match the initial glass blurriness
+         glassInnerRef.current.style.background = `rgba(255, 255, 255, 0.08)`;
+         
+         // Crossfade the scaled glass out while the second page fades in
+         // This replaces the artificially magnified blur with a true 12px blur
+         const glassOpacity = Math.max(1 - (progress - 0.5) * 2, 0);
+         glassInnerRef.current.style.opacity = glassOpacity;
       }
 
       if (fictionTextRef.current) {
-         // Fade out the 'FICTION' text
-         fictionTextRef.current.style.opacity = Math.max(1 - progress * 2.5, 0);
+         // Fade out the 'FICTION' text fast but smoothly
+         fictionTextRef.current.style.opacity = Math.max(1 - progress * 8, 0);
       }
 
       if (secondPageRef.current) {
         // Fade in the second page content once zoom is mostly done
-        const secondPageProgress = Math.max(0, (progress - 0.7) * 3.33); 
+        const secondPageProgress = Math.max(0, (progress - 0.5) * 2); 
         secondPageRef.current.style.opacity = Math.min(secondPageProgress, 1);
         secondPageRef.current.style.transform = `translateY(${40 - Math.min(secondPageProgress, 1) * 40}px)`;
         secondPageRef.current.style.pointerEvents = secondPageProgress > 0.5 ? 'auto' : 'none';
