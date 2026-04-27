@@ -145,7 +145,8 @@
 .shelf-hero {
   position: sticky;
   top: 0;
-  height: 110vh;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -155,6 +156,8 @@
   padding: 40px 24px 48px;
   gap: 32px;
   overflow: hidden; /* Prevent zoomed glass from causing scrollbars */
+  transform: translateZ(0); /* Force GPU acceleration to prevent sticky jitter */
+  will-change: transform;
 }
 
 /* ── Second Page Content ── */

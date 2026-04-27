@@ -30,8 +30,9 @@ export default function HomePage() {
 
     const updateScroll = () => {
       const scrolled = container.scrollTop;
-      // Total scroll distance for the transition is 1000px
-      const progress = Math.min(scrolled / 1000, 1);
+      // Total scroll distance for the transition is dynamically calculated
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      const progress = maxScroll > 0 ? Math.min(scrolled / maxScroll, 1) : 0;
       
       if (scrolled > 10) {
         container.classList.add('is-scrolling');
