@@ -169,8 +169,6 @@
   pointer-events: none;
   opacity: 0;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.08); /* Matches the glass box exactly */
-  backdrop-filter: blur(12px); /* True, unscaled 12px blur */
 }
 
 .second-page-title {

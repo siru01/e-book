@@ -42,21 +42,22 @@ export default function HomePage() {
 
       // Move texts and stickers upwards faster, without fading
       const textTranslate = -progress * 800;
+      const headlineTranslate = -progress * 1500; // Even faster for headlines
 
       if (line1Ref.current) {
-        line1Ref.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        line1Ref.current.style.transform = `translate3d(0, ${headlineTranslate}px, 0)`;
         line1Ref.current.style.opacity = 1;
       }
       if (line2Ref.current) {
-        line2Ref.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        line2Ref.current.style.transform = `translate3d(0, ${headlineTranslate}px, 0)`;
         line2Ref.current.style.opacity = 1;
       }
       if (subtextRef.current) {
-        subtextRef.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        subtextRef.current.style.transform = `translate3d(0, ${-textTranslate}px, 0)`;
         subtextRef.current.style.opacity = 1;
       }
       if (actionsRef.current) {
-        actionsRef.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        actionsRef.current.style.transform = `translate3d(0, ${-textTranslate}px, 0)`;
         actionsRef.current.style.opacity = 1;
       }
 
@@ -97,9 +98,8 @@ export default function HomePage() {
          glassInnerRef.current.style.backdropFilter = `blur(${12 / scale}px)`;
          glassInnerRef.current.style.WebkitBackdropFilter = `blur(${12 / scale}px)`;
          
-         // Crossfade the scaled glass out while the second page fades in
-         const glassOpacity = Math.max(1 - (progress - 0.5) * 2, 0);
-         glassInnerRef.current.style.opacity = glassOpacity;
+         // Keep the glass fully opaque so the blur is maintained continuously
+         glassInnerRef.current.style.opacity = 1;
       }
 
       if (fictionTextRef.current) {
