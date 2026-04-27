@@ -26,7 +26,9 @@ export default function HomePage() {
     const container = scrollRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
+    let ticking = false;
+
+    const updateScroll = () => {
       const scrolled = container.scrollTop;
       // Total scroll distance for the transition is 1000px
       const progress = Math.min(scrolled / 1000, 1);
@@ -38,31 +40,32 @@ export default function HomePage() {
         container.classList.remove('is-scrolling');
       }
 
-      // Fades out texts early on in the scroll
-      const textOpacity = Math.max(1 - progress * 3, 0); 
-      const textTranslate = -progress * 300;
+      // Move texts and stickers upwards faster, without fading
+      const textTranslate = -progress * 800;
 
       if (line1Ref.current) {
-        line1Ref.current.style.transform = `translateY(${textTranslate}px)`;
-        line1Ref.current.style.opacity = textOpacity;
+        line1Ref.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        line1Ref.current.style.opacity = 1;
       }
       if (line2Ref.current) {
-        line2Ref.current.style.transform = `translateY(${textTranslate}px)`;
-        line2Ref.current.style.opacity = textOpacity;
+        line2Ref.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        line2Ref.current.style.opacity = 1;
       }
       if (subtextRef.current) {
-        subtextRef.current.style.transform = `translateY(${textTranslate}px)`;
-        subtextRef.current.style.opacity = textOpacity;
+        subtextRef.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        subtextRef.current.style.opacity = 1;
       }
       if (actionsRef.current) {
-        actionsRef.current.style.transform = `translateY(${textTranslate}px)`;
-        actionsRef.current.style.opacity = textOpacity;
+        actionsRef.current.style.transform = `translate3d(0, ${textTranslate}px, 0)`;
+        actionsRef.current.style.opacity = 1;
       }
 
-      // Fade stickers
+      // Move stickers without fading
       document.querySelectorAll('.shelf-sticker').forEach(sticker => {
-         sticker.style.opacity = textOpacity;
-         sticker.style.transform = `translateY(${textTranslate}px)`;
+         sticker.style.opacity = 1;
+         const isBulb = sticker.classList.contains('shelf-sticker--bulb');
+         const rot = isBulb ? -12 : 18;
+         sticker.style.transform = `translate3d(0, ${textTranslate}px, 0) rotate(${rot}deg)`;
       });
 
       // Calculate scale globally so we can use it to counteract blur magnification
@@ -75,7 +78,7 @@ export default function HomePage() {
         const rotationProgress = Math.min(progress / 0.3, 1);
         const currentRotation = 12 * (1 - rotationProgress);
         
-        heroImgRef.current.style.transform = `scale(${scale}) rotate(${currentRotation}deg)`;
+        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) rotate(${currentRotation}deg)`;
       }
 
       if (glassInnerRef.current) {
@@ -108,12 +111,21 @@ export default function HomePage() {
         // Fade in the second page content once zoom is mostly done
         const secondPageProgress = Math.max(0, (progress - 0.5) * 2); 
         secondPageRef.current.style.opacity = Math.min(secondPageProgress, 1);
-        secondPageRef.current.style.transform = `translateY(${40 - Math.min(secondPageProgress, 1) * 40}px)`;
+        secondPageRef.current.style.transform = `translate3d(0, ${40 - Math.min(secondPageProgress, 1) * 40}px, 0)`;
         secondPageRef.current.style.pointerEvents = secondPageProgress > 0.5 ? 'auto' : 'none';
+      }
+
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateScroll);
+        ticking = true;
       }
     };
 
-    container.addEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
