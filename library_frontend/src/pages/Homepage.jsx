@@ -108,10 +108,10 @@ export default function HomePage() {
       }
 
       if (secondPageRef.current) {
-        // Fade in the second page content once zoom is mostly done
-        const secondPageProgress = Math.max(0, (progress - 0.5) * 2); 
+        // Fade in the second page content at the very end of the transition
+        const secondPageProgress = Math.max(0, (progress - 0.8) * 5); 
         secondPageRef.current.style.opacity = Math.min(secondPageProgress, 1);
-        secondPageRef.current.style.transform = `translate3d(0, ${40 - Math.min(secondPageProgress, 1) * 40}px, 0)`;
+        secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
         secondPageRef.current.style.pointerEvents = secondPageProgress > 0.5 ? 'auto' : 'none';
       }
 
