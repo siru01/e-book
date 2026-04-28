@@ -571,4 +571,106 @@
   color: rgb(7, 6, 6);
   letter-spacing: 0.05em;
 }
+/* ── Serene Scene Background ── */
+.shelf-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, #6fa393 0%, #a8ccbf 60%, #d1dce0 100%);
+  overflow: hidden;
+  pointer-events: none;
+}
 
+.scene-ambient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
+  animation: ambient-glow 8s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-glow {
+  from { opacity: 0.3; transform: scale(1); }
+  to   { opacity: 0.5; transform: scale(1.1); }
+}
+
+.scene-sun {
+  position: absolute;
+  top: 15%;
+  right: 15%;
+  width: clamp(80px, 15vw, 150px);
+  height: clamp(80px, 15vw, 150px);
+  background: #fff;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.4;
+  animation: sun-pulse 10s ease-in-out infinite alternate;
+}
+
+@keyframes sun-pulse {
+  from { transform: scale(1); opacity: 0.3; }
+  to   { transform: scale(1.2); opacity: 0.5; }
+}
+
+.scene-layer {
+  position: absolute;
+  bottom: -10vh;
+  left: -25%;
+  width: 150%;
+  border-radius: 100% 100% 0 0;
+  filter: blur(1px);
+}
+
+.scene-layer--back {
+  height: 45vh;
+  background: #77b5a1;
+  opacity: 0.5;
+  transform: translateX(-5%) translateY(5vh);
+  animation: drift-back 20s linear infinite alternate;
+}
+
+.scene-layer--mid {
+  height: 35vh;
+  background: #86c4b2;
+  opacity: 0.7;
+  transform: translateX(5%) translateY(8vh);
+  animation: drift-mid 15s linear infinite alternate;
+}
+
+.scene-layer--front {
+  height: 25vh;
+  background: #9fd1c0;
+  opacity: 0.8;
+  transform: translateY(12vh);
+}
+
+@keyframes drift-back {
+  from { transform: translateX(-5%) translateY(5vh); }
+  to   { transform: translateX(5%) translateY(5vh); }
+}
+
+@keyframes drift-mid {
+  from { transform: translateX(5%) translateY(8vh); }
+  to   { transform: translateX(-5%) translateY(8vh); }
+}
+
+.scene-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Responsiveness for Scene */
+@media (max-width: 800px) {
+  .scene-sun {
+    top: 10%;
+    right: 10%;
+    width: 60px;
+    height: 60px;
+  }
+  .scene-layer {
+    height: 30vh;
+    bottom: -5vh;
+  }
+}

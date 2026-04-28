@@ -6,6 +6,20 @@ import "./HomePage.css";
 import bulbIcon from "../assets/bulb.png";
 import bookIcon from "../assets/books.png";
 
+/* ── Serene Scene Background (Pure JSX/CSS) ── */
+function SceneBackground() {
+  return (
+    <div className="shelf-scene">
+      <div className="scene-ambient" />
+      <div className="scene-sun" />
+      <div className="scene-layer scene-layer--back" />
+      <div className="scene-layer scene-layer--mid" />
+      <div className="scene-layer scene-layer--front" />
+      <div className="scene-grain" />
+    </div>
+  );
+}
+
 /* ─── Main landing page ─── */
 /* ── Canvas Grid Trail Component ── */ 
 export default function HomePage() {
@@ -70,50 +84,43 @@ export default function HomePage() {
          sticker.style.transform = `translate3d(0, ${textTranslate}px, 0) rotate(${rot}deg)`;
       });
 
-      // Calculate scale globally so we can use it to counteract blur magnification
-      const cubicProgress = Math.pow(progress, 3);
-      const scale = 1 + cubicProgress * 100; // Scale up massively
+      // Calculate scale globally with a smoother Quintic curve for that 'infinite' zoom feel
+      const quinticProgress = Math.pow(progress, 5);
+      const scale = 1 + quinticProgress * 120; // Slightly more zoom, much smoother end
 
       if (heroImgRef.current) {
-        // Smoothly rotate from 12deg to 0deg
-        // We want it to straighten out relatively early (by 30% progress)
-        const rotationProgress = Math.min(progress / 0.3, 1);
+        const rotationProgress = Math.min(progress / 0.35, 1);
         const currentRotation = 12 * (1 - rotationProgress);
         
-        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) rotate(${currentRotation}deg)`;
+        // Use translateZ(0) to force GPU layer for extra smoothness
+        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) rotate(${currentRotation}deg) translateZ(0)`;
       }
 
       if (glassInnerRef.current) {
-         // Fade out border and shadow so they don't look thick when scaled
          const borderOpacity = Math.max(0.25 - progress * 4, 0);
          const shadowOpacity = Math.max(0.15 - progress * 2, 0);
          glassInnerRef.current.style.borderColor = `rgba(255, 255, 255, ${borderOpacity})`;
          glassInnerRef.current.style.boxShadow = `0 12px 40px rgba(0, 0, 0, ${shadowOpacity}), inset 0 0 0 1px rgba(255, 255, 255, ${borderOpacity})`;
-         
-         // Keep background exactly the same to match the initial glass blurriness
          glassInnerRef.current.style.background = `rgba(255, 255, 255, 0.08)`;
          
-         // **CRITICAL FIX**: Dynamically reduce the blur radius to counteract the scale magnification!
-         // Since the browser multiplies the blur by the scale, setting `12 / scale` 
-         // mathematically guarantees the blur on screen is ALWAYS exactly 12px!
-         glassInnerRef.current.style.backdropFilter = `blur(${12 / scale}px)`;
-         glassInnerRef.current.style.WebkitBackdropFilter = `blur(${12 / scale}px)`;
-         
-         // Keep the glass fully opaque so the blur is maintained continuously
+         // Counteract blur magnification, but cap at 0.5px to avoid sub-pixel jitter in some browsers
+         const blurRadius = Math.max(12 / scale, 0.5);
+         glassInnerRef.current.style.backdropFilter = `blur(${blurRadius}px)`;
+         glassInnerRef.current.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
          glassInnerRef.current.style.opacity = 1;
       }
 
       if (fictionTextRef.current) {
-         // Fade out the 'FICTION' text fast but smoothly
-         fictionTextRef.current.style.opacity = Math.max(1 - progress * 8, 0);
+         fictionTextRef.current.style.opacity = Math.max(1 - progress * 6, 0);
       }
 
       if (secondPageRef.current) {
-        // Fade in the second page content at the very end of the transition
-        const secondPageProgress = Math.max(0, (progress - 0.8) * 5); 
-        secondPageRef.current.style.opacity = Math.min(secondPageProgress, 1);
+        // More gradual fade-in starting from 75% scroll
+        const secondPageProgress = Math.max(0, (progress - 0.75) * 4); 
+        const opacity = Math.min(Math.pow(secondPageProgress, 2), 1); // Quadratic fade for smoothness
+        secondPageRef.current.style.opacity = opacity;
         secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
-        secondPageRef.current.style.pointerEvents = secondPageProgress > 0.5 ? 'auto' : 'none';
+        secondPageRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
       }
 
       ticking = false;
@@ -132,6 +139,7 @@ export default function HomePage() {
 
   return (
     <div className="shelf-wrapper" data-theme="light">
+      <SceneBackground />
       <div className="shelf-root" ref={scrollRef}>
 
         {/* ── Nav: [links left] [brand center] [toggle right] ── */}

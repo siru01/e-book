@@ -15,9 +15,8 @@ html, body {
   font-family: "Inter", sans-serif;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  background: url("./assets/bg1.png") no-repeat center center;
-  background-color: #8fcbb8; /* Match sky color to prevent white gap on overscroll */
-  background-size: 100% 100%;
+  background: linear-gradient(to bottom, #6fa393 0%, #d1dce0 100%);
+  background-attachment: fixed;
 }
 
 /* Helper to unlock scroll for Dashboard/Reader pages */
@@ -58,7 +57,6 @@ html.allow-scroll::-webkit-scrollbar-thumb:hover {
 /* Correct background for mobile portrait */
 @media (max-width: 800px) {
   html, body {
-    background-image: url("./assets/mobile1.png") !important;
     background-color: #92ceba !important; /* Mobile sky color match */
   }
 }
