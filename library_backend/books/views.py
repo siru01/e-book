@@ -572,7 +572,7 @@ class BookReadView(APIView):
         try:
             meta_r = httpx.get(
                 f"https://gutendex.com/books/{gutenberg_id}",
-                timeout=10,
+                timeout=30,
                 follow_redirects=True
             )
             meta_r.raise_for_status()

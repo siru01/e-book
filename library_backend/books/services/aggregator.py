@@ -21,7 +21,7 @@ def search_all_stream(query: str, page: int = 1):
         guten_future = next((f for f, name in future_to_source.items() if name == "Gutenberg"), None)
         if guten_future:
             try:
-                results = guten_future.result(timeout=10) # Wait for it specifically
+                results = guten_future.result(timeout=30) # Wait for it specifically
                 if results:
                     unique_batch = []
                     for b in results:
@@ -106,7 +106,8 @@ def fetch_all_shelves(genres_map: list) -> list:
         except Exception:
             return {"label": label, "books": []}
 
-    with ThreadPoolExecutor(max_workers=len(genres_map)) as executor:
+    # Use a small number of workers to avoid 429 Too Many Requests on external APIs
+    with ThreadPoolExecutor(max_workers=2) as executor:
         # executor.map preserves the order of the genres_map
         results = list(executor.map(_fetch_one, genres_map))
         

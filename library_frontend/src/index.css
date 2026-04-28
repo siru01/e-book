@@ -20,6 +20,41 @@ html, body {
   background-size: 100% 100%;
 }
 
+/* Helper to unlock scroll for Dashboard/Reader pages */
+body.allow-scroll {
+  overflow: auto !important;
+  height: auto !important;
+  scrollbar-width: auto !important; /* Firefox */
+  -ms-overflow-style: auto !important; /* IE/Edge */
+}
+
+html.allow-scroll {
+  overflow: auto !important;
+  height: auto !important;
+}
+
+body.allow-scroll::-webkit-scrollbar,
+html.allow-scroll::-webkit-scrollbar {
+  display: block !important;
+  width: 8px;
+}
+
+body.allow-scroll::-webkit-scrollbar-track,
+html.allow-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+body.allow-scroll::-webkit-scrollbar-thumb,
+html.allow-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+body.allow-scroll::-webkit-scrollbar-thumb:hover,
+html.allow-scroll::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
 /* Correct background for mobile portrait */
 @media (max-width: 800px) {
   html, body {

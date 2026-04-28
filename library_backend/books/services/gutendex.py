@@ -41,52 +41,74 @@ def search(query: str, page: int = 1):
     if cached:
         return cached
 
-    try:
-        # Optimized API hit with direct filtering
-        # mime_type=text/plain asks Gutendex for Full Text only
-        with httpx.Client(timeout=10, follow_redirects=True) as client:
-            resp = client.get(
-                f"{BASE_URL}/books", 
-                params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}
-            )
-        resp.raise_for_status()
-        data = resp.json()
-        raw_results = data.get("results", [])
-        
-        # Normalize and filter for Full Text ONLY
-        results = []
-        for b in raw_results:
-            n = _normalize(b)
-            if n: results.append(n)
+    for attempt in range(2):
+        try:
+            # Optimized API hit with direct filtering
+            # mime_type=text/plain asks Gutendex for Full Text only
+            with httpx.Client(timeout=30, follow_redirects=True) as client:
+                resp = client.get(
+                    f"{BASE_URL}/books", 
+                    params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}
+                )
             
-        set_cached("search", results, source="gutenberg", q=query, page=page)
-        return results
-    except Exception as e:
-        print(f"[gutendex] search failed for query '{query}': {e}")
-        return []
+            if resp.status_code == 429 and attempt == 0:
+                import time
+                time.sleep(1)
+                continue
+
+            resp.raise_for_status()
+            data = resp.json()
+            raw_results = data.get("results", [])
+            
+            # Normalize and filter for Full Text ONLY
+            results = []
+            for b in raw_results:
+                n = _normalize(b)
+                if n: results.append(n)
+                
+            set_cached("search", results, source="gutenberg", q=query, page=page)
+            return results
+        except Exception as e:
+            if attempt == 1:
+                print(f"[gutendex] search failed for query '{query}' after retry: {e}")
+                return []
+            import time
+            time.sleep(0.5)
+    return []
 
 
 def trending():
     cached = get_cached("trending", source="gutenberg")
     if cached:
         return cached
-    try:
-        with httpx.Client(timeout=10, follow_redirects=True) as client:
-            resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
-        resp.raise_for_status()
-        raw_books = resp.json().get("results", [])
-        
-        # Use simple normalize, no DB
-        results = []
-        for b in raw_books:
-            n = _normalize(b)
-            if n: results.append(n)
+    for attempt in range(2):
+        try:
+            with httpx.Client(timeout=30, follow_redirects=True) as client:
+                resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
             
-        set_cached("trending", results, source="gutenberg")
-        return results
-    except Exception as e:
-        print(f"[gutendex] trending failed: {e}")
-        return []
+            if resp.status_code == 429 and attempt == 0:
+                import time
+                time.sleep(1)
+                continue
+
+            resp.raise_for_status()
+            raw_books = resp.json().get("results", [])
+            
+            # Use simple normalize, no DB
+            results = []
+            for b in raw_books:
+                n = _normalize(b)
+                if n: results.append(n)
+                
+            set_cached("trending", results, source="gutenberg")
+            return results
+        except Exception as e:
+            if attempt == 1:
+                print(f"[gutendex] trending failed after retry: {e}")
+                return []
+            import time
+            time.sleep(0.5)
+    return []
 
 
 def by_category(genre: str, page: int = 1):
@@ -94,23 +116,34 @@ def by_category(genre: str, page: int = 1):
     if cached:
         return cached
 
-    try:
-        with httpx.Client(timeout=10, follow_redirects=True) as client:
-            resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
-        resp.raise_for_status()
-        raw_books = resp.json().get("results", [])
-        
-        # Use simple normalize, no DB
-        results = []
-        for b in raw_books:
-            n = _normalize(b)
-            if n: results.append(n)
+    for attempt in range(2):
+        try:
+            with httpx.Client(timeout=30, follow_redirects=True) as client:
+                resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
             
-        set_cached("category", results, source="gutenberg", genre=genre, page=page)
-        return results
-    except Exception as e:
-        print(f"[gutendex] by_category failed for genre '{genre}': {e}")
-        return []
+            if resp.status_code == 429 and attempt == 0:
+                import time
+                time.sleep(1) # Back off for 1s
+                continue
+
+            resp.raise_for_status()
+            raw_books = resp.json().get("results", [])
+            
+            # Use simple normalize, no DB
+            results = []
+            for b in raw_books:
+                n = _normalize(b)
+                if n: results.append(n)
+                
+            set_cached("category", results, source="gutenberg", genre=genre, page=page)
+            return results
+        except Exception as e:
+            if attempt == 1:
+                print(f"[gutendex] by_category failed for genre '{genre}' after retry: {e}")
+                return []
+            import time
+            time.sleep(0.5)
+    return []
 
 
 def new_arrivals():

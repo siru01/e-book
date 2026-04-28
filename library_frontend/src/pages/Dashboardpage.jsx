@@ -10,6 +10,76 @@ import {
   useShelfRows,
 } from "../hooks/useDashboardData";
 
+/* ══════════════════════════════════════════════════════════════════
+   Dashboard Loader — counts 1 → 100 % then fades out
+ ══════════════════════════════════════════════════════════════════ */
+function DashboardLoader({ dataReady, onComplete }) {
+  const [count, setCount] = useState(1);
+  const [exiting, setExiting] = useState(false);
+  const dataReadyRef = useRef(false);
+  const countDoneRef = useRef(false);
+  const exitFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (dataReady) dataReadyRef.current = true;
+  }, [dataReady]);
+
+  const triggerExit = useCallback(() => {
+    if (exitFiredRef.current) return;
+    exitFiredRef.current = true;
+    setExiting(true);
+    setTimeout(() => onComplete(), 700);
+  }, [onComplete]);
+
+  useEffect(() => {
+    let frame;
+    let current = 1;
+
+    const tick = () => {
+      current += current < 80 ? 0.55 : current < 95 ? 1.1 : 1.9;
+      const clamped = Math.min(Math.floor(current), 100);
+      setCount(clamped);
+
+      if (clamped < 100) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        countDoneRef.current = true;
+        if (dataReadyRef.current) {
+          triggerExit();
+        } else {
+          const wait = setInterval(() => {
+            if (dataReadyRef.current) {
+              clearInterval(wait);
+              triggerExit();
+            }
+          }, 80);
+        }
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [triggerExit]);
+
+  return createPortal(
+    <div className={`dash-loader-overlay${exiting ? ' dash-loader-exiting' : ''}`}>
+      <div className="dash-loader-inner">
+        <div className="dash-loader-brand">SHELF</div>
+        <div className="dash-loader-count-wrap">
+          <span className="dash-loader-count">{count}</span>
+          <span className="dash-loader-pct">%</span>
+        </div>
+        <div className="dash-loader-bar-track">
+          <div className="dash-loader-bar-fill" style={{ width: `${count}%` }} />
+        </div>
+        <p className="dash-loader-label">Loading your library…</p>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
 
 function timeAgo(dateString) {
@@ -261,9 +331,11 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
     if (isExpanded) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'auto';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => { 
+      document.body.style.overflow = 'auto'; 
+    };
   }, [isExpanded]);
 
   const open = useCallback(() => {
@@ -525,6 +597,13 @@ export default function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
+  // Show loader on every fresh entry to the dashboard for that "premium" feel
+  const [showLoader, setShowLoader] = useState(true);
+  const handleLoaderComplete = useCallback(() => {
+    sessionStorage.setItem('shelf_dashboard_loaded', '1');
+    setShowLoader(false);
+  }, []);
+
   const resolvedEmail = useMemo(() => {
     try {
       const t = sessionStorage.getItem("shelf_token");
@@ -562,6 +641,8 @@ export default function DashboardPage() {
 
   // Combine loading states for simultaneous rendering
   const pageLoading = (summaryLoading || rowsLoading) && !searched;
+  // Tell the loader when real data has arrived
+  const dataIsReady = !summaryLoading && !rowsLoading;
 
   const counts = useMemo(() => {
     return {
@@ -629,6 +710,7 @@ export default function DashboardPage() {
   const handleCollapse = useCallback(() => setActivePanel(""), []);
   const handleLogout = useCallback(() => {
     sessionStorage.removeItem("shelf_dashboard_subtitle");
+    sessionStorage.removeItem("shelf_dashboard_loaded");
     queryClient.clear();
     logout();
     navigate("/");
@@ -727,8 +809,26 @@ export default function DashboardPage() {
     setEmailChangeStatus({ loading: false, error: "" });
   };
 
+  useEffect(() => {
+    if (!showLoader) {
+      document.documentElement.classList.add('allow-scroll');
+      document.body.classList.add('allow-scroll');
+    }
+    
+    return () => {
+      document.documentElement.classList.remove('allow-scroll');
+      document.body.classList.remove('allow-scroll');
+    };
+  }, [showLoader]);
+
   return (
     <div className="dash-root">
+      {showLoader && (
+        <DashboardLoader
+          dataReady={dataIsReady}
+          onComplete={handleLoaderComplete}
+        />
+      )}
       <nav className="dash-navbar">
         <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</span>
 
@@ -812,17 +912,24 @@ export default function DashboardPage() {
           <div className="dash-shelves">
             {pageLoading
               ? [1, 2, 3].map(i => <SkeletonShelf key={i} />)
-              : shelfRows.map(row => (
-                <div key={row.label} className="dash-shelf">
-                  <div className="dash-shelf-header">
-                    <h2 className="dash-shelf-label">{row.label}</h2>
-                    <span className="dash-shelf-all" onClick={() => { setSearchQuery(row.label); handleSearch(row.label); }}>VIEW ALL</span>
+              : (shelfRows.length > 0 ? (
+                  shelfRows.map(row => (
+                    <div key={row.label} className="dash-shelf">
+                      <div className="dash-shelf-header">
+                        <h2 className="dash-shelf-label">{row.label}</h2>
+                        <span className="dash-shelf-all" onClick={() => { setSearchQuery(row.label); handleSearch(row.label); }}>VIEW ALL</span>
+                      </div>
+                      <div className="dash-shelf-scroll">
+                        {row.books.map((book, i) => <BookCard key={i} book={book} />)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="dash-empty-shelves">
+                    <div className="dash-empty-icon">📚</div>
+                    <p className="dash-empty-msg">External libraries are taking a break. <br/> Try searching for a book above!</p>
                   </div>
-                  <div className="dash-shelf-scroll">
-                    {row.books.map((book, i) => <BookCard key={i} book={book} />)}
-                  </div>
-                </div>
-              ))
+                ))
             }
           </div>
         )}

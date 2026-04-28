@@ -137,6 +137,15 @@ export default function BookOverviewPage() {
   const [error,   setError]   = useState(null);
   const [saved,   setSaved]   = useState(false);
   const [saving,  setSaving]  = useState(false);
+  
+  useEffect(() => {
+    document.documentElement.classList.add('allow-scroll');
+    document.body.classList.add('allow-scroll');
+    return () => {
+      document.documentElement.classList.remove('allow-scroll');
+      document.body.classList.remove('allow-scroll');
+    };
+  }, []);
 
   useEffect(() => {
     if (!bookId) return;

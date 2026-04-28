@@ -5,8 +5,36 @@
   background: #fff;
   font-family: 'Inter', sans-serif;
   color: #111;
+  width: 100%;
+  min-height: 100vh;
   overflow-x: hidden;
   scrollbar-gutter: stable; /* Crucial: Prevents layout shift when body locks */
+  position: relative;
+  z-index: 10;
+}
+
+.dash-empty-shelves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+  text-align: center;
+  color: #888;
+}
+
+.dash-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.3;
+}
+
+.dash-empty-msg {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ccc;
 }
 
 /* ── Navbar ── */
@@ -734,3 +762,111 @@
 
 @keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-slide-up { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD LOADER  — 1 → 100 % counting splash screen
+══════════════════════════════════════════════════════════════════ */
+.dash-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Subtle grain texture via SVG */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+/* Exit animation: fade + subtle scale-up */
+.dash-loader-exiting {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.dash-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0 clamp(28px, 8vw, 80px);
+  width: 100%;
+  max-width: 760px;
+  user-select: none;
+}
+
+/* "SHELF" brand word at top-left */
+.dash-loader-brand {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  color: #bbb;
+  text-transform: uppercase;
+  margin-bottom: clamp(40px, 8vh, 72px);
+}
+
+/* Big number + percent sign */
+.dash-loader-count-wrap {
+  display: flex;
+  align-items: flex-start;
+  line-height: 1;
+  gap: 0;
+}
+
+.dash-loader-count {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(100px, 22vw, 220px);
+  font-weight: 400;
+  color: #111;
+  letter-spacing: -0.02em;
+  line-height: 0.88;
+  /* Subtle number-flip feel via character transitions */
+  transition: none;
+  display: inline-block;
+  min-width: 3ch;
+  text-align: right;
+}
+
+.dash-loader-pct {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(36px, 7vw, 72px);
+  font-weight: 400;
+  color: #ccc;
+  align-self: flex-end;
+  padding-bottom: clamp(10px, 2vw, 18px);
+  margin-left: 6px;
+  letter-spacing: 0;
+}
+
+/* Thin progress bar */
+.dash-loader-bar-track {
+  width: 100%;
+  height: 2px;
+  background: #eee;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: clamp(28px, 5vh, 48px);
+}
+
+.dash-loader-bar-fill {
+  height: 100%;
+  background: #111;
+  border-radius: 99px;
+  transition: width 0.05s linear;
+  will-change: width;
+}
+
+/* Label below bar */
+.dash-loader-label {
+  margin-top: 14px;
+  font-size: clamp(0.7rem, 1.2vw, 0.82rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #bbb;
+  text-transform: uppercase;
+}
+
