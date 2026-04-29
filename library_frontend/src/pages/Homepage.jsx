@@ -83,7 +83,7 @@ const LiquidMaterial = shaderMaterial(
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_Position = vec4(position, 1.0);
   }
   `,
   // fragment shader
@@ -98,62 +98,66 @@ const LiquidMaterial = shaderMaterial(
   
   varying vec2 vUv;
 
-  // Stable 2D Random
-  float random(in vec2 st) {
-      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-  }
-  
-  // Smooth Value Noise
-  float noise(in vec2 st) {
-      vec2 i = floor(st);
-      vec2 f = fract(st);
+  // Faster, more stable simplex-like noise
+  vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
-      float a = random(i);
-      float b = random(i + vec2(1.0, 0.0));
-      float c = random(i + vec2(0.0, 1.0));
-      float d = random(i + vec2(1.0, 1.0));
-
-      vec2 u = f * f * (3.0 - 2.0 * f);
-
-      return mix(a, b, u.x) +
-              (c - a) * u.y * (1.0 - u.x) +
-              (d - b) * u.x * u.y;
+  float snoise(vec2 v){
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+             -0.577350269189626, 0.024390243902439);
+    vec2 i  = floor(v + dot(v, C.yy) );
+    vec2 x0 = v -   i + dot(i, C.xx);
+    vec2 i1;
+    i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = mod(i, 289.0);
+    vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+    + i.x + vec3(0.0, i1.x, 1.0 ));
+    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+      dot(x12.zw,x12.zw)), 0.0);
+    m = m*m ;
+    m = m*m ;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+    vec3 g;
+    g.x  = a0.x  * x0.x  + h.x  * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
   }
 
   void main() {
     vec2 p = vUv;
     
-    // Liquid displacement using noise
-    float disp = noise(p * 4.0 + uTime * 0.4);
-    float disp2 = noise(p * 8.0 - uTime * 0.2);
-    float totalDisp = disp * 0.6 + disp2 * 0.4; // 0.0 to 1.0
+    // Liquid displacement using more stable noise
+    float noiseVal = snoise(p * 2.5 + uTime * 0.2);
+    float noiseVal2 = snoise(p * 5.0 - uTime * 0.1);
+    float totalDisp = (noiseVal + noiseVal2 * 0.5) * 0.3;
     
     // Swipe direction (1 for next, -1 for prev)
     float edge = uSwipeDir > 0.0 ? 1.0 - p.x : p.x;
     
-    // Strong distortion for clear liquid wave (-0.6 to 0.6)
-    float distortion = totalDisp * 1.2 - 0.6;
-    float distortedEdge = edge + distortion;
+    // Distorted edge for liquid wave
+    float distortedEdge = edge + totalDisp;
     
-    // Boundary moves from -0.75 to 1.75 to guarantee full clearance
-    float b = uProgress * 2.5 - 0.75;
+    // Boundary movement: -1.0 to 2.0 ensures full clearance across the plane
+    float b = uProgress * 3.0 - 1.0;
     
-    // Narrow band (0.2 width) for a distinct wave edge instead of a muddy fade
-    float mixVal = smoothstep(b - 0.1, b + 0.1, distortedEdge);
+    // Narrow mix band for a sharp but fluid edge
+    float mixVal = smoothstep(b - 0.15, b + 0.15, distortedEdge);
     
-    // Edge glow (foam)
-    float edgeDist = abs(distortedEdge - b);
-    float glow = smoothstep(0.05, 0.0, edgeDist);
+    // Gradients for current and next slide
+    vec3 grad1 = mix(uColor1B, uColor1A, p.y);
+    vec3 grad2 = mix(uColor2B, uColor2A, p.y);
     
-    // Render current and next gradients
-    vec3 grad1 = mix(uColor1B, uColor1A, p.y * 0.8 + p.x * 0.2);
-    vec3 grad2 = mix(uColor2B, uColor2A, p.y * 0.8 + p.x * 0.2);
-    
-    // Mix them based on the liquid wipe
+    // Mix based on the wipe progress
     vec3 finalColor = mix(grad2, grad1, mixVal);
     
-    // Add subtle bright glow at the boundary
-    finalColor += vec3(glow * 0.25);
+    // Subtle edge glow
+    float glow = smoothstep(0.1, 0.0, abs(distortedEdge - b)) * 0.15;
+    finalColor += vec3(glow);
     
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -188,26 +192,27 @@ function WebGLBackground({ slideIndex, swipeDir }) {
 
   useFrame((state, delta) => {
     if (materialRef.current) {
-      // Cap delta to prevent large jumps if the React main thread blocks during DOM updates
-      const dt = Math.min(delta, 0.04); 
+      // Smooth out delta to prevent jittering on frame drops
+      const dt = Math.min(delta, 0.032); 
       materialRef.current.uTime += dt;
       
       if (transitioning) {
         let raw = materialRef.current.userData.rawProgress || 0;
-        raw += dt * 1.8; // Animation speed increased for a snappier wave
+        raw += dt * 1.5; // Slightly slower for more controlled liquid feel
         
         if (raw >= 1.0) {
           raw = 1.0;
           setTransitioning(false);
           const curSlide = SLIDES[slideIndex];
-          materialRef.current.uColor1A = new THREE.Color(curSlide.color1);
-          materialRef.current.uColor1B = new THREE.Color(curSlide.color2);
-          materialRef.current.uColor2A = new THREE.Color(curSlide.color1);
-          materialRef.current.uColor2B = new THREE.Color(curSlide.color2);
+          // After transition, sync uColor1 to current so it becomes the base for next transition
+          materialRef.current.uColor1A.set(curSlide.color1);
+          materialRef.current.uColor1B.set(curSlide.color2);
+          materialRef.current.uColor2A.set(curSlide.color1);
+          materialRef.current.uColor2B.set(curSlide.color2);
           materialRef.current.uProgress = 0.0;
         } else {
-          // Smoothstep easing for a fluid, non-linear wipe
-          materialRef.current.uProgress = raw * raw * (3.0 - 2.0 * raw);
+          // Cubic easing for smoother start/stop of the wave
+          materialRef.current.uProgress = raw * raw * (3.0 - 2.0 * raw); // Keep smoothstep or cubic
         }
         materialRef.current.userData.rawProgress = raw;
       }
@@ -430,12 +435,21 @@ export default function HomePage() {
       }
 
       if (secondPageRef.current) {
-        // More gradual fade-in starting from 75% scroll
-        const secondPageProgress = Math.max(0, (progress - 0.75) * 4); 
-        const opacity = Math.min(Math.pow(secondPageProgress, 2), 1); // Quadratic fade for smoothness
+        // More gradual fade-in starting from 80% scroll to ensure hero content is clear
+        const revealThreshold = 0.8;
+        const secondPageProgress = Math.max(0, (progress - revealThreshold) / (1 - revealThreshold)); 
+        const opacity = Math.min(secondPageProgress * 1.5, 1); // Linear with slight boost for responsiveness
+        
         secondPageRef.current.style.opacity = opacity;
         secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
-        secondPageRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+        secondPageRef.current.style.pointerEvents = opacity > 0.8 ? 'auto' : 'none';
+        
+        // Hide hero elements completely when second page is fully visible to prevent overlap jitter
+        const heroOpacity = Math.max(0, 1 - secondPageProgress * 4);
+        if (line1Ref.current) line1Ref.current.style.opacity = heroOpacity;
+        if (line2Ref.current) line2Ref.current.style.opacity = heroOpacity;
+        if (subtextRef.current) subtextRef.current.style.opacity = heroOpacity;
+        if (actionsRef.current) actionsRef.current.style.opacity = heroOpacity;
       }
 
       ticking = false;
