@@ -240,12 +240,25 @@ function LiquidCarousel() {
   useEffect(() => { currentRef.current = current; }, [current]);
   
   const goTo = useCallback((idx) => {
-    const clamped = Math.max(0, Math.min(idx, SLIDES.length - 1));
-    if (clamped === currentRef.current || isExiting) return;
+    if (isExiting) return;
     
-    setSwipeDir(clamped > currentRef.current ? 1 : -1);
+    let nextIdx = idx;
+    let dir = idx > currentRef.current ? 1 : -1;
+    
+    // Circular logic
+    if (idx < 0) {
+      nextIdx = SLIDES.length - 1;
+      dir = -1; // Going "back" to the end
+    } else if (idx >= SLIDES.length) {
+      nextIdx = 0;
+      dir = 1; // Going "forward" to the start
+    }
+    
+    if (nextIdx === currentRef.current) return;
+    
+    setSwipeDir(dir);
     setIsExiting(true);
-    nextIdxRef.current = clamped;
+    nextIdxRef.current = nextIdx;
     
     // Wait for exit transition (blur/fade backwards) before updating content
     setTimeout(() => {
@@ -318,18 +331,22 @@ function LiquidCarousel() {
            <h2 className="lc-title">{SLIDES[current].title}</h2>
            <p className="lc-sub">{SLIDES[current].sub}</p>
            <button className="lc-btn" onClick={(e) => { e.stopPropagation(); navigate(SLIDES[current].route); }}>
-             {SLIDES[current].cta} <span className="lc-arrow-btn">→</span>
+             {SLIDES[current].cta}
            </button>
         </div>
         
-        {current > 0 && (
-          <button className="lc-nav lc-nav-left" onClick={(e) => { e.stopPropagation(); goTo(current - 1); }}>‹</button>
-        )}
-        {current < SLIDES.length - 1 && (
-          <button className="lc-nav lc-nav-right" onClick={(e) => { e.stopPropagation(); goTo(current + 1); }}>›</button>
-        )}
+        <div className="lc-nav-area lc-nav-area-left" 
+             onClick={(e) => { e.stopPropagation(); goTo(current - 1); }}
+             onMouseDown={(e) => e.stopPropagation()}
+        >
+        </div>
+        <div className="lc-nav-area lc-nav-area-right" 
+             onClick={(e) => { e.stopPropagation(); goTo(current + 1); }}
+             onMouseDown={(e) => e.stopPropagation()}
+        >
+        </div>
         
-        <div className="lc-dots">
+        <div className="lc-dots" onMouseDown={(e) => e.stopPropagation()}>
           {SLIDES.map((_, i) => (
             <button key={i} className={`lc-dot ${i === current ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); goTo(i); }} />
           ))}
@@ -442,7 +459,7 @@ export default function HomePage() {
         
         secondPageRef.current.style.opacity = opacity;
         secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
-        secondPageRef.current.style.pointerEvents = opacity > 0.8 ? 'auto' : 'none';
+        secondPageRef.current.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
         
         // Hide hero elements completely when second page is fully visible to prevent overlap jitter
         const heroOpacity = Math.max(0, 1 - secondPageProgress * 4);
@@ -555,7 +572,7 @@ export default function HomePage() {
                   Get Back To You
                 </button>
                 <button className="btn-secondary" onClick={() => navigate("/signup")}>
-                  First Time? Let's Get Started →
+                  First Time? Let's Get Started
                 </button>
               </div>
             </div>

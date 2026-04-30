@@ -76,7 +76,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <GlobalMouseEffect />
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>

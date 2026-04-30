@@ -217,6 +217,8 @@
   gap: 24px;
   transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
   will-change: transform, opacity;
+  z-index: 25;
+  pointer-events: none;
 }
 
 .lcarousel-content-animate.is-exiting {
@@ -301,36 +303,39 @@
   transform: translateX(4px);
 }
 
-/* Nav Arrows */
-.lc-nav {
+/* Nav Areas */
+.lc-nav-area {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  font-size: 2rem;
-  line-height: 1;
+  top: 0;
+  bottom: 0;
+  width: 15%;
+  z-index: 20;
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  pointer-events: auto;
+  transition: opacity 0.3s ease;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.lc-nav-left { left: 40px; }
-.lc-nav-right { right: 40px; }
-
-.lc-nav:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-50%) scale(1.1);
+.lc-nav-area-left { 
+  left: 0; 
+  cursor: w-resize !important;
+  justify-content: flex-start;
 }
+
+.lc-nav-area-right { 
+  right: 0; 
+  cursor: e-resize !important;
+  justify-content: flex-end;
+}
+
+/* Removed gradients to ensure areas are invisible */
+
+/* Nav Arrows */
+/* Removed static nav buttons in favor of directional cursors */
 
 /* Dots */
 .lc-dots {
@@ -732,14 +737,14 @@
     text-align: center;
   }
 
-  .lc-nav {
-    width: 44px;
-    height: 44px;
-    font-size: 1.5rem;
+  /* Removed static nav buttons */
+
+  .lc-nav-area {
+    width: 25%; /* Reduced from 45% */
   }
 
-  .lc-nav-left { left: 16px; }
-  .lc-nav-right { right: 16px; }
+  .lc-nav-area-left { padding-left: 12px; }
+  .lc-nav-area-right { padding-right: 12px; }
 
   .lc-sub { font-size: 1rem; }
 }
