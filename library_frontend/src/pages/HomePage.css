@@ -303,7 +303,7 @@
   transform: translateX(4px);
 }
 
-/* Nav Areas */
+/* Nav Areas — plain SVG arrows, no circles */
 .lc-nav-area {
   position: absolute;
   top: 0;
@@ -313,24 +313,39 @@
   pointer-events: auto;
   display: flex;
   align-items: center;
-  transition: opacity 0.3s ease;
-  background: none !important;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  background: transparent !important;
   border: none !important;
   outline: none !important;
-  -webkit-tap-highlight-color: transparent;
+}
+
+.lc-nav-area svg {
+  width: 36px;
+  height: 72px;
+  opacity: 0.45;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.lc-nav-area:hover svg {
+  opacity: 1;
 }
 
 .lc-nav-area-left { 
   left: 0; 
-  cursor: w-resize !important;
   justify-content: flex-start;
+  padding-left: 24px;
 }
+.lc-nav-area-left:hover svg { transform: translateX(-4px); }
 
 .lc-nav-area-right { 
   right: 0; 
-  cursor: e-resize !important;
   justify-content: flex-end;
+  padding-right: 24px;
 }
+.lc-nav-area-right:hover svg { transform: translateX(4px); }
 
 /* Removed gradients to ensure areas are invisible */
 
@@ -740,7 +755,11 @@
   /* Removed static nav buttons */
 
   .lc-nav-area {
-    width: 25%; /* Reduced from 45% */
+    width: 20%;
+  }
+  .lc-nav-area svg {
+    width: 24px;
+    height: 48px;
   }
 
   .lc-nav-area-left { padding-left: 12px; }

@@ -339,11 +339,17 @@ function LiquidCarousel() {
              onClick={(e) => { e.stopPropagation(); goTo(current - 1); }}
              onMouseDown={(e) => e.stopPropagation()}
         >
+          <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M370 40 L130 256 L370 472" stroke="white" strokeWidth="80" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
         <div className="lc-nav-area lc-nav-area-right" 
              onClick={(e) => { e.stopPropagation(); goTo(current + 1); }}
              onMouseDown={(e) => e.stopPropagation()}
         >
+          <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M142 40 L382 256 L142 472" stroke="white" strokeWidth="80" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
         
         <div className="lc-dots" onMouseDown={(e) => e.stopPropagation()}>
