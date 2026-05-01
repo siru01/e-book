@@ -223,18 +223,18 @@
 
 .lcarousel-content-animate.is-exiting {
   opacity: 0;
-  transform: scale(0.9) translateY(-20px);
+  transform: scale(0.95);
   filter: blur(10px);
 }
 
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .lcarousel-content-animate > * {
   opacity: 0;
-  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.7s ease forwards;
 }
 
 .lcarousel-content-animate .lc-eyebrow { animation-delay: 0.1s; }
