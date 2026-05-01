@@ -327,7 +327,6 @@ function LiquidCarousel() {
       
       <div className="lcarousel-overlay">
         <div key={contentKey} className={`lcarousel-content-animate ${isExiting ? 'is-exiting' : ''}`} style={{ transform: `translateX(${dragOffset * 0.5}px)` }}>
-           <p className="lc-eyebrow">0{current + 1} / 0{SLIDES.length}</p>
            <h2 className="lc-title">{SLIDES[current].title}</h2>
            <p className="lc-sub">{SLIDES[current].sub}</p>
            <button className="lc-btn" onClick={(e) => { e.stopPropagation(); navigate(SLIDES[current].route); }}>

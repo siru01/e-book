@@ -244,14 +244,6 @@
 .lcarousel-content-animate .lc-sub { animation-delay: 0.3s; }
 .lcarousel-content-animate .lc-btn { animation-delay: 0.4s; }
 
-.lc-eyebrow {
-  font-family: "Inter", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  text-transform: uppercase;
-}
 
 .lc-title {
   font-family: "Anton", sans-serif;
