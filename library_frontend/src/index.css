@@ -5,6 +5,13 @@
 @tailwind utilities;
  
 * { box-sizing: border-box; }
+body, html {
+  color: #ffffff !important;
+}
+* {
+  color: inherit;
+}
+
 
 html, body {
   margin: 0;

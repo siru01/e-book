@@ -6,16 +6,16 @@
 .shelf-wrapper {
   --bg:                hsl(17, 64%, 60%);
   --bg-secondary:      #cbcbcb;
-  --text:              #163024;
+  --text:              #ffffff;
   --text-muted:        #eef1f3;
-  --nav-link:          #163024;
-  --nav-link-hover:    #163024;
-  --nav-border:        rgba(0,0,0,0);
+  --nav-link:          #ffffff;
+  --nav-link-hover:    #ffffff;
+  --nav-border:        rgba(255,255,255,0.2);
   --btn-primary-bg:    #111;
   --btn-primary-text:  #f0f0f0;
   --btn-primary-hover: #333;
-  --btn-secondary-bg:  rgba(0,0,0,0.08);
-  --btn-secondary-text:#333;
+  --btn-secondary-bg:  rgba(255,255,255,0.1);
+  --btn-secondary-text:#ffffff;
 }
 
 /* ── Root ─────────────────────────────────────────────────── */
@@ -777,7 +777,7 @@
   transform: translate(-50%, -50%);
   font-size: 2rem;
   font-weight: 700;
-  color: rgb(7, 6, 6);
+  color: #ffffff;
   letter-spacing: 0.05em;
 }
 /* ── Serene Scene Background ── */
