@@ -559,7 +559,7 @@ export default function HomePage() {
               >
                 <div className="shelf-glass-inner" ref={glassInnerRef}>
                   <span className="glass-content" ref={fictionTextRef}>
-                    FICTION
+                    BROWSE COLLECTIONS
                   </span>
                 </div>
               </div>
