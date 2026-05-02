@@ -37,7 +37,7 @@ const SLIDES = [
   {
     color1: '#6a0572',
     color2: '#ce93d8',
-    title: "Science Fiction ", 
+    title: "Science Fiction ",   
     sub: "Stories focused on futuristic technology, space exploration, or scientific what ifs.",
     cta: "Start Tracking",
     route: "/signup",
