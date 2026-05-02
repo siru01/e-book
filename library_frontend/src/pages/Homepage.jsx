@@ -430,9 +430,8 @@ export default function HomePage() {
       const scale = 1 + quinticProgress * 120;
 
       if (heroImgRef.current) {
-        const rotationProgress = Math.min(progress / 0.35, 1);
-        const currentRotation = 12 * (1 - rotationProgress);
-        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) rotate(${currentRotation}deg) translateZ(0)`;
+        // Use translateZ(0) for GPU acceleration
+        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) translateZ(0)`;
       }
 
       if (glassInnerRef.current) {

@@ -513,7 +513,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(12deg); 
   will-change: transform;
   pointer-events: auto;
 }
