@@ -386,7 +386,6 @@ export default function HomePage() {
 
     const updateScroll = () => {
       const scrolled = container.scrollTop;
-      // Total scroll distance for the transition is dynamically calculated
       const maxScroll = container.scrollHeight - container.clientHeight;
       const progress = maxScroll > 0 ? Math.min(scrolled / maxScroll, 1) : 0;
       
@@ -397,9 +396,9 @@ export default function HomePage() {
         container.classList.remove('is-scrolling');
       }
 
-      // Move texts and stickers upwards faster, without fading
+      // Move texts upwards faster
       const textTranslate = -progress * 800;
-      const headlineTranslate = -progress * 1500; // Even faster for headlines
+      const headlineTranslate = -progress * 1500;
 
       if (line1Ref.current) {
         line1Ref.current.style.transform = `translate3d(0, ${headlineTranslate}px, 0)`;
@@ -418,7 +417,7 @@ export default function HomePage() {
         actionsRef.current.style.opacity = 1;
       }
 
-      // Move stickers without fading
+      // Move stickers
       document.querySelectorAll('.shelf-sticker').forEach(sticker => {
          sticker.style.opacity = 1;
          const isBulb = sticker.classList.contains('shelf-sticker--bulb');
@@ -426,15 +425,13 @@ export default function HomePage() {
          sticker.style.transform = `translate3d(0, ${textTranslate}px, 0) rotate(${rot}deg)`;
       });
 
-      // Calculate scale globally with a smoother Quintic curve for that 'infinite' zoom feel
+      // Calculate scale globally for the glass container
       const quinticProgress = Math.pow(progress, 5);
-      const scale = 1 + quinticProgress * 120; // Slightly more zoom, much smoother end
+      const scale = 1 + quinticProgress * 120;
 
       if (heroImgRef.current) {
         const rotationProgress = Math.min(progress / 0.35, 1);
         const currentRotation = 12 * (1 - rotationProgress);
-        
-        // Use translateZ(0) to force GPU layer for extra smoothness
         heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) rotate(${currentRotation}deg) translateZ(0)`;
       }
 
@@ -445,7 +442,6 @@ export default function HomePage() {
          glassInnerRef.current.style.boxShadow = `0 12px 40px rgba(0, 0, 0, ${shadowOpacity}), inset 0 0 0 1px rgba(255, 255, 255, ${borderOpacity})`;
          glassInnerRef.current.style.background = `rgba(255, 255, 255, 0.08)`;
          
-         // Counteract blur magnification, but cap at 0.5px to avoid sub-pixel jitter in some browsers
          const blurRadius = Math.max(12 / scale, 0.5);
          glassInnerRef.current.style.backdropFilter = `blur(${blurRadius}px)`;
          glassInnerRef.current.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
@@ -457,16 +453,14 @@ export default function HomePage() {
       }
 
       if (secondPageRef.current) {
-        // More gradual fade-in starting from 80% scroll to ensure hero content is clear
         const revealThreshold = 0.8;
         const secondPageProgress = Math.max(0, (progress - revealThreshold) / (1 - revealThreshold)); 
-        const opacity = Math.min(secondPageProgress * 1.5, 1); // Linear with slight boost for responsiveness
+        const opacity = Math.min(secondPageProgress * 1.5, 1);
         
         secondPageRef.current.style.opacity = opacity;
         secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
         secondPageRef.current.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
         
-        // Hide hero elements completely when second page is fully visible to prevent overlap jitter
         const heroOpacity = Math.max(0, 1 - secondPageProgress * 4);
         if (line1Ref.current) line1Ref.current.style.opacity = heroOpacity;
         if (line2Ref.current) line2Ref.current.style.opacity = heroOpacity;
@@ -543,43 +537,34 @@ export default function HomePage() {
         <div className="shelf-hero-scroll-container">
           <section className="shelf-hero">
 
-            {/* Staggered headline with image sandwiched between line 1 & line 2 */}
+            {/* Headline wrap */}
             <div className="shelf-headline-wrap fade-2">
 
-              {/* Line 1 — z-index below the image */}
               <span className="shelf-headline-line shelf-headline-line--top" ref={line1Ref}>
                 Unlock stories
               </span>
 
-              {/* ── Glass Container: Tilted & Floating ── */}
-              <div 
-                className="shelf-hero-img-wrap" 
-                ref={heroImgRef}
-              >
-                <div className="shelf-glass-inner" ref={glassInnerRef}>
-                  <span className="glass-content" ref={fictionTextRef}>
-                    BROWSE COLLECTIONS
-                  </span>
-                </div>
-              </div>
-
-              {/* Line 2 — z-index above the image */}
               <span className="shelf-headline-line shelf-headline-line--bottom" ref={line2Ref}>
                 expand minds
               </span>
 
+              {/* ── Glass Container: Tilted & Floating ── */}
+              <div 
+                className="shelf-hero-img-wrap fade-3" 
+                ref={heroImgRef}
+                onClick={() => navigate("/dashboard")}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="shelf-glass-inner" ref={glassInnerRef}>
+                  <span className="glass-content" ref={fictionTextRef}>
+                    BROWSE GENRE
+                  </span>
+                </div>
+              </div>
+
               <p className="shelf-subtext fade-3" ref={subtextRef}>
                 One digital library for every kind of reader.
               </p>
-
-              <div className="shelf-actions fade-3" ref={actionsRef}>
-                <button className="btn-primary" onClick={() => navigate("/login")}>
-                  Get Back To You
-                </button>
-                <button className="btn-secondary" onClick={() => navigate("/signup")}>
-                  First Time? Let's Get Started
-                </button>
-              </div>
             </div>
 
             {/* ── WebGL Liquid Carousel Page ── */}

@@ -382,13 +382,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 0.88;
-  gap: 0PX;
-  z-index: 1; /* Keep below nav */
+  line-height: 1.1;
+  gap: 20px;
+  z-index: 1; 
   width: 100%; 
   height: 100%;
-  clip-path: inset(52px 40px 0 50px); /* Updated for smaller navbar border */
-  pointer-events: none; /* Allow interaction with carousel behind */
+  clip-path: inset(52px 40px 0 50px); 
+  pointer-events: none;
 }
 
 .shelf-headline-wrap > * {
@@ -418,8 +418,8 @@
 .shelf-headline-line--bottom {
   font-size: clamp(2.4rem, 9vw, 6.5rem);
   position: relative;
-  z-index: 3;          /* in front of the image */
-  margin-top: -0.6em;  /* proportional pull up */
+  z-index: 3;
+  margin-top: 0;
 }
 
 /* ── Pink stickers ── */
@@ -490,19 +490,32 @@
 }
 
 /* ── Accent image / placeholder (sandwiched between lines) ── */
+/* ── Subtext ── */
+.shelf-subtext {
+  margin-top: 30px;
+  font-size: 1.35rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  max-width: 700px; 
+  line-height: 1.6;
+  will-change: transform;
+}
+
+/* Action area removed in favor of direct stack */
+
+/* ── Accent image / placeholder (Glass CTA) ── */
 .shelf-hero-img-wrap {
   position: relative;
-  z-index: 2;                  /* above line 1, below line 2 */
-  width: clamp(120px, 18vw, 240px);
-  height: clamp(100px, 15vw, 200px);
-  margin-top: -60px;           /* push image upward */ 
-  margin-bottom: 0;
-  pointer-events: none;
+  z-index: 2;
+  width: clamp(140px, 22vw, 280px);
+  height: clamp(120px, 18vw, 240px);
+  margin: 10px 0; 
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotate(12deg); /* Base tilt handled by wrapper */
+  transform: rotate(12deg); 
   will-change: transform;
+  pointer-events: auto;
 }
 
 .shelf-glass-inner {
@@ -540,67 +553,17 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-/* ── Subtext ── */
-.shelf-subtext {
-  margin-top: 30px;
-  font-size: 1.35rem;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  max-width: 700px; 
-  line-height: 1.6;
-  will-change: transform;
-}
-
-/* ── Action Buttons ── */
-.shelf-actions {
-  margin-top: 30px;
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.btn-primary {
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: none;
-  padding: 13px 28px;
-  border-radius: 10px;
-  font-size: 0.85rem; 
-  font-weight: 400;
-  cursor: pointer;
-  font-family: "Anton", sans-serif;
-  text-transform: uppercase;
+.glass-content{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
   letter-spacing: 0.05em;
-  transition: transform 0.15s, box-shadow 0.2s, background 0.3s;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
-  background: var(--btn-primary-hover);
-}
-
-.btn-secondary {
-  background: var(--btn-secondary-bg);
-  color: var(--btn-secondary-text);
-  border: 1.5px solid rgba(128,128,128,0.25);
-  padding: 13px 28px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 400;
-  font-family: "Anton", sans-serif;
-  text-transform: uppercase;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: transform 0.15s, background 0.3s, border-color 0.2s;
-  backdrop-filter: blur(8px);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  background: rgba(128,128,128,0.18);
-  border-color: rgba(128,128,128,0.45);
 }
 
 /* ── Animations ── */
@@ -745,11 +708,15 @@
     gap: 12px;
   }
 
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    padding: 16px;
-    font-size: 0.85rem;
+  .shelf-hero-img-wrap {
+    width: 60vw;
+    height: 45vw;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .glass-content {
+    font-size: 1.1rem;
   }
 
   .lcarousel-content-animate {
@@ -774,18 +741,7 @@
   .lc-sub { font-size: 1rem; }
 }
 
-.glass-content{
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  text-align: center;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.05em;
-}
+/* Glass Content Styles Removed */
 /* ── Serene Scene Background ── */
 .shelf-scene {
   position: fixed;
