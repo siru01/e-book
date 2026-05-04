@@ -388,7 +388,7 @@
   z-index: 1; 
   width: 100%; 
   height: 100%;
-  clip-path: inset(20px); 
+  clip-path: inset(60px 0 0 0); 
   pointer-events: none;
 }
 
@@ -493,8 +493,8 @@
 /* ── Accent image / placeholder (sandwiched between lines) ── */
 /* ── Subtext ── */
 .shelf-subtext {
-  margin-top: 30px;
-  font-size: 1.35rem;
+  margin-top: 10px;
+  font-size: 1.2rem;
   color: var(--text-muted);
   letter-spacing: 0.04em;
   max-width: 700px; 
@@ -508,8 +508,8 @@
 .shelf-hero-img-wrap {
   position: relative;
   z-index: 2;
-  width: clamp(140px, 22vw, 280px);
-  height: clamp(120px, 18vw, 240px);
+  width: clamp(140px, 18vw, 220px);
+  height: clamp(100px, 14vw, 180px);
   margin: 10px 0; 
   display: flex;
   align-items: center;
@@ -560,7 +560,7 @@
   width: 100%;
   text-align: center;
   transform: translate(-50%, -50%);
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.05em;
@@ -673,14 +673,11 @@
     letter-spacing: 0; 
   }
 
-  .shelf-headline-line--bottom {
-    margin-top: -0em;
-  }
-
   .shelf-hero-img-wrap {
-    width: 38vw;
-    height: 30vw;
-    margin-top: -22px;
+    width: 50vw;
+    height: 35vw;
+    margin-top: 10px;
+    margin-bottom: 15px;
   }
 
   .shelf-sticker--bulb {
@@ -699,21 +696,7 @@
 
   .shelf-subtext {
     font-size: 1rem;
-    padding:  20px;
-  } 
-
-  .shelf-actions {
-    flex-direction: column;
-    width: 100%;
-    padding: 0 32px;
-    gap: 12px;
-  }
-
-  .shelf-hero-img-wrap {
-    width: 60vw;
-    height: 45vw;
-    margin-top: 10px;
-    margin-bottom: 20px;
+    padding: 20px;
   }
 
   .glass-content {
