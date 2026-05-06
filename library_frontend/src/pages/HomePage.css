@@ -509,7 +509,7 @@
   width:  250px;
   height: 75px;
   left: calc(50% - 125px);
-  top:  calc(50% + 140px); /* Moved down below headings */
+  top:  calc(50% + 180px); /* Moved further down below headings */
   z-index: 8;
   pointer-events: auto;
   cursor: pointer;
@@ -524,6 +524,7 @@
 
 /* ── Glass Inner ── */
 .shelf-glass-inner {
+  padding-top: 20px;
   width: 100%;
   height: 100%;
   overflow: hidden;

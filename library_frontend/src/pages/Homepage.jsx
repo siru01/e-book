@@ -461,7 +461,7 @@ export default function HomePage() {
         const pillW = 250, pillH = 75;
 
         // 1. Fixed starting position (no initial slide-up)
-        const startCenterY  = (vh / 2 + 177.5);
+        const startCenterY  = (vh / 2 + 217.5);
         const targetCenterY = morphTargetYRef.current !== null ? morphTargetYRef.current : (vh / 2);
         
         // Morph only moves it between start and target
