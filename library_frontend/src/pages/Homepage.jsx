@@ -29,7 +29,7 @@ const SLIDES = [
   {
     color1: '#1a1a2e',
     color2: '#0f3460',
-    title: "Welcome to the Collection",
+    title: "BROWSE GENRE",
     sub: "Explore an endless universe of stories curated just for you.",
     cta: "Browse Library",
     route: "/dashboard",
@@ -37,34 +37,34 @@ const SLIDES = [
   {
     color1: '#6a0572',
     color2: '#ce93d8',
-    title: "Science Fiction ",   
-    sub: "Stories focused on futuristic technology, space exploration, or scientific what ifs.",
-    cta: "Start Tracking",
-    route: "/signup",
+    title: "Science Fiction",
+    sub: "Stories focused on futuristic technology, space exploration, or scientific what-ifs.",
+    cta: "Explore Sci-Fi",
+    route: "/dashboard",
   },
   {
     color1: '#004d40',
     color2: '#80cbc4',
     title: "Mystery & Crime",
     sub: "Narratives centered around solving a puzzle or a crime.",
-    cta: "Explore Now",
+    cta: "Explore Mystery",
     route: "/dashboard",
   },
   {
     color1: '#b83b5e',
     color2: '#f08a5d',
     title: "Romance",
-    sub: "Stories primarily focused on a central love story.", 
-    cta: "Get Started",
-    route: "/signup",
+    sub: "Stories primarily focused on a central love story.",
+    cta: "Explore Romance",
+    route: "/dashboard",
   },
   {
     color1: '#0f4c75',
     color2: '#3282b8',
     title: "Join the Community",
     sub: "Share reviews, swap recommendations, and find your next great read together.",
-    cta: "Join Now",
-    route: "/signup",
+    cta: "Browse Library",
+    route: "/dashboard",
   },
 ];
 
@@ -377,12 +377,34 @@ export default function HomePage() {
   const actionsRef = useRef(null);
   const fictionTextRef = useRef(null);
   const secondPageRef = useRef(null);
+  const heroSectionRef = useRef(null);
+  const morphWrapRef = useRef(null);
+  const morphTargetYRef = useRef(null); // cached Y-center of carousel's .lc-title
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     let ticking = false;
+
+    // ── Measure the carousel title's center-Y relative to the hero section.
+    // Because .shelf-hero is sticky and always at top:0, its child elements'
+    // offsetTop values are scroll-position-independent.
+    const getMorphTargetY = () => {
+      if (morphTargetYRef.current !== null) return;
+      if (!secondPageRef.current || !heroSectionRef.current) return;
+      const lcTitle = secondPageRef.current.querySelector('.lc-title');
+      if (!lcTitle) return;
+      
+      let offsetY = 0;
+      let el = lcTitle;
+      while (el && el !== heroSectionRef.current) {
+        offsetY += el.offsetTop;
+        el = el.offsetParent;
+      }
+      // Vertical center of the title relative to hero top
+      morphTargetYRef.current = offsetY + lcTitle.offsetHeight / 2;
+    };
 
     const updateScroll = () => {
       const scrolled = container.scrollTop;
@@ -396,7 +418,7 @@ export default function HomePage() {
         container.classList.remove('is-scrolling');
       }
 
-      // Move texts upwards faster
+      // Move texts upwards
       const textTranslate = -progress * 800;
       const headlineTranslate = -progress * 1500;
 
@@ -425,47 +447,87 @@ export default function HomePage() {
          sticker.style.transform = `translate3d(0, ${textTranslate}px, 0) rotate(${rot}deg)`;
       });
 
-      // Calculate scale globally for the glass container
-      const quinticProgress = Math.pow(progress, 5);
-      const scale = 1 + quinticProgress * 120;
+      // ── Morph: glass pill → full-screen carousel (shared-element) ──
+      const morphStart = 0.25;
+      const morphEnd   = 0.75;
+      const morphProgress = Math.max(0, Math.min(1, (progress - morphStart) / (morphEnd - morphStart)));
+      const morphEased   = morphProgress * morphProgress * (3.0 - 2.0 * morphProgress);
 
-      if (heroImgRef.current) {
-        // Use translateZ(0) for GPU acceleration
-        heroImgRef.current.style.transform = `scale3d(${scale}, ${scale}, 1) translateZ(0)`;
+      getMorphTargetY();
+
+      if (morphWrapRef.current && glassInnerRef.current && fictionTextRef.current) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const pillW = 250, pillH = 75;
+
+        // 1. Fixed starting position (no initial slide-up)
+        const startCenterY  = (vh / 2 + 177.5);
+        const targetCenterY = morphTargetYRef.current !== null ? morphTargetYRef.current : (vh / 2);
+        
+        // Morph only moves it between start and target
+        const centerY = startCenterY + (targetCenterY - startCenterY) * morphEased;
+
+        const w    = pillW + (vw - pillW) * morphEased;
+        const h    = pillH + (vh - pillH) * morphEased;
+        const left = (vw - w) / 2;
+        const top  = centerY - h / 2;
+
+        morphWrapRef.current.style.width   = `${w}px`;
+        morphWrapRef.current.style.height  = `${h}px`;
+        morphWrapRef.current.style.left    = `${left}px`;
+        morphWrapRef.current.style.top     = `${top}px`;
+
+        // Cross-fade window
+        const crossFadeProgress = Math.max(0, Math.min(1, (morphProgress - 0.6) / 0.35));
+        const overlayOpacity = 1 - crossFadeProgress;
+        morphWrapRef.current.style.opacity       = overlayOpacity;
+        morphWrapRef.current.style.pointerEvents = overlayOpacity < 0.05 ? 'none' : 'auto';
+
+        // Glass shell dissolves INSTANTLY once morph starts (multiplier of 10x)
+        const radius   = Math.max(16 * (1 - morphEased * 5), 0);
+        const blurPx   = Math.max(12 * (1 - morphEased * 10), 0);
+        const bgAlpha  = Math.max(0.08 * (1 - morphEased * 10), 0);
+        const brdAlpha = Math.max(0.25 * (1 - morphEased * 10), 0);
+        const shadow   = Math.max(0.15 * (1 - morphEased * 10), 0);
+
+        glassInnerRef.current.style.borderRadius         = `${radius}px`;
+        glassInnerRef.current.style.background           = `rgba(255,255,255,${bgAlpha})`;
+        glassInnerRef.current.style.backdropFilter       = `blur(${blurPx}px)`;
+        glassInnerRef.current.style.WebkitBackdropFilter = `blur(${blurPx}px)`;
+        glassInnerRef.current.style.borderColor          = `rgba(255,255,255,${brdAlpha})`;
+        glassInnerRef.current.style.boxShadow            = `0 12px 40px rgba(0,0,0,${shadow})`;
+
+        // BROWSE GENRE text: NO FADE — grows to .lc-title size
+        const startFs  = 17.6;
+        const endFs    = Math.max(40, Math.min(72, vw * 0.06));
+        const fontSize = startFs + (endFs - startFs) * morphEased;
+        const letterSp = 0.05 + (0.02 - 0.05) * morphEased;
+
+        fictionTextRef.current.style.fontSize      = `${fontSize}px`;
+        fictionTextRef.current.style.letterSpacing = `${letterSp}em`;
+        fictionTextRef.current.style.fontFamily    = '"Anton", sans-serif';
+        fictionTextRef.current.style.fontWeight    = '400';
+        fictionTextRef.current.style.textShadow    = `0 10px 30px rgba(0,0,0,${morphEased * 0.3})`;
       }
 
-      if (glassInnerRef.current) {
-         const borderOpacity = Math.max(0.25 - progress * 4, 0);
-         const shadowOpacity = Math.max(0.15 - progress * 2, 0);
-         glassInnerRef.current.style.borderColor = `rgba(255, 255, 255, ${borderOpacity})`;
-         glassInnerRef.current.style.boxShadow = `0 12px 40px rgba(0, 0, 0, ${shadowOpacity}), inset 0 0 0 1px rgba(255, 255, 255, ${borderOpacity})`;
-         glassInnerRef.current.style.background = `rgba(255, 255, 255, 0.08)`;
-         
-         const blurRadius = Math.max(12 / scale, 0.5);
-         glassInnerRef.current.style.backdropFilter = `blur(${blurRadius}px)`;
-         glassInnerRef.current.style.WebkitBackdropFilter = `blur(${blurRadius}px)`;
-         glassInnerRef.current.style.opacity = 1;
-      }
-
-      if (fictionTextRef.current) {
-         fictionTextRef.current.style.opacity = Math.max(1 - progress * 6, 0);
-      }
-
+      // Carousel reveal: Starts only when the morph is nearly complete (0.9 to 1.0)
       if (secondPageRef.current) {
-        const revealThreshold = 0.8;
-        const secondPageProgress = Math.max(0, (progress - revealThreshold) / (1 - revealThreshold)); 
-        const opacity = Math.min(secondPageProgress * 1.5, 1);
+        const carouselReveal = Math.max(0, Math.min(1, (morphProgress - 0.9) / 0.1));
+        secondPageRef.current.style.opacity      = carouselReveal;
+        secondPageRef.current.style.pointerEvents = carouselReveal > 0.05 ? 'auto' : 'none';
         
-        secondPageRef.current.style.opacity = opacity;
-        secondPageRef.current.style.transform = `translate3d(0, 0, 0)`;
-        secondPageRef.current.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
-        
-        const heroOpacity = Math.max(0, 1 - secondPageProgress * 4);
-        if (line1Ref.current) line1Ref.current.style.opacity = heroOpacity;
-        if (line2Ref.current) line2Ref.current.style.opacity = heroOpacity;
-        if (subtextRef.current) subtextRef.current.style.opacity = heroOpacity;
-        if (actionsRef.current) actionsRef.current.style.opacity = heroOpacity;
+        const lcTitle = secondPageRef.current.querySelector('.lc-title');
+        if (lcTitle) {
+          lcTitle.style.opacity = morphProgress > 0.95 ? '1' : '0';
+        }
       }
+
+      // Hero headlines fade out
+      const heroOpacity = Math.max(0, 1 - morphProgress * 2.5);
+      if (line1Ref.current)   line1Ref.current.style.opacity   = heroOpacity;
+      if (line2Ref.current)   line2Ref.current.style.opacity   = heroOpacity;
+      if (subtextRef.current) subtextRef.current.style.opacity = heroOpacity;
+      if (actionsRef.current) actionsRef.current.style.opacity = heroOpacity;
 
       ticking = false;
     };
@@ -534,41 +596,38 @@ export default function HomePage() {
         </nav>
 
         <div className="shelf-hero-scroll-container">
-          <section className="shelf-hero">
+          <section className="shelf-hero" ref={heroSectionRef}>
 
-            {/* Headline wrap */}
+            {/* ── Layer 1: Carousel (bottom) ── */}
+            <div className="shelf-second-page" ref={secondPageRef}>
+              <LiquidCarousel />
+            </div>
+
+            {/* ── Layer 2: Morphing glass pill (middle)
+                 Lives OUTSIDE headline-wrap so clip-path never cuts it.
+                 JS controls width / height / left / top directly. ── */}
+            <div
+              className="shelf-morph-overlay fade-3"
+              ref={morphWrapRef}
+            >
+              <div className="shelf-glass-inner" ref={glassInnerRef}>
+                <span className="glass-content" ref={fictionTextRef}>
+                  BROWSE GENRE
+                </span>
+              </div>
+            </div>
+
+            {/* ── Layer 3: Hero headlines (top) ── */}
             <div className="shelf-headline-wrap fade-2">
-
               <span className="shelf-headline-line shelf-headline-line--top" ref={line1Ref}>
                 Unlock stories
               </span>
-
               <span className="shelf-headline-line shelf-headline-line--bottom" ref={line2Ref}>
                 expand minds
               </span>
-
-              {/* ── Glass Container: Tilted & Floating ── */}
-              <div 
-                className="shelf-hero-img-wrap fade-3" 
-                ref={heroImgRef}
-                onClick={() => navigate("/dashboard")}
-                style={{ cursor: "pointer" }}
-              >
-                <div className="shelf-glass-inner" ref={glassInnerRef}>
-                  <span className="glass-content" ref={fictionTextRef}>
-                    BROWSE GENRE
-                  </span>
-                </div>
-              </div>
-
               <p className="shelf-subtext fade-3" ref={subtextRef}>
                 One digital library for every kind of reader.
               </p>
-            </div>
-
-            {/* ── WebGL Liquid Carousel Page ── */}
-            <div className="shelf-second-page" ref={secondPageRef}>
-              <LiquidCarousel />
             </div>
 
           </section>
