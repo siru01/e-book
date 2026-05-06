@@ -582,17 +582,19 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-.glass-content{
+.glass-content {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 100%;
   text-align: center;
   transform: translate(-50%, -50%);
+  font-family: "Anton", sans-serif; /* Matched to headings */
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 400; /* Anton is usually 400 */
   color: #ffffff;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* ── Animations ── */
