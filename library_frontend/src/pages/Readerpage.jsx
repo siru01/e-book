@@ -158,6 +158,10 @@ export default function ReaderPage() {
 
   /* ── Fetch book ── */
   useEffect(() => {
+    // Force white background for the reader to prevent gradient glimpse
+    const originalBg = document.body.style.background;
+    document.body.style.background = "#ffffff";
+    
     if (!bookId) { setError("No book ID provided."); setLoading(false); return; }
     let cancelled = false;
     setLoading(true); setError(""); setPages([]); setSpreadIndex(0);
@@ -219,7 +223,10 @@ export default function ReaderPage() {
       if (!cancelled) setDataIsReady(true);
     })();
 
-    return () => { cancelled = true; };
+    return () => { 
+      cancelled = true;
+      document.body.style.background = originalBg; 
+    };
   }, [bookId]);
 
   /* ── Navigation ── */
