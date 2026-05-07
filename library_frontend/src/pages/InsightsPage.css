@@ -1,0 +1,343 @@
+.insights-root {
+  height: 100vh;
+  background-color: #0f0a1e;
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.insights-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.insights-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.insights-nav-left:hover {
+  opacity: 1;
+}
+
+.insights-back-arrow {
+  font-size: 1.5rem;
+}
+
+.insights-brand {
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.insights-container {
+  flex: 1;
+  max-width: 1300px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1.2fr 1fr 0.8fr;
+  gap: 20px;
+  min-height: 0; /* Allow grid to shrink */
+}
+
+/* Card Base Styles */
+.insight-card {
+  background-color: #241e38;
+  border-radius: 28px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 0;
+}
+
+.insight-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* Row 1 - Apps Card */
+.card-apps {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  background-color: #241e38;
+}
+
+.card-apps .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.card-apps h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  max-width: 140px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.launch-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.apps-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.app-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* Stat Cards */
+.card-stat {
+  justify-content: flex-end;
+}
+
+.stat-value {
+  font-size: 3.2rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.stat-label {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  margin: 4px 0 0 0;
+}
+
+/* Likes Card */
+.card-likes {
+  background-color: #241e38;
+}
+
+.heart-bg {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Viewers Card */
+.card-viewers {
+  background-color: #241e38;
+}
+
+.live-indicator {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: #ff0000;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-indicator .dot {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+/* Active Users Card */
+.card-active-users {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+}
+
+.trend {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.trend.positive {
+  color: #4ade80;
+}
+
+.stat-value-large {
+  font-size: 4.2rem;
+  font-weight: 700;
+  margin: 8px 0 0 0;
+  line-height: 1;
+}
+
+/* Design Card */
+.card-design {
+  background-color: #6333ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.design-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 2px 2px, rgba(0,0,0,0.1) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.5;
+}
+
+.design-text {
+  font-size: 2.5rem;
+  font-family: 'Serif', serif;
+  font-weight: 700;
+  letter-spacing: 2px;
+  z-index: 1;
+}
+
+/* Subscribers Card */
+.card-subscribers {
+  grid-column: 3 / 4;
+  grid-row: 2 / 4;
+  background-color: #f8f8f8;
+  color: #1a162d;
+  justify-content: flex-start;
+  gap: 40px;
+}
+
+.card-subscribers .label {
+  color: #1a162d;
+  font-weight: 600;
+}
+
+.subscriber-chart {
+  width: 100%;
+  flex: 1;
+  min-height: 100px;
+  margin: 10px 0;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-svg path {
+  stroke: #1a162d;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 2s ease forwards;
+}
+
+.stat-value-xl {
+  font-size: 5rem;
+  font-weight: 800;
+  margin-top: auto;
+  line-height: 1;
+}
+
+/* Learning Card */
+.card-learning {
+  grid-column: 1 / 3;
+  grid-row: 3 / 4;
+  background-color: #241e38;
+  justify-content: center;
+}
+
+.card-learning h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  max-width: 400px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.learning-accent {
+  position: absolute;
+  bottom: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(99, 51, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .insights-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .card-subscribers {
+    grid-column: 2 / 3;
+    grid-row: 2 / 4;
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-container {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+  .card-apps, .card-active-users, .card-subscribers, .card-learning {
+    grid-column: 1 / 2;
+    grid-row: auto;
+  }
+}

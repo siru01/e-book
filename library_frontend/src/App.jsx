@@ -11,6 +11,7 @@ import BookOverviewPage   from "./pages/BookOverviewPage";
 import "./App.css";
 import ForgotPasswordPage from './pages/Forgotpasswordpage';
 import GlobalMouseEffect from "./components/GlobalMouseEffect";
+import InsightsPage from "./pages/InsightsPage";
 
 
 
@@ -60,6 +61,7 @@ function AppRoutes() {
       <Route path="/dashboard"         element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
       <Route path="/read/:bookId"       element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
+      <Route path="/insights"           element={<ProtectedRoute><InsightsPage /></ProtectedRoute>} />
 
       {/* Public but requires no auth protection */}
 

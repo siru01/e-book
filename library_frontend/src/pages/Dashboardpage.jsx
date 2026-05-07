@@ -835,7 +835,7 @@ export default function DashboardPage() {
         <div className="dash-nav-links">
           <span className="dash-nav-link dash-nav-link-active">Library</span>
           <span className="dash-nav-link">Journal</span>
-          <span className="dash-nav-link">Store</span>
+          <span className="dash-nav-link" onClick={() => navigate("/insights")} style={{ cursor: "pointer" }}>Insights</span>
         </div>
 
         <div className="dash-nav-search">
