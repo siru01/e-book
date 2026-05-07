@@ -304,11 +304,16 @@ export default function ReaderPage() {
     );
   }
 
+  const handleLoadingComplete = useCallback(() => {
+    setLoading(false);
+  }, []);
+
   if (loading) {
     return (
       <CounterLoader 
+        key={`loader-${bookId}`}
         dataReady={dataIsReady} 
-        onComplete={() => setLoading(false)} 
+        onComplete={handleLoadingComplete} 
         brand="SHELF"
         label="Opening your book…"
       />
