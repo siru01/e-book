@@ -533,7 +533,19 @@ class BookReadView(APIView):
             raw_id = book_id
 
         try:
-            # Fetch user progress if authenticated
+            # Fetch metadata & full text
+            if source == "gutenberg":
+                resp = self._fetch_gutenberg(raw_id)
+            elif source == "archive":
+                resp = self._fetch_archive(raw_id)
+            elif source == "openlibrary":
+                resp = self._fetch_openlibrary(raw_id)
+            elif source == "google":
+                resp = self._fetch_google(raw_id)
+            else:
+                return Response({"error": f"Unknown source: {source}"}, status=400)
+
+            # User metadata
             user_progress = 0.0
             is_faved = False
             is_done  = False
@@ -545,21 +557,6 @@ class BookReadView(APIView):
                     is_done = act.is_finished
                 is_faved = Bookmarks.objects.filter(user=user, book_id=book_id).exists()
 
-            if source == "gutenberg":
-                resp = self._fetch_gutenberg(raw_id)
-            elif source == "archive":
-                resp = self._fetch_archive(raw_id)
-            elif source == "openlibrary":
-                resp = self._fetch_openlibrary(raw_id)
-            elif source == "google":
-                resp = self._fetch_google(raw_id)
-            else:
-                return Response(
-                    {"error": f"Unknown source: {source}. Supported: gutenberg, openlibrary, google, archive"},
-                    status=400
-                )
-            
-            # Inject user metadata into the response
             resp.data["user_progress"] = user_progress
             resp.data["is_bookmarked"] = is_faved
             resp.data["is_finished"]   = is_done

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent, streamBookContent } from "../api/shelf";
-import "./ReaderPage.css";
+import "./Readerpage.css";
 import CounterLoader from "../components/CounterLoader";
 
 const CHARS_PER_PAGE = 1200;
@@ -29,7 +29,7 @@ function splitIntoPages(text) {
   return pages;
 }
 
-/* ── useMediaQuery hook ── ✦ NEW */
+/* ── useMediaQuery hook ── */
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -70,33 +70,23 @@ const capitalizeFirst = (str) =>
 
 /* ══════════════════════════════════════════════════════
    Profile Dropdown
-══════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════ */
 function ProfileDropdown({ username, email, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-
-  const initials = username
-    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
+  const initials = username ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "?";
 
   useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   return (
     <div className="profile-wrap" ref={ref}>
-      <button
-        className="profile-trigger"
-        onClick={() => setOpen(o => !o)}
-        aria-label="Profile menu"
-      >
+      <button className="profile-trigger" onClick={() => setOpen(o => !o)} aria-label="Profile menu">
         <span className="avatar-initials">{initials}</span>
       </button>
-
       {open && (
         <div className="profile-dropdown">
           <div className="profile-dropdown-header">
@@ -108,8 +98,7 @@ function ProfileDropdown({ username, email, onLogout }) {
           </div>
           <div className="profile-dropdown-divider" />
           <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
-            <IconLogout />
-            Sign out
+            <IconLogout /> Sign out
           </button>
         </div>
       )}
@@ -128,13 +117,11 @@ function VerticalSideLabel({ text, position }) {
 
 /* ══════════════════════════════════════════════════════
    MAIN COMPONENT
-══════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════ */
 export default function ReaderPage() {
   const { bookId: rawBookId } = useParams();
   const { token, username, logout } = useAuth();
   const navigate = useNavigate();
-
-  /* ✦ NEW — detect mobile */
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const resolvedEmail = useMemo(() => {
@@ -145,8 +132,6 @@ export default function ReaderPage() {
       return payload.email || "";
     } catch { return ""; }
   }, [token]);
-
-  const handleLogout = useCallback(() => { logout(); navigate("/"); }, [logout, navigate]);
 
   const [fontSize,      setFontSize]      = useState(16);
   const [showTypo,      setShowTypo]      = useState(false);
@@ -162,8 +147,6 @@ export default function ReaderPage() {
   const [jumpValue,     setJumpValue]     = useState("");
 
   const totalPages  = pages.length;
-
-  /* ✦ CHANGED — mobile shows 1 page, desktop shows 2 (spread) */
   const step        = isMobile ? 1 : 2;
   const leftPage    = pages[spreadIndex]     || "";
   const rightPage   = pages[spreadIndex + 1] || "";
@@ -172,7 +155,6 @@ export default function ReaderPage() {
 
   const bookId     = rawBookId ? decodeURIComponent(rawBookId) : "";
   const source     = bookId.split(":")[0] || "openlibrary";
-  const chapterNum = Math.ceil((spreadIndex + 1) / 20);
 
   /* ── Fetch book ── */
   useEffect(() => {
@@ -190,8 +172,6 @@ export default function ReaderPage() {
           cover_url: data.cover_url || "",
           source:    data.source    || source,
           user_progress: data.user_progress || 0,
-          is_bookmarked: data.is_bookmarked || false,
-          is_finished:   data.is_finished   || false,
         });
         setBookmarkSaved(data.is_bookmarked || false);
         setFinishedSaved(data.is_finished   || false);
@@ -212,12 +192,11 @@ export default function ReaderPage() {
           const newPages = splitIntoPages(processedText);
           setPages(newPages);
 
-          // We are "ready" to show the book as soon as we have the first 5 pages
+          // We show the book as soon as we have enough content to start reading (e.g. 5 pages)
           if (isFirstSet && newPages.length >= 5) {
             setDataIsReady(true);
             isFirstSet = false;
             
-            // set target index based on progress if available
             if (data.user_progress > 0) {
               const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
               setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
@@ -227,7 +206,6 @@ export default function ReaderPage() {
         
         if (isFirstSet) {
           setDataIsReady(true);
-          // if very small book, apply progress here
           if (data.user_progress > 0 && splitIntoPages(textBuffer).length > 0) {
              const newPages = splitIntoPages(textBuffer);
              const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
@@ -244,7 +222,7 @@ export default function ReaderPage() {
     return () => { cancelled = true; };
   }, [bookId]);
 
-  /* ── Navigation ✦ CHANGED — uses step ── */
+  /* ── Navigation ── */
   function goNext() {
     if (spreadIndex + step >= pages.length || sliding) return;
     setSliding("left");
@@ -261,9 +239,7 @@ export default function ReaderPage() {
     if (e.key !== "Enter") return;
     const target = parseInt(jumpValue, 10);
     if (!isNaN(target) && target >= 1 && target <= totalPages) {
-      const idx = isMobile
-        ? target - 1                                          // ✦ mobile: go to exact page
-        : (target % 2 === 0 ? target - 2 : target - 1);     // desktop: land on spread start
+      const idx = isMobile ? target - 1 : (target % 2 === 0 ? target - 2 : target - 1);
       setSpreadIndex(Math.max(0, idx));
     }
     setJumpValue("");
@@ -279,107 +255,56 @@ export default function ReaderPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [spreadIndex, pages.length, sliding, isMobile]);
 
-  /* ── Touch swipe support ✦ NEW — swipe left/right on mobile ── */
-  const touchStartX = useRef(null);
-
-  function handleTouchStart(e) {
-    touchStartX.current = e.touches[0].clientX;
-  }
-
-  function handleTouchEnd(e) {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) goNext();
-      else goPrev();
-    }
-    touchStartX.current = null;
-  }
-
-  /* ── Actions ── */
-  async function handleBookmark() {
-    if (!token || !bookMeta) return;
-    try {
-      await saveBookmark(token, {
-        book_id: bookId,
-        source: source,
-        book_title: bookMeta.title,
-        book_author: bookMeta.author,
-        book_cover: bookMeta.cover_url
-      });
-      setBookmarkSaved(true);
-      setTimeout(() => setBookmarkSaved(false), 2000);
-    } catch {}
-  }
-
-  async function handleMarkFinished() {
-    if (!token || !bookMeta) return;
-    const nextFinished = !finishedSaved;
-    try {
-      await saveReadingActivity(token, {
-        book_id: bookId,
-        source: source,
-        book_title: bookMeta.title,
-        book_author: bookMeta.author,
-        book_cover: bookMeta.cover_url,
-        progress_percent: nextFinished ? 100 : progressPct,
-        is_finished: nextFinished
-      });
-      setFinishedSaved(nextFinished);
-    } catch {}
-  }
-
-  /* ✦ CHANGED — progress uses step */
-  const progressPct = pages.length > 0
-    ? Math.min(100, ((spreadIndex + step) / pages.length) * 100)
-    : 0;
-
+  /* ── Progress ── */
+  const progressPct = pages.length > 0 ? Math.min(100, ((spreadIndex + step) / pages.length) * 100) : 0;
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!token || !bookMeta || pages.length === 0) return;
     saveReadingActivity(token, {
-      book_id: bookId,
-      source: source,
-      book_title: bookMeta.title,
-      book_author: bookMeta.author,
-      book_cover: bookMeta.cover_url,
-      progress_percent: progressPct,
-      is_finished: finishedSaved
-    })
-    .then(() => {
+      book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url,
+      progress_percent: progressPct, is_finished: finishedSaved
+    }).then(() => {
       queryClient.invalidateQueries({ queryKey: ["myActivity"] });
       queryClient.invalidateQueries({ queryKey: ["myFinished"] });
-    })
-    .catch(() => {});
-  }, [spreadIndex, pages.length, bookMeta, token, bookId, source, progressPct, queryClient]);
+    }).catch(() => {});
+  }, [spreadIndex, pages.length, bookMeta, token, bookId, source, progressPct, queryClient, finishedSaved]);
 
   useEffect(() => {
     if (!token) return;
-    const interval = setInterval(() => {
-      recordSession(token, 1).catch(() => {});
-    }, 60000);
+    const interval = setInterval(() => { recordSession(token, 1).catch(() => {}); }, 60000);
     return () => clearInterval(interval);
   }, [token]);
 
-  /* ══════════════════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════════════════ */
+  if (error) {
+    return (
+      <div className="reader-center reader-error-wrap">
+        <p className="error-icon">📚</p>
+        <p className="reader-status-text">{error}</p>
+        <Link to="/dashboard"><button className="reader-back-btn">← Back to Library</button></Link>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <CounterLoader 
+        dataReady={dataIsReady} 
+        onComplete={() => setLoading(false)} 
+        brand="SHELF"
+        label="Opening your book…"
+      />
+    );
+  }
+
   return (
     <div className="shelf-reader-page">
-
-      {/* ── Toolbar ── */}
       <header className="reader-toolbar">
         <div className="toolbar-left">
           <Link to="/dashboard" className="reader-brand">Shelf</Link>
           <div className="toolbar-divider" />
-          <div style={{ position: "relative" }}>
-            <button className="toolbar-btn" onClick={() => setShowTypo(v => !v)}>
-              <IconAppearance /> Appearance
-            </button>
-          </div>
           <button className="toolbar-btn" onClick={() => setShowTypo(v => !v)}>
-            <IconTypography /> Typography
+            <IconAppearance /> Appearance
           </button>
           {showTypo && (
             <div className="typo-popover">
@@ -393,150 +318,72 @@ export default function ReaderPage() {
           )}
         </div>
         <div className="toolbar-right">
-          <button
-            className={`toolbar-icon-btn ${bookmarkSaved ? "toolbar-icon-btn--saved" : ""}`}
-            onClick={handleBookmark}
-            title={bookmarkSaved ? "Saved!" : "Bookmark this book"}
-          >
-            <IconBookmark />
-          </button>
-          <ProfileDropdown
-            username={username}
-            email={resolvedEmail}
-            onLogout={handleLogout}
-          />
+          <button className={`toolbar-icon-btn ${bookmarkSaved ? "toolbar-icon-btn--saved" : ""}`} onClick={async () => {
+             if (!token || !bookMeta) return;
+             await saveBookmark(token, { book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url });
+             setBookmarkSaved(true);
+             setTimeout(() => setBookmarkSaved(false), 2000);
+          }}><IconBookmark /></button>
+          <ProfileDropdown username={username} email={resolvedEmail} onLogout={() => { logout(); navigate("/"); }} />
         </div>
       </header>
 
-      {/* ── Progress bar ── */}
-      {pages.length > 0 && (
-        <div className="reader-progress-bar">
-          <div className="reader-progress-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-      )}
+      <div className="reader-progress-bar">
+        <div className="reader-progress-fill" style={{ width: `${progressPct}%` }} />
+      </div>
 
-      {/* ── Main ── */}
-      <main
-        className="reader-main-wrapper"
-        onTouchStart={handleTouchStart}   /* ✦ NEW */
-        onTouchEnd={handleTouchEnd}       /* ✦ NEW */
-      >
-        {loading ? (
-          <CounterLoader 
-            dataReady={dataIsReady} 
-            onComplete={() => setLoading(false)} 
-            brand="SHELF"
-            label="Opening your book…"
-          />
-        ) : error ? (
-          <div className="reader-center">
-            <p style={{ fontSize: "2.5em" }}>📚</p>
-            <p className="reader-status-text">
-              {error === "Book not found" || error.includes("Unknown source")
-                ? "This edition is no longer available. Try searching for another edition."
-                : error}
-            </p>
-            <Link to="/dashboard">
-              <button className="reader-back-btn">← Back to Library</button>
-            </Link>
-          </div>
-        ) : (
-          <>
-            <VerticalSideLabel
-              text={`ESTABLISHED ${new Date().getFullYear()}`}
-              position="left-top"
-            />
-            <VerticalSideLabel
-              text={`${source.toUpperCase()} ACCESS`}
-              position="left-bottom"
-            />
+      <main className="reader-main-wrapper">
+        <VerticalSideLabel text={`ESTABLISHED ${new Date().getFullYear()}`} position="left-top" />
+        <VerticalSideLabel text={`${source.toUpperCase()} ACCESS`} position="left-bottom" />
 
-            <button
-              className={`reader-nav-arrow reader-nav-arrow--left ${spreadIndex <= 0 ? "hidden" : ""}`}
-              onClick={goPrev}
-            ><IconArrowLeft /></button>
+        <button className={`reader-nav-arrow reader-nav-arrow--left ${spreadIndex <= 0 ? "hidden" : ""}`} onClick={goPrev}><IconArrowLeft /></button>
 
-            <div className={`reading-content-columns ${
-              sliding === "left"  ? "slide-out-left"  :
-              sliding === "right" ? "slide-out-right" : ""
-            }`}>
-              {/* Left column — always visible */}
-              <div className="reading-column reading-column--left">
-                <header className="column-header">
-                  <span className="chapter-label">CHAPTER {chapterNum}</span>
-                  <span className="vol-label">VOL. {Math.ceil(chapterNum / 5)}</span>
-                </header>
-                <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
-                  {leftPage.split("\n\n").map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
-                <div className="column-footer">
-                  <span className="page-num-bottom">{leftPageNum}</span>
-                </div>
-              </div>
-
-              {/* Right column — ✦ hidden on mobile */}
-              {!isMobile && (
-                <div className="reading-column reading-column--right">
-                  <header className="column-header">
-                    <span className="liquid-label">{bookMeta?.title?.toUpperCase()}</span>
-                    <span className="page-num">{rightPage ? rightPageNum : ""}</span>
-                  </header>
-                  <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
-                    {rightPage
-                      ? rightPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)
-                      : <p className="reader-end-text">~ End ~</p>
-                    }
-                  </div>
-                  <div className="column-footer" />
-                </div>
-              )}
+        <div className={`reading-content-columns ${sliding === "left" ? "slide-out-left" : sliding === "right" ? "slide-out-right" : ""}`}>
+          <div className="reading-column reading-column--left">
+            <header className="column-header">
+              <span className="chapter-label">PROGRESS</span>
+            </header>
+            <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
+              {leftPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
             </div>
+            <div className="column-footer"><span className="page-num-bottom">{leftPageNum}</span></div>
+          </div>
 
-            <button
-              className={`reader-nav-arrow reader-nav-arrow--right ${spreadIndex + step >= pages.length ? "hidden" : ""}`}
-              onClick={goNext}
-            ><IconArrowRight /></button>
-          </>
-        )}
+          {!isMobile && (
+            <div className="reading-column reading-column--right">
+              <header className="column-header">
+                <span className="liquid-label">{bookMeta?.title?.toUpperCase()}</span>
+                <span className="page-num">{rightPageNum <= totalPages ? rightPageNum : ""}</span>
+              </header>
+              <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
+                {rightPage ? rightPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>) : <p className="reader-end-text">~ End ~</p>}
+              </div>
+              <div className="column-footer" />
+            </div>
+          )}
+        </div>
+
+        <button className={`reader-nav-arrow reader-nav-arrow--right ${spreadIndex + step >= pages.length ? "hidden" : ""}`} onClick={goNext}><IconArrowRight /></button>
       </main>
 
-      {/* ── Pagination footer ── */}
-      {pages.length > 0 && !loading && !error && (
-        <footer className="reader-pagination">
-          <div className="pagination-left">
-            <button className="nav-arrow-btn" onClick={goPrev} disabled={spreadIndex <= 0}>
-              <IconArrowLeft />
-            </button>
-            <span className="page-range">Page {leftPageNum} of {totalPages}</span>
-            <button className="nav-arrow-btn" onClick={goNext} disabled={spreadIndex + step >= pages.length}>
-              <IconArrowRight />
-            </button>
+      <footer className="reader-pagination">
+        <div className="pagination-left">
+          <button className="nav-arrow-btn" onClick={goPrev} disabled={spreadIndex <= 0}><IconArrowLeft /></button>
+          <span className="page-range">Page {leftPageNum} of {totalPages}</span>
+          <button className="nav-arrow-btn" onClick={goNext} disabled={spreadIndex + step >= pages.length}><IconArrowRight /></button>
+        </div>
+        <div className="pagination-right">
+          <div className="jump-to-box">
+            <label htmlFor="jumpToInput">JUMP TO</label>
+            <input id="jumpToInput" type="number" min={1} max={totalPages} value={jumpValue} onChange={e => setJumpValue(e.target.value)} onKeyDown={handleJump} placeholder={String(leftPageNum)} />
           </div>
-          <div className="pagination-right">
-            <div className="jump-to-box">
-              <label htmlFor="jumpToInput">JUMP TO</label>
-              <input
-                id="jumpToInput"
-                type="number"
-                min={1}
-                max={totalPages}
-                value={jumpValue}
-                onChange={e => setJumpValue(e.target.value)}
-                onKeyDown={handleJump}
-                placeholder={String(leftPageNum)}
-              />
-            </div>
-            <button
-              className={`action-btn-dark ${finishedSaved ? "action-btn-done" : ""}`}
-              onClick={handleMarkFinished}
-            >
-              {finishedSaved ? "✅ Finished!" : "Mark as Finished"}
-            </button>
-          </div>
-        </footer>
-      )}
+          <button className={`action-btn-dark ${finishedSaved ? "action-btn-done" : ""}`} onClick={() => {
+            const next = !finishedSaved;
+            saveReadingActivity(token, { book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url, progress_percent: next ? 100 : progressPct, is_finished: next });
+            setFinishedSaved(next);
+          }}>{finishedSaved ? "✅ Finished!" : "Mark as Finished"}</button>
+        </div>
+      </footer>
     </div>
   );
 }

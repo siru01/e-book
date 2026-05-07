@@ -57,14 +57,14 @@
   font-family: 'Anton', sans-serif;
   font-size: clamp(4rem, 15vw, 10rem);
   line-height: 0.9;
-  color: #000;
+  color: #000 !important;
   letter-spacing: -0.02em;
 }
 
 .c-loader-pct {
   font-family: 'Anton', sans-serif;
   font-size: clamp(1.5rem, 5vw, 3rem);
-  color: #000;
+  color: #000 !important;
   margin-left: 4px;
 }
 

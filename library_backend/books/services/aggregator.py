@@ -4,69 +4,15 @@ from . import gutendex, google_books, openlibrary, archive
 
 def search_all_stream(query: str, page: int = 1):
     """
-    Parallel search that YIELDS results as soon as each source is ready.
-    This allows the frontend to show books piece-by-piece.
+    Gutenberg-only search stream to ensure high quality (Covers + Full Text).
     """
-    tasks = {
-        "Gutenberg":      lambda: gutendex.search(query, page),
-        "Google":         lambda: google_books.search(query, page),
-        "OpenLibrary":    lambda: openlibrary.search(query, page),
-        "Archive":        lambda: archive.search(query, page),
-    }
-
-    seen = set()
-
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        # Submit all tasks
-        future_to_source = {executor.submit(func): name for name, func in tasks.items()}
-        
-        # ── PRIORITY: Yield Gutenberg first if it's available ────────
-        guten_yielded = False
-        guten_future = next((f for f, name in future_to_source.items() if name == "Gutenberg"), None)
-        if guten_future:
-            try:
-                results = guten_future.result(timeout=8) # Wait for it specifically
-                if results:
-                    unique_batch = []
-                    for b in results:
-                        bid = b.get("book_id")
-                        if bid and bid not in seen:
-                            unique_batch.append(b)
-                            seen.add(bid)
-                    if unique_batch:
-                        guten_yielded = True
-                        yield {"source": "Gutenberg", "books": unique_batch}
-            except Exception as e:
-                # Gutenberg is just slow or failed, we'll try again in the main loop
-                pass
-
-        # ── Then yield everything else as they complete ──────────────
-        for future in as_completed(future_to_source):
-            source_name = future_to_source[future]
-            if source_name == "Gutenberg" and guten_yielded:
-                continue # Already handled successfully
-                
-            try:
-                results = future.result()
-                if not results:
-                    continue
-                
-                # Deduplicate on the fly
-                unique_batch = []
-                for b in results:
-                    bid = b.get("book_id")
-                    if bid and bid not in seen:
-                        unique_batch.append(b)
-                        seen.add(bid)
-                
-                if unique_batch:
-                    yield {
-                        "source": source_name,
-                        "books": unique_batch
-                    }
-                    
-            except Exception as e:
-                print(f"[aggregator] {source_name} search failed: {e}")
+    try:
+        # Gutenberg results are already filtered for cover and text availability in gutendex.py
+        results = gutendex.search(query, page)
+        if results:
+            yield {"source": "Gutenberg", "books": results}
+    except Exception as e:
+        print(f"[aggregator] Gutenberg search failed: {e}")
 
 
 def search_all(query: str, page: int = 1, sources: list = None) -> list:
