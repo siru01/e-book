@@ -202,7 +202,7 @@
 }
 
 .trend {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -248,8 +248,8 @@
   grid-row: 2 / 4;
   background-color: #f8f8f8;
   color: #1a162d;
-  justify-content: flex-start;
-  gap: 40px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .card-subscribers .label {
@@ -278,10 +278,10 @@
 }
 
 .stat-value-xl {
-  font-size: 5rem;
+  font-size: 4.4rem;
   font-weight: 800;
   margin-top: auto;
-  line-height: 1;
+  line-height: 0.9;
 }
 
 /* Learning Card */
