@@ -1,0 +1,93 @@
+.c-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+  font-family: 'Inter', sans-serif;
+}
+
+.c-loader--overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+.c-loader--inline {
+  width: 100%;
+  padding: 60px 20px;
+  background: transparent;
+}
+
+.c-loader--exiting {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.c-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0 clamp(20px, 5vw, 40px);
+  width: 100%;
+  max-width: 600px;
+  user-select: none;
+}
+
+.c-loader-brand {
+  font-family: 'Anton', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  color: #000;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.c-loader-count-wrap {
+  display: flex;
+  align-items: baseline;
+  margin-left: -4px;
+}
+
+.c-loader-count {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(4rem, 15vw, 10rem);
+  line-height: 0.9;
+  color: #000;
+  letter-spacing: -0.02em;
+}
+
+.c-loader-pct {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  color: #000;
+  margin-left: 4px;
+}
+
+.c-loader-bar-track {
+  width: 100%;
+  height: 2px;
+  background: #eee;
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.c-loader-bar-fill {
+  height: 100%;
+  background: #000;
+  transition: width 0.1s linear;
+}
+
+.c-loader-label {
+  margin-top: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+}

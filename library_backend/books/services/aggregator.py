@@ -9,6 +9,9 @@ def search_all_stream(query: str, page: int = 1):
     """
     tasks = {
         "Gutenberg":      lambda: gutendex.search(query, page),
+        "Google":         lambda: google_books.search(query, page),
+        "OpenLibrary":    lambda: openlibrary.search(query, page),
+        "Archive":        lambda: archive.search(query, page),
     }
 
     seen = set()
@@ -18,10 +21,11 @@ def search_all_stream(query: str, page: int = 1):
         future_to_source = {executor.submit(func): name for name, func in tasks.items()}
         
         # ── PRIORITY: Yield Gutenberg first if it's available ────────
+        guten_yielded = False
         guten_future = next((f for f, name in future_to_source.items() if name == "Gutenberg"), None)
         if guten_future:
             try:
-                results = guten_future.result(timeout=30) # Wait for it specifically
+                results = guten_future.result(timeout=8) # Wait for it specifically
                 if results:
                     unique_batch = []
                     for b in results:
@@ -30,15 +34,17 @@ def search_all_stream(query: str, page: int = 1):
                             unique_batch.append(b)
                             seen.add(bid)
                     if unique_batch:
+                        guten_yielded = True
                         yield {"source": "Gutenberg", "books": unique_batch}
             except Exception as e:
-                print(f"[aggregator] Gutenberg priority wait failed: {e}")
+                # Gutenberg is just slow or failed, we'll try again in the main loop
+                pass
 
         # ── Then yield everything else as they complete ──────────────
         for future in as_completed(future_to_source):
             source_name = future_to_source[future]
-            if source_name == "Gutenberg":
-                continue # Already handled above
+            if source_name == "Gutenberg" and guten_yielded:
+                continue # Already handled successfully
                 
             try:
                 results = future.result()

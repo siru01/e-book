@@ -54,6 +54,31 @@
 }
 
 /* Card Base Styles */
+
+/* Drawing Animation for SVGs */
+@keyframes drawContent {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Text Reveal Animation */
+@keyframes textReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
 .insight-card {
   background-color: #241e38;
   border-radius: 28px;
@@ -65,7 +90,57 @@
   justify-content: space-between;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   min-height: 0;
+  
+  /* Entrance Animation */
+  opacity: 0;
+  animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
+
+.insight-card svg path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawContent 2.5s ease forwards;
+}
+
+.insight-card h2, 
+.insight-card h3, 
+.insight-card p, 
+.insight-card span {
+  opacity: 0;
+  animation: textReveal 0.8s ease-out forwards;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-apps { animation-delay: 0.1s; }
+.card-apps h3, .card-apps .launch-btn, .card-apps .app-icon { animation-delay: 0.3s; }
+
+.card-likes { animation-delay: 0.2s; }
+.card-likes .stat-value, .card-likes .stat-label { animation-delay: 0.4s; }
+
+.card-viewers { animation-delay: 0.3s; }
+.card-viewers .stat-value, .card-viewers .stat-label, .card-viewers .live-indicator { animation-delay: 0.5s; }
+
+.card-active-users { animation-delay: 0.4s; }
+.card-active-users .label, .card-active-users .trend, .card-active-users .stat-value-large { animation-delay: 0.6s; }
+
+.card-design { animation-delay: 0.5s; }
+.card-design .design-text { animation-delay: 0.7s; }
+
+.card-subscribers { animation-delay: 0.6s; }
+.card-subscribers .label, .card-subscribers .trend, .card-subscribers .stat-value-xl { animation-delay: 0.8s; }
+
+.card-learning { animation-delay: 0.7s; }
+.card-learning h2 { animation-delay: 0.9s; }
 
 .insight-card:hover {
   transform: translateY(-5px);
@@ -274,7 +349,7 @@
   stroke: #1a162d;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: draw 2s ease forwards;
+  animation: drawContent 2.5s ease forwards;
 }
 
 .stat-value-xl {
@@ -316,9 +391,7 @@
   100% { opacity: 1; }
 }
 
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
-}
+
 
 /* Responsive */
 @media (max-width: 1024px) {

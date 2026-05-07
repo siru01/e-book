@@ -4,6 +4,7 @@ import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent, streamBookContent } from "../api/shelf";
 import "./ReaderPage.css";
+import CounterLoader from "../components/CounterLoader";
 
 const CHARS_PER_PAGE = 1200;
 
@@ -153,6 +154,7 @@ export default function ReaderPage() {
   const [pages,         setPages]         = useState([]);
   const [spreadIndex,   setSpreadIndex]   = useState(0);
   const [loading,       setLoading]       = useState(true);
+  const [dataIsReady,   setDataIsReady]   = useState(false);
   const [error,         setError]         = useState("");
   const [bookmarkSaved, setBookmarkSaved] = useState(false);
   const [finishedSaved, setFinishedSaved] = useState(false);
@@ -210,11 +212,12 @@ export default function ReaderPage() {
           const newPages = splitIntoPages(processedText);
           setPages(newPages);
 
-          if (isFirstSet && newPages.length > 3) {
-            setLoading(false);
+          // We are "ready" to show the book as soon as we have the first 5 pages
+          if (isFirstSet && newPages.length >= 5) {
+            setDataIsReady(true);
             isFirstSet = false;
             
-            // set target index based on progress
+            // set target index based on progress if available
             if (data.user_progress > 0) {
               const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
               setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
@@ -223,7 +226,7 @@ export default function ReaderPage() {
         }
         
         if (isFirstSet) {
-          setLoading(false);
+          setDataIsReady(true);
           // if very small book, apply progress here
           if (data.user_progress > 0 && splitIntoPages(textBuffer).length > 0) {
              const newPages = splitIntoPages(textBuffer);
@@ -235,7 +238,7 @@ export default function ReaderPage() {
       } catch (e) {
         if (!cancelled) setError(e.message);
       }
-      if (!cancelled) setLoading(false);
+      if (!cancelled) setDataIsReady(true);
     })();
 
     return () => { cancelled = true; };
@@ -419,10 +422,12 @@ export default function ReaderPage() {
         onTouchEnd={handleTouchEnd}       /* ✦ NEW */
       >
         {loading ? (
-          <div className="reader-center">
-            <div className="reader-spinner" />
-            <p className="reader-status-text">Opening book…</p>
-          </div>
+          <CounterLoader 
+            dataReady={dataIsReady} 
+            onComplete={() => setLoading(false)} 
+            brand="SHELF"
+            label="Opening your book…"
+          />
         ) : error ? (
           <div className="reader-center">
             <p style={{ fontSize: "2.5em" }}>📚</p>

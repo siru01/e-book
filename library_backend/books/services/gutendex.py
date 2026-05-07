@@ -45,7 +45,7 @@ def search(query: str, page: int = 1):
         try:
             # Optimized API hit with direct filtering
             # mime_type=text/plain asks Gutendex for Full Text only
-            with httpx.Client(timeout=30, follow_redirects=True) as client:
+            with httpx.Client(timeout=45, follow_redirects=True) as client:
                 resp = client.get(
                     f"{BASE_URL}/books", 
                     params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}

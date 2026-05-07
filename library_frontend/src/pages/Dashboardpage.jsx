@@ -9,75 +9,8 @@ import {
   useDashboardSummary,
   useShelfRows,
 } from "../hooks/useDashboardData";
+import CounterLoader from "../components/CounterLoader";
 
-/* ══════════════════════════════════════════════════════════════════
-   Dashboard Loader — counts 1 → 100 % then fades out
- ══════════════════════════════════════════════════════════════════ */
-function DashboardLoader({ dataReady, onComplete }) {
-  const [count, setCount] = useState(1);
-  const [exiting, setExiting] = useState(false);
-  const dataReadyRef = useRef(false);
-  const countDoneRef = useRef(false);
-  const exitFiredRef = useRef(false);
-
-  useEffect(() => {
-    if (dataReady) dataReadyRef.current = true;
-  }, [dataReady]);
-
-  const triggerExit = useCallback(() => {
-    if (exitFiredRef.current) return;
-    exitFiredRef.current = true;
-    setExiting(true);
-    setTimeout(() => onComplete(), 700);
-  }, [onComplete]);
-
-  useEffect(() => {
-    let frame;
-    let current = 1;
-
-    const tick = () => {
-      current += current < 80 ? 0.55 : current < 95 ? 1.1 : 1.9;
-      const clamped = Math.min(Math.floor(current), 100);
-      setCount(clamped);
-
-      if (clamped < 100) {
-        frame = requestAnimationFrame(tick);
-      } else {
-        countDoneRef.current = true;
-        if (dataReadyRef.current) {
-          triggerExit();
-        } else {
-          const wait = setInterval(() => {
-            if (dataReadyRef.current) {
-              clearInterval(wait);
-              triggerExit();
-            }
-          }, 80);
-        }
-      }
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [triggerExit]);
-
-  return createPortal(
-    <div className={`dash-loader-overlay${exiting ? ' dash-loader-exiting' : ''}`}>
-      <div className="dash-loader-inner">
-        <div className="dash-loader-brand">SHELF</div>
-        <div className="dash-loader-count-wrap">
-          <span className="dash-loader-count">{count}</span>
-          <span className="dash-loader-pct">%</span>
-        </div>
-        <div className="dash-loader-bar-track">
-          <div className="dash-loader-bar-fill" style={{ width: `${count}%` }} />
-        </div>
-        <p className="dash-loader-label">Loading your library…</p>
-      </div>
-    </div>,
-    document.body
-  );
-}
 
 
 const toArray = (raw) => Array.isArray(raw) ? raw : raw?.results || [];
@@ -617,6 +550,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchAnimationDone, setSearchAnimationDone] = useState(false);
   const [searched, setSearched] = useState(() => !!new URLSearchParams(window.location.search).get("q"));
   const [phIndex, setPhIndex] = useState(0);
 
@@ -664,33 +598,55 @@ export default function DashboardPage() {
     
     if (qParam) {
       const performSearch = async () => {
+        // Track the current search to prevent race conditions
+        const currentSearchQ = qParam;
+
+        // If it's a new query, reset everything
+        if (searchQuery !== qParam) {
+          setSearchAnimationDone(false);
+          setSearchResults([]);
+          setSearchLoading(true);
+        }
+        
         setSearched(true);
-        setSearchLoading(true);
         setSearchQuery(qParam);
-        setSearchResults([]); // Reset results before starting
         
         try {
-          // Consume the stream generator
+          let firstBatchPreloaded = false;
           for await (const chunk of searchBooksStream(token, qParam)) {
-            if (chunk.error) {
-              console.error("Stream chunk error:", chunk.error);
-              continue;
-            }
+            // If the user already changed the query, stop this one
+            if (searchParams.get("q") !== currentSearchQ) return;
+            
+            if (chunk.error) continue;
             if (chunk.books) {
               const newBooks = chunk.books.map(parseBFFBook);
               setSearchResults(prev => {
-                // Deduplicate against already rendered results just in case
                 const existingIds = new Set(prev.map(b => b.bookId));
                 const filtered = newBooks.filter(b => !existingIds.has(b.bookId));
                 return [...prev, ...filtered];
               });
-              // Turn off loading spinner as soon as first source arrives
-              setSearchLoading(false);
+              
+              // Preload the first few covers to ensure they are ready before revealing
+              if (!firstBatchPreloaded && newBooks.length > 0) {
+                const preloadBatch = newBooks.slice(0, 5);
+                await Promise.all(preloadBatch.map(b => {
+                  if (!b.cover) return Promise.resolve();
+                  return new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = b.cover;
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    setTimeout(resolve, 2500); // Max wait 2.5s
+                  });
+                }));
+                firstBatchPreloaded = true;
+                // Once first batch of images is ready, we consider data "ready"
+                setSearchLoading(false);
+              }
             }
           }
         } catch (err) {
-          console.error("Search stream failed:", err);
-          // If searchResults is still empty, show nothing found later
+          console.error("Search failed:", err);
         } finally {
           setSearchLoading(false);
         }
@@ -706,6 +662,10 @@ export default function DashboardPage() {
   const clearSearch = () => { 
     setSearchParams({}, { replace: true });
   };
+  const handleSearchLoaderComplete = useCallback(() => {
+    setSearchAnimationDone(true);
+  }, []);
+
   const handleExpand = useCallback((key) => setActivePanel(key), []);
   const handleCollapse = useCallback(() => setActivePanel(""), []);
   const handleLogout = useCallback(() => {
@@ -824,9 +784,11 @@ export default function DashboardPage() {
   return (
     <div className="dash-root">
       {showLoader && (
-        <DashboardLoader
+        <CounterLoader
           dataReady={dataIsReady}
           onComplete={handleLoaderComplete}
+          brand="SHELF"
+          label="Preparing your library…"
         />
       )}
       <nav className="dash-navbar">
@@ -895,13 +857,16 @@ export default function DashboardPage() {
               <h3>Results for "<strong>{searchQuery}</strong>"</h3>
               <button onClick={clearSearch}>✕ Clear</button>
             </div>
-            {searchLoading
+            {!searchAnimationDone
               ? (
-                <div className="dash-search-loading-hero">
-                  <div className="dash-search-spinner" />
-                  <p className="dash-loading-wait-msg">PLEASE WAIT PATIENTLY </p>
-                  <p className="dash-loading-detail">TILL YOU PREFERENCE IS BEING SEARCHED</p>
-                </div>
+                <CounterLoader 
+                  key={`search-loader-${searchParams.get("q")}`}
+                  overlay={false} 
+                  dataReady={!searchLoading && searchResults.length > 0} 
+                  onComplete={handleSearchLoaderComplete} 
+                  brand=""
+                  label="Searching our shelves…" 
+                />
               )
               : <div className="dash-src-grid">
                 {searchResults.map((b, i) => <SearchResultCard key={i} book={b} />)}
