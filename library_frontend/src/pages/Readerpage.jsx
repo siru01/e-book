@@ -259,16 +259,27 @@ export default function ReaderPage() {
   const progressPct = pages.length > 0 ? Math.min(100, ((spreadIndex + step) / pages.length) * 100) : 0;
   const queryClient = useQueryClient();
 
+  // Debounced progress save
   useEffect(() => {
     if (!token || !bookMeta || pages.length === 0) return;
-    saveReadingActivity(token, {
-      book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url,
-      progress_percent: progressPct, is_finished: finishedSaved
-    }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ["myActivity"] });
-      queryClient.invalidateQueries({ queryKey: ["myFinished"] });
-    }).catch(() => {});
-  }, [spreadIndex, pages.length, bookMeta, token, bookId, source, progressPct, queryClient, finishedSaved]);
+
+    const timeout = setTimeout(() => {
+      saveReadingActivity(token, {
+        book_id: bookId, 
+        source, 
+        book_title: bookMeta.title, 
+        book_author: bookMeta.author, 
+        book_cover: bookMeta.cover_url,
+        progress_percent: progressPct, 
+        is_finished: finishedSaved
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["myActivity"] });
+        queryClient.invalidateQueries({ queryKey: ["myFinished"] });
+      }).catch(() => {});
+    }, 10000); // 10s debounce to avoid spamming the server
+
+    return () => clearTimeout(timeout);
+  }, [spreadIndex, finishedSaved, token, bookId]); // Removed pages.length and progressPct to avoid stream-triggered updates
 
   useEffect(() => {
     if (!token) return;
