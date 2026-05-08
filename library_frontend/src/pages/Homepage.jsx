@@ -552,7 +552,7 @@ export default function HomePage() {
       <div className="shelf-root" ref={scrollRef}>
 
         {/* ── Nav: [links left] [brand center] [toggle right] ── */}
-        <nav className="shelf-nav fade-1">
+        <nav className="shelf-nav fade-nav">
           {/* LEFT */}
           <ul className="shelf-nav-links">
             <li><a href="#">Browse</a></li>
