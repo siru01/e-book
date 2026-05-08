@@ -477,6 +477,10 @@ export default function HomePage() {
         morphWrapRef.current.style.left    = `${left}px`;
         morphWrapRef.current.style.top     = `${top}px`;
 
+        // 2. Corners fade away quickly once morph starts
+        const cornerAlpha = Math.max(1 - morphEased * 4, 0);
+        morphWrapRef.current.style.setProperty('--corner-opacity', cornerAlpha);
+
         // No fade for the words - keep solid until handoff to carousel title
         morphWrapRef.current.style.opacity       = 1;
         morphWrapRef.current.style.pointerEvents = morphProgress < 0.95 ? 'auto' : 'none';

@@ -60,14 +60,14 @@
   align-items: center;
   height: 60px;
   padding: 0 24px;
-  border-radius: 0;
-  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 0; 
+  border: 1px solid rgba(0,0,0,0.21);
   background: rgba(252, 250, 249, 0.9); 
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: none;
 }
-
+ 
 /* Technical Corner Details */
 .shelf-nav::before, .shelf-nav::after,
 .shelf-morph-overlay::before, .shelf-morph-overlay::after {
@@ -79,6 +79,8 @@
   --c: #1a1a1a;
   --t: 1.5px;
   --s: 8px;
+  opacity: var(--corner-opacity, 1);
+  transition: opacity 0.2s ease;
 }
 
 .shelf-nav::before, .shelf-morph-overlay::before {
@@ -808,11 +810,11 @@
     radial-gradient(#e5e5e5 1.5px, transparent 1.5px),
     linear-gradient(rgba(229, 229, 229, 0.2) 1px, transparent 1px),
     linear-gradient(90deg, rgba(229, 229, 229, 0.2) 1px, transparent 1px);
-  background-size: 24px 24px, 96px 96px, 96px 96px;
-  background-attachment: fixed;
+  background-size: 10px 10px, 120px 120px, 120px 120px;
+  background-attachment: fixed; 
   overflow: hidden;
   pointer-events: none;
-}
+} 
 
 .scene-ambient {
   position: absolute;
