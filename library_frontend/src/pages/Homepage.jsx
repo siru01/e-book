@@ -198,7 +198,7 @@ function WebGLBackground({ slideIndex, swipeDir }) {
       
       if (transitioning) {
         let raw = materialRef.current.userData.rawProgress || 0;
-        raw += dt * 1.5; // Slightly slower for more controlled liquid feel
+        raw += dt * 0.8; // Slower transition for a more fluid feel
         
         if (raw >= 1.0) {
           raw = 1.0;
@@ -477,11 +477,9 @@ export default function HomePage() {
         morphWrapRef.current.style.left    = `${left}px`;
         morphWrapRef.current.style.top     = `${top}px`;
 
-        // Cross-fade window
-        const crossFadeProgress = Math.max(0, Math.min(1, (morphProgress - 0.6) / 0.35));
-        const overlayOpacity = 1 - crossFadeProgress;
-        morphWrapRef.current.style.opacity       = overlayOpacity;
-        morphWrapRef.current.style.pointerEvents = overlayOpacity < 0.05 ? 'none' : 'auto';
+        // No fade for the words - keep solid until handoff to carousel title
+        morphWrapRef.current.style.opacity       = 1;
+        morphWrapRef.current.style.pointerEvents = morphProgress < 0.95 ? 'auto' : 'none';
 
         // Glass shell dissolves INSTANTLY once morph starts (multiplier of 10x)
         const radius   = Math.max(16 * (1 - morphEased * 5), 0);
@@ -519,6 +517,11 @@ export default function HomePage() {
         const lcTitle = secondPageRef.current.querySelector('.lc-title');
         if (lcTitle) {
           lcTitle.style.opacity = morphProgress > 0.95 ? '1' : '0';
+        }
+        
+        // Hide the morphing text once the carousel title is fully visible
+        if (morphWrapRef.current) {
+          morphWrapRef.current.style.opacity = morphProgress > 0.98 ? '0' : '1';
         }
       }
 
