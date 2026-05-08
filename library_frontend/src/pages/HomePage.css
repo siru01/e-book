@@ -4,13 +4,13 @@
 
 /* ── Theme Variables ──────────────────────────────────────── */
 .shelf-wrapper {
-  --bg:                hsl(17, 64%, 60%);
-  --bg-secondary:      #cbcbcb;
-  --text:              #ffffff;
-  --text-muted:        #eef1f3;
-  --nav-link:          #ffffff;
-  --nav-link-hover:    #ffffff;
-  --nav-border:        rgba(255,255,255,0.2);
+  --bg:                #fcfaf9;
+  --bg-secondary:      #f0f0f0;
+  --text:              #1a1a1a;
+  --text-muted:        #666666;
+  --nav-link:          #1a1a1a;
+  --nav-link-hover:    #000000;
+  --nav-border:        rgba(0,0,0,0.1);
   --btn-primary-bg:    #111;
   --btn-primary-text:  #f0f0f0;
   --btn-primary-hover: #333;
@@ -60,9 +60,10 @@
   padding: 0 48px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--nav-border);
-  background: rgba(255, 255, 255, 0.03); 
+  background: rgba(252, 250, 249, 0.8); 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 /* LEFT column */
@@ -557,7 +558,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   font-family: inherit;
-  color: #ffffff;
+  color: #1a1a1a;
   letter-spacing: 0.05em;
   text-align: center;
   white-space: nowrap;
@@ -592,7 +593,7 @@
   font-family: "Anton", sans-serif; /* Matched to headings */
   font-size: 1.1rem;
   font-weight: 400; /* Anton is usually 400 */
-  color: #ffffff;
+  color: #1a1a1a;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -762,7 +763,13 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(to bottom, #6fa393 0%, #a8ccbf 60%, #d1dce0 100%);
+  background-color: #fcfaf9;
+  background-image: 
+    radial-gradient(#e5e5e5 1.5px, transparent 1.5px),
+    linear-gradient(rgba(229, 229, 229, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 229, 229, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px, 96px 96px, 96px 96px;
+  background-attachment: fixed;
   overflow: hidden;
   pointer-events: none;
 }
@@ -770,7 +777,7 @@
 .scene-ambient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
+  background: radial-gradient(circle at 50% 20%, rgba(0, 0, 0, 0.03) 0%, transparent 60%);
   animation: ambient-glow 8s ease-in-out infinite alternate;
 }
 
@@ -779,65 +786,7 @@
   to   { opacity: 0.5; transform: scale(1.1); }
 }
 
-.scene-sun {
-  position: absolute;
-  top: 15%;
-  right: 15%;
-  width: clamp(80px, 15vw, 150px);
-  height: clamp(80px, 15vw, 150px);
-  background: #fff;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.4;
-  animation: sun-pulse 10s ease-in-out infinite alternate;
-}
-
-@keyframes sun-pulse {
-  from { transform: scale(1); opacity: 0.3; }
-  to   { transform: scale(1.2); opacity: 0.5; }
-}
-
-.scene-layer {
-  position: absolute;
-  bottom: -10vh;
-  left: -25%;
-  width: 150%;
-  border-radius: 100% 100% 0 0;
-  filter: blur(1px);
-}
-
-.scene-layer--back {
-  height: 45vh;
-  background: #77b5a1;
-  opacity: 0.5;
-  transform: translateX(-5%) translateY(5vh);
-  animation: drift-back 20s linear infinite alternate;
-}
-
-.scene-layer--mid {
-  height: 35vh;
-  background: #86c4b2;
-  opacity: 0.7;
-  transform: translateX(5%) translateY(8vh);
-  animation: drift-mid 15s linear infinite alternate;
-}
-
-.scene-layer--front {
-  height: 25vh;
-  background: #9fd1c0;
-  opacity: 0.8;
-  transform: translateY(12vh);
-}
-
-@keyframes drift-back {
-  from { transform: translateX(-5%) translateY(5vh); }
-  to   { transform: translateX(5%) translateY(5vh); }
-}
-
-@keyframes drift-mid {
-  from { transform: translateX(5%) translateY(8vh); }
-  to   { transform: translateX(-5%) translateY(8vh); }
-}
+/* Landscape layers removed for Hex style */
 
 .scene-grain {
   position: absolute;

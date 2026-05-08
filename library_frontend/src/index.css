@@ -18,7 +18,12 @@ html, body {
   font-family: "Inter", sans-serif;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  background: linear-gradient(to bottom, #6fa393 0%, #d1dce0 100%);
+  background-color: #fcfaf9;
+  background-image: 
+    radial-gradient(#e5e5e5 1.5px, transparent 1.5px),
+    linear-gradient(rgba(229, 229, 229, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 229, 229, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px, 96px 96px, 96px 96px;
   background-attachment: fixed;
 }
 
