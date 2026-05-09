@@ -50,10 +50,28 @@ export default function HomePage() {
         // Match your latest CSS (75% start)
         const startCenterY = vh * 0.75;
 
-        const currentCenterY = startCenterY + (targetCenterY - startCenterY) * progress;
+        let currentCenterY = startCenterY + (targetCenterY - startCenterY) * progress;
+
+        // --- NEW: PUSH LOGIC ---
+        // The second page starts at 90vh in the scroll container.
+        // We want the windows (inside shelf-second-page) to stay below the pill.
+        // Current second page top relative to viewport:
+        const secondPageTop = (vh * 0.9) - scrolled;
+        // The windows have a padding-top in CSS. Let's account for it.
+        const paddingOffset = 120; // We will reduce the CSS padding to this.
+        const contentTop = secondPageTop + paddingOffset;
+        
+        const pillBottom = currentCenterY + (scaledHeight / 2);
+        const GAP = 50; // Min gap between pill and windows
+
+        if (contentTop < pillBottom + GAP) {
+          // Push the pill up as the content moves up
+          currentCenterY -= (pillBottom + GAP - contentTop);
+        }
+        // -----------------------
 
         ctaRef.current.style.top = `${currentCenterY}px`;
-        // Ensure centering is maintained
+        // Ensure centering is maintained 
         ctaRef.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
         
         if (progress > 0.98) {
@@ -142,9 +160,107 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* ── Second Page ── */}
+          {/* ── Second Page: Data Dashboard Layout ── */}
           <section className="shelf-second-page">
-            {/* The BROWSE GENRE pill lands here as a heading */}
+            <div className="hex-layout-container">
+              
+              <div className="hex-stack">
+                
+                {/* Left: Notebook Window */}
+                <div className="hex-window window-notebook">
+                  <div className="hex-window-header">
+                    <div className="hex-window-title">FICTION</div>
+                    <div className="hex-window-actions">
+                      <button className="hex-btn-small">Notebook</button> 
+                    </div>
+                  </div>
+                  <div className="hex-window-body">
+                    <div className="hex-sidebar">
+                      <div className="side-icon" />
+                      <div className="side-icon" />
+                      <div className="side-icon" />
+                    </div>
+                    <div className="hex-main">
+                      <div className="mock-code">
+                        import numpy as np<br/>
+                        df = load_data("revenue_2026")<br/>
+                        df.groupby("sector").sum()
+                      </div>
+                      <div className="mock-chart">
+                        <div className="mock-line" style={{top: '40%', opacity: 0.4}}></div>
+                        <div className="mock-line" style={{top: '60%', opacity: 0.1}}></div>
+                      </div>
+                      <div className="mock-stats">
+                        <div className="stat-card">
+                          <div className="stat-label">Velocity</div>
+                          <div className="stat-value">84.2%</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-label">Retention</div>
+                          <div className="stat-value">12.4k</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Center: AI/Chat Window */}
+                <div className="hex-window window-chat">
+                  <div className="hex-window-header">
+                    <div className="hex-window-title">NexaCorp product line performance</div>
+                    <div className="hex-window-actions">
+                      <button className="hex-btn-small">Share</button>
+                    </div>
+                  </div>
+                  <div className="hex-window-body">
+                    <div className="hex-main">
+                      <div className="chat-bubble">Can you show me NexaCorp's Q3 sales?</div>
+                      <div className="chat-bubble ai">
+                        I'll help you analyze NexaCorp's revenue. I've pulled data from Q1-Q3.
+                        <div className="mock-chart" style={{height: '100px', marginTop: '12px'}}>
+                           <div className="mock-line" style={{top: '30%', backgroundColor: '#000'}}></div>
+                        </div>
+                      </div>
+                      <div className="chat-bubble ai">
+                        <strong>NexaCorp revenue trends</strong>
+                        <ul style={{fontSize: '0.75rem', paddingLeft: '16px', marginTop: '8px'}}>
+                          <li>Teleportation pads — $42.3M</li>
+                          <li>Quantum drives — $38.7M</li>
+                          <li>Wormhole initiators — $33.1M</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Beautiful Apps Window */}
+                <div className="hex-window window-dashboard">
+                  <div className="hex-window-header">
+                    <div className="hex-window-title">Customer Analytics Dashboard</div>
+                    <div className="hex-window-actions">
+                      <button className="hex-btn-small">Edit</button>
+                      <button className="hex-btn-small">Share</button>
+                    </div>
+                  </div>
+                  <div className="hex-window-body">
+                    <div className="hex-main">
+                      <div className="mock-stats" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
+                        <div className="stat-card"><div className="stat-label">ARR</div><div className="stat-value">$1.2M</div></div>
+                        <div className="stat-card"><div className="stat-label">Churn</div><div className="stat-value">2.1%</div></div>
+                        <div className="stat-card"><div className="stat-label">Growth</div><div className="stat-value">+14%</div></div>
+                      </div>
+                      <div className="mock-chart" style={{height: '240px'}}>
+                         <div style={{position: 'absolute', bottom: 0, left: '10%', width: '15%', height: '60%', background: '#eee'}}></div>
+                         <div style={{position: 'absolute', bottom: 0, left: '30%', width: '15%', height: '80%', background: '#ddd'}}></div>
+                         <div style={{position: 'absolute', bottom: 0, left: '50%', width: '15%', height: '40%', background: '#ccc'}}></div>
+                         <div style={{position: 'absolute', bottom: 0, left: '70%', width: '15%', height: '90%', background: '#bbb'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </section>
 
         </div>
