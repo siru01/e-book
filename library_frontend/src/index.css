@@ -18,7 +18,7 @@ html, body {
   font-family: "Inter", sans-serif;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
-  background-color: #fcfaf9;
+  background-color: #dbd4bd;
   background-image: 
     radial-gradient(#e5e5e5 1.5px, transparent 1.5px),
     linear-gradient(rgba(229, 229, 229, 0.2) 1px, transparent 1px),

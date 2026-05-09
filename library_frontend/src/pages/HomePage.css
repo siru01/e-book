@@ -1,21 +1,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-
-
 /* ── Theme Variables ──────────────────────────────────────── */
 .shelf-wrapper {
   --bg:                #fcfaf9;
-  --bg-secondary:      #f0f0f0;
-  --text:              #1a1a1a;
+  --text:              #000000;
   --text-muted:        #666666;
   --nav-link:          #1a1a1a;
   --nav-link-hover:    #000000;
   --nav-border:        rgba(0,0,0,0.1);
-  --btn-primary-bg:    #111;
-  --btn-primary-text:  #f0f0f0;
-  --btn-primary-hover: #333;
-  --btn-secondary-bg:  rgba(255,255,255,0.1);
-  --btn-secondary-text:#ffffff;
+  --corner-c:          #1a1a1a;
+  --corner-t:          1.5px;
+  --corner-s:          8px;
 }
 
 /* ── Root ─────────────────────────────────────────────────── */
@@ -33,20 +28,18 @@
   position: fixed;
   inset: 0;
   overflow-x: hidden;
-  overflow-y: auto;   /* allow scrolling */
-  scrollbar-width: none;  /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  overflow-y: auto;   
+  scrollbar-width: none;  
+  -ms-overflow-style: none; 
   display: flex;
   flex-direction: column;
-  transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* Chrome, Safari, etc. — Hide scrollbar */
 .shelf-root::-webkit-scrollbar {
   display: none;
 }
 
-/* ── Nav: 3-column grid so brand is always perfectly centred ── */
+/* ── Nav ──────────────────────────────────────────────────── */
 .shelf-nav {
   position: fixed;
   top: 20px;
@@ -60,53 +53,45 @@
   align-items: center;
   height: 60px;
   padding: 0 24px;
-  border-radius: 0; 
-  border: 1px solid rgba(0,0,0,0.21);
-  background: rgba(252, 250, 249, 0.9); 
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95); 
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: none;
 }
- 
-/* Technical Corner Details */
+
+/* Technical Corner Details for Nav */
 .shelf-nav::before, .shelf-nav::after,
-.shelf-morph-overlay::before, .shelf-morph-overlay::after {
+.shelf-cta-pill::before, .shelf-cta-pill::after {
   content: '';
   position: absolute;
   inset: -1px;
   pointer-events: none;
   z-index: 10;
-  --c: #1a1a1a;
-  --t: 1.5px;
-  --s: 8px;
-  opacity: var(--corner-opacity, 1);
-  transition: opacity 0.2s ease;
 }
 
-.shelf-nav::before, .shelf-morph-overlay::before {
+.shelf-nav::before, .shelf-cta-pill::before {
   background: 
-    linear-gradient(to right, var(--c) var(--t), transparent 0) 0 0,
-    linear-gradient(to bottom, var(--c) var(--t), transparent 0) 0 0,
-    linear-gradient(to left, var(--c) var(--t), transparent 0) 100% 0,
-    linear-gradient(to bottom, var(--c) var(--t), transparent 0) 100% 0;
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 100% 0;
   background-repeat: no-repeat;
-  background-size: var(--s) var(--s);
+  background-size: var(--corner-s) var(--corner-s);
 }
 
-.shelf-nav::after, .shelf-morph-overlay::after {
+.shelf-nav::after, .shelf-cta-pill::after {
   background: 
-    linear-gradient(to right, var(--c) var(--t), transparent 0) 0 100%,
-    linear-gradient(to top, var(--c) var(--t), transparent 0) 0 100%,
-    linear-gradient(to left, var(--c) var(--t), transparent 0) 100% 100%,
-    linear-gradient(to top, var(--c) var(--t), transparent 0) 100% 100%;
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 100% 100%;
   background-repeat: no-repeat;
-  background-size: var(--s) var(--s);
+  background-size: var(--corner-s) var(--corner-s);
 }
 
-/* LEFT column */
 .shelf-nav-links {
   display: flex;
-  gap: 20px; /* Stretched links */
+  gap: 40px;
   list-style: none; 
   align-items: center;
   justify-content: flex-start;
@@ -117,78 +102,42 @@
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.2em; /* Stretched links */
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  padding: 6px 16px;
-  border-radius: 0;
-  border: 1px solid transparent; 
-  white-space: nowrap;
-  /*transition: color 0.2s, border-color 0.2s, background 0.2s;*/
+  padding: 6px 0;
+  transition: opacity 0.2s;
 }
 
 .shelf-nav-links a:hover {
-  color: var(--nav-link-hover);
-  border-color: var(--nav-border);
-  background: rgba(0,0,0,0.06);
+  opacity: 0.6;
 }
 
-/* CENTER column — brand */
 .shelf-nav-logo {
   font-family: "Anton", sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--text);
   user-select: none;
   justify-self: center;
 }
 
-/* RIGHT column — removed toggle */
 .shelf-nav-right {
   justify-self: end;
 }
 
-/* ── Hamburger ── */
-.shelf-hamburger {
-  display: none; /* hidden on desktop */
-  flex-direction: column;
-  gap: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-}
-
-.ham-bar {
-  width: 20px;
-  height: 2px;
-  background: var(--text);
-  transition: all 0.3s ease;
-}
-
-.ham-bar--open:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-.ham-bar--open:nth-child(2) { opacity: 0; }
-.ham-bar--open:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Hero & Scroll Container ────────────────────────────────── */
+/* ── Hero & Scroll Container ── */
 .shelf-hero-scroll-container {
-  height: 250vh; /* Scrollable space for zoom transition */
+  height: 200vh; 
   position: relative;
   width: 100%;
-  flex-shrink: 0; /* Ensures the flex container respects the height */
 }
 
 .shelf-hero {
   position: sticky;
   top: 0;
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile */
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -197,439 +146,96 @@
   text-align: center;
   gap: 32px;
   overflow: hidden; 
-  transform: translateZ(0); 
-  will-change: transform;
 }
 
-/* ── Second Page Content ── */
-.shelf-second-page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 6; /* behind morph layer but above scene */
-  display: block;
-  pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-}
-
-/* ── WebGL Liquid Carousel ── */
-.lcarousel-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  user-select: none;
-  cursor: grab;
-}
-
-.lcarousel-container:active {
-  cursor: grabbing;
-}
-
-.lcarousel-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.lcarousel-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-/* Staggered Content Animation */
-.lcarousel-content-animate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 60px;
-  max-width: 900px;
-  gap: 24px;
-  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
-  will-change: transform, opacity;
-  z-index: 25;
-  pointer-events: none;
-}
-
-.lcarousel-content-animate.is-exiting {
-  opacity: 0;
-  transform: scale(0.95);
-  filter: blur(10px);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.lcarousel-content-animate > * {
-  opacity: 0;
-  animation: fadeIn 0.7s ease forwards;
-}
-
-.lcarousel-content-animate .lc-eyebrow { animation-delay: 0.1s; }
-.lcarousel-content-animate .lc-title { animation-delay: 0.2s; }
-.lcarousel-content-animate .lc-sub { animation-delay: 0.3s; }
-.lcarousel-content-animate .lc-btn { animation-delay: 0.4s; }
-
-
-.lc-title {
-  font-family: "Anton", sans-serif;
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1.05;
-  text-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.lc-sub {
-  font-size: clamp(0.95rem, 1.8vw, 1.2rem);
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.6;
-  max-width: 600px;
-  font-weight: 400;
-  text-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.lc-btn {
-  margin-top: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 14px 28px;
-  border-radius: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  pointer-events: auto;
-}
-
-.lc-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-}
-
-.lc-arrow-btn {
-  transition: transform 0.3s ease;
-}
-
-.lc-btn:hover .lc-arrow-btn {
-  transform: translateX(4px);
-}
-
-/* Nav Areas — plain SVG arrows, no circles */
-.lc-nav-area {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 15%;
-  z-index: 20;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-}
-
-.lc-nav-area svg {
-  width: 36px;
-  height: 72px;
-  opacity: 0.45;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.lc-nav-area:hover svg {
-  opacity: 1;
-}
-
-.lc-nav-area-left { 
-  left: 0; 
-  justify-content: flex-start;
-  padding-left: 24px;
-}
-.lc-nav-area-left:hover svg { transform: translateX(-4px); }
-
-.lc-nav-area-right { 
-  right: 0; 
-  justify-content: flex-end;
-  padding-right: 24px;
-}
-.lc-nav-area-right:hover svg { transform: translateX(4px); }
-
-/* Removed gradients to ensure areas are invisible */
-
-/* Nav Arrows */
-/* Removed static nav buttons in favor of directional cursors */
-
-/* Dots */
-.lc-dots {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 10;
-  pointer-events: auto;
-}
-
-.lc-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 0;
-  border: none;
-  background: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  transition: background 0.25s, transform 0.25s;
-  padding: 0;
-}
-
-.lc-dot.active {
-  background: #fff;
-  transform: scale(1.35);
-}
-
-
-/* ── Staggered headline wrapper ── */
+/* ── Hero headlines ── */
 .shelf-headline-wrap {
-  padding-top: 160px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.1;
-  gap: 20px;
-  z-index: 1; 
-  width: 100%; 
-  height: 100%;
-  clip-path: inset(60px 0 0 0); 
-  pointer-events: none;
+  line-height: 1.05;
+  gap: 12px;
+  z-index: 10; 
+  padding-bottom: 20px;
 }
 
-.shelf-headline-wrap > * {
-  pointer-events: auto; /* Re-enable for buttons/links */
-}
-
-/* Line 1 & Line 2 shared */
 .shelf-headline-line {
   display: block;
   font-family: "Anton", sans-serif;
-  font-size: clamp(2.8rem, 10vw, 8rem);
-  text-shadow: 0 4px 12px rgba(0,0,0,0.15); /* fixed syntax */
+  font-size: clamp(3.5rem, 12vw, 9rem);
   font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--text);
   white-space: nowrap;
   text-transform: uppercase;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
-.shelf-headline-line--top {
-  position: relative;
-  z-index: 1;        /* behind the image */
-}
-
-/* Line 2 — sits in front of the image */
-.shelf-headline-line--bottom {
-  font-size: clamp(2.4rem, 9vw, 6.5rem);
-  position: relative;
-  z-index: 3;
-  margin-top: 0;
-}
-
-/* ── Pink stickers ── */
-.shelf-sticker {
-  
-  position: absolute;
-  z-index: 4;
-  animation: sticker-float 4s ease-in-out infinite alternate;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
-}
-
-.shelf-sticker--bulb {
-  bottom: -80px;
-  left: 50px;
-  transform: rotate(-12deg);
-  animation-delay: 0s;
-  width: clamp(100px, 20vw, 180px);
-  height: clamp(100px, 20vw, 180px);
-}
-
-.shelf-sticker--plane {
-  top: 50px;
-  right: -0px; 
-  transform: rotate(18deg); 
-  animation-delay: 1.5s;
-  width: clamp(100px, 20vw, 180px);
-  height: clamp(100px, 20vw, 180px);
-}
-
-.shelf-sticker {
-  position: absolute;
-  z-index: 4;
-  pointer-events: auto;        /* allow hover */
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
-  animation: sticker-float 4s ease-in-out infinite alternate;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* spring back */
-}
-
-.shelf-sticker--bulb:hover {
-  transform: rotate(18deg) translate(12px, -14px) scale(1.15);
-}
-
-.shelf-sticker--plane:hover { 
-  transform: rotate(-12deg) translate(-12px, -14px) scale(1.15);
-}
-
-.sticker-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  mix-blend-mode: multiply;
-}
-
-@keyframes sticker-float {
-  from { transform: rotate(-12deg) translateY(0px); }
-  to   { transform: rotate(-12deg) translateY(-8px); }
-}
-
-.shelf-sticker--plane {
-  animation-name: sticker-float-plane;
-}
-
-@keyframes sticker-float-plane {
-  from { transform: rotate(18deg) translateY(0px); }
-  to   { transform: rotate(18deg) translateY(-8px); }
-}
-
-/* ── Accent image / placeholder (sandwiched between lines) ── */
-/* ── Subtext ── */
 .shelf-subtext {
-  margin-top: 10px;
-  font-size: 1.2rem;
-  color: var(--text-muted);
+  margin-top: 20px;
+  font-size: 1.15rem;
+  color: #888;
   letter-spacing: 0.04em;
   max-width: 700px; 
   line-height: 1.6;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
-/* Action area removed in favor of direct stack */
-
-/* ── Morph Overlay — starts as the glass pill, expands to fill viewport ── */
-/* Initial size + position set here; JS overrides during scroll */
-.shelf-morph-overlay {
-  position: absolute;
-  width:  250px;
+/* ── CTA Pill ── */
+.shelf-cta-pill {
+  width: 260px;
   height: 75px;
-  left: calc(50% - 125px);
-  top:  calc(50% + 180px); /* Moved further down below headings */
-  z-index: 8;
-  pointer-events: auto;
+  margin-top: 40px;
   cursor: pointer;
-  transition: none;
-  will-change: width, height, left, top;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.is-scrolling .shelf-morph-overlay .shelf-glass-inner {
-  animation: none !important;
-  transform: none !important;
+.shelf-cta-pill:hover {
+  transform: translateY(-4px);
 }
 
-/* ── Glass Inner ── */
 .shelf-glass-inner {
-  padding-top: 20px;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-
-  /* Glass effect */
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0,0,0,0.04);
-  border-radius: 0;
-  box-shadow: none;
-
+  border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* NO float animation — removed per user request */
-  transition: border-radius 0.04s linear,
-              background    0.06s ease,
-              border-color  0.06s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
 .glass-content {
-  /* positioned via flexbox now, not absolute */
-  position: relative;
+  font-family: "Anton", sans-serif;
   font-size: 1.1rem;
-  font-weight: 700;
-  font-family: inherit;
   color: #1a1a1a;
-  letter-spacing: 0.05em;
-  text-align: center;
-  white-space: nowrap;
-  /* JS will animate font-size, font-family, letter-spacing */
-  will-change: font-size;
-}
-
-/* When scrolling starts, we stop floating and quickly snap translation to center */
-.is-scrolling .shelf-glass-inner {
-  animation: none !important;
-  transform: translateY(0) !important;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-@keyframes glass-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-20px); }
-}
-
-.shelf-glass-inner:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.glass-content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  text-align: center;
-  transform: translate(-50%, -50%);
-  font-family: "Anton", sans-serif; /* Matched to headings */
-  font-size: 1.1rem;
-  font-weight: 400; /* Anton is usually 400 */
-  color: #1a1a1a;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* ── Serene Scene Background ── */
+.shelf-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: #fcfaf9;
+  background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: fixed; 
+  overflow: hidden;
+  pointer-events: none;
+} 
+
+.scene-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* ── Animations ── */
@@ -645,209 +251,19 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-1 { animation: fadeUp 0.7s ease both 0.1s; }
 .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
 .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
-
-/* Cancel intro animations permanently after first scroll so JS inline styles work smoothly */
-.has-scrolled-once .fade-1,
-.has-scrolled-once .fade-2,
-.has-scrolled-once .fade-3,
-.has-scrolled-once .fade-nav {
-  animation: none !important;
-}
 
 /* ── Mobile ── */
 @media (max-width: 800px) {
   .shelf-nav {
     padding: 0 20px;
     height: 56px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: transparent;
-    /* backdrop-filter: blur(10px); */
+    width: calc(100% - 20px);
   }
 
-  .shelf-nav-logo {
-    font-size: 1.5rem;
-    margin-left: 0;
-  }
-
-  .shelf-hamburger {
-    display: flex;
-    margin-left: 0;
-    z-index: 1001; /* Stay above the mobile menu overlay */
-  }
-
-  .shelf-mobile-menu {
-    position: absolute;
-    top: 100%; /* Perfectly align with the bottom of the navbar */
-    left: 0;
-    right: 0;
-    background: transparent; /* Slightly more opaque glass */
-    backdrop-filter: blur(10px); 
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 30px 20px;
-    gap: 20px;
-    z-index: 998;
-    border-bottom: 1.5px solid rgba(128, 128, 128, 0.25);
-    animation: menuFadeDown 0.3s ease-out forwards;
-  }
-
-  .shelf-mobile-menu a {
-    color: var(--text);
-    font-size: 1.5rem;
-    font-weight: 400;
-    text-align: center;
-    text-decoration: none;
-    font-family: "Anton", sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: color 0.3s ease, transform 0.3s ease;
-  }
-
-  .shelf-mobile-menu a:nth-child(1) { animation: linkEntry 0.4s ease forwards 0.1s; }
-  .shelf-mobile-menu a:nth-child(2) { animation: linkEntry 0.4s ease forwards 0.15s; }
-  .shelf-mobile-menu a:nth-child(3) { animation: linkEntry 0.4s ease forwards 0.2s; }
-
-  @keyframes menuFadeDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes linkEntry {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .shelf-nav-links {
-    display: none;
-  }
-
-  .shelf-headline-wrap {
-    margin-top: 0; 
-    padding-top: 40px; /* Reduced from 120px to push content up on mobile */
-    clip-path: inset(56px 0 0 0); /* Aligned with mobile navbar border */
-  }
-
-  .shelf-headline-line {
-    font-size: 3.5rem;
-    white-space: nowrap;
-    text-align: center;
-    line-height: 1;
-    letter-spacing: 0; 
-  }
-
-  .shelf-hero-img-wrap {
-    width: 50vw;
-    height: 35vw;
-    margin-top: 10px;
-    margin-bottom: 15px;
-  }
-
-  .shelf-sticker--bulb {
-    width: 85px;
-    height: 85px;
-    bottom: -55px;
-    left: -15px;
-  }
-
-  .shelf-sticker--plane {
-    width: 80px;
-    height: 85px;
-    top: -50px;
-    right: -15px;
-  }
-
-  .shelf-subtext {
-    font-size: 1rem;
-    padding: 20px;
-  }
-
-  .glass-content {
-    font-size: 1.1rem;
-  }
-
-  .lcarousel-content-animate {
-    padding: 32px 24px;
-    align-items: center;
-    text-align: center;
-  }
-
-  /* Removed static nav buttons */
-
-  .lc-nav-area {
-    width: 20%;
-  }
-  .lc-nav-area svg {
-    width: 24px;
-    height: 48px;
-  }
-
-  .lc-nav-area-left { padding-left: 12px; }
-  .lc-nav-area-right { padding-right: 12px; }
-
-  .lc-sub { font-size: 1rem; }
-}
-
-/* Glass Content Styles Removed */
-/* ── Serene Scene Background ── */
-.shelf-scene {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background-color: #fcfaf9;
-  background-image: 
-    radial-gradient(#e5e5e5 1.5px, transparent 1.5px),
-    linear-gradient(rgba(229, 229, 229, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(229, 229, 229, 0.2) 1px, transparent 1px);
-  background-size: 10px 10px, 120px 120px, 120px 120px;
-  background-attachment: fixed; 
-  overflow: hidden;
-  pointer-events: none;
-} 
-
-.scene-ambient {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 20%, rgba(0, 0, 0, 0.03) 0%, transparent 60%);
-  animation: ambient-glow 8s ease-in-out infinite alternate;
-}
-
-@keyframes ambient-glow {
-  from { opacity: 0.3; transform: scale(1); }
-  to   { opacity: 0.5; transform: scale(1.1); }
-}
-
-/* Landscape layers removed for Hex style */
-
-.scene-grain {
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Responsiveness for Scene */
-@media (max-width: 800px) {
-  .scene-sun {
-    top: 10%;
-    right: 10%;
-    width: 60px;
-    height: 60px;
-  }
-  .scene-layer {
-    height: 30vh;
-    bottom: -5vh;
-  }
+  .shelf-nav-logo { font-size: 1.4rem; }
+  .shelf-headline-line { font-size: 3.5rem; }
+  .shelf-nav-links { display: none; }
+  .shelf-cta-pill { width: 220px; height: 65px; }
 }
