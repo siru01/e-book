@@ -322,7 +322,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 120px;
+  padding-top: 120px; 
   padding-bottom: 120px;
   z-index: 20;
 }
@@ -363,16 +363,16 @@ html, body {
 }
 
 .window-notebook {
-  width: 440px;
-  height: 340px;
-  left: 0;
-  top: 40px;
+  width: 440px; 
+  height: 460px;
+  left: 0; 
+  top: 25px; 
   z-index: 1;
 }
-
+ 
 .window-chat {
-  width: 380px;
-  height: 460px;
+  width: 480px;
+  height: 499px;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
@@ -381,10 +381,10 @@ html, body {
 }
 
 .window-dashboard {
-  width: 460px;
-  height: 380px;
+  width: 440px;
+  height: 460px;
   right: 0;
-  top: 80px;
+  top: 25px;
   z-index: 2;
 }
 
