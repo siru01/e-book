@@ -241,7 +241,7 @@ const SignUp = () => {
         )}
 
       </div>
-    </div>
+      </div>
   );
 };
 

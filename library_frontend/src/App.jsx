@@ -12,6 +12,7 @@ import "./App.css";
 import ForgotPasswordPage from './pages/Forgotpasswordpage';
 import GlobalMouseEffect from "./components/GlobalMouseEffect";
 import InsightsPage from "./pages/InsightsPage";
+import Navbar from "./components/Navbar";
 
 
 
@@ -79,6 +80,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <GlobalMouseEffect />
+          <Navbar />
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>

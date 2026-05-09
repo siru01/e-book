@@ -20,12 +20,6 @@ const InsightsPage = () => {
 
   return (
     <div className="insights-root">
-      <nav className="insights-nav">
-        <div className="insights-nav-left" onClick={() => navigate('/dashboard')}>
-           <span className="insights-back-arrow">←</span>
-           <span className="insights-brand">SHELF / INSIGHTS</span>
-        </div>
-      </nav>
 
       <main className="insights-container">
         {/* Row 1 */}

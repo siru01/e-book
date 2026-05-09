@@ -16,7 +16,6 @@ function SceneBackground({ firstBgRef, secondBgRef }) {
 /* ─── Main landing page ─── */
 export default function HomePage() {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollRef   = useRef(null);
   const headlineRef = useRef(null);
@@ -118,50 +117,6 @@ export default function HomePage() {
         className="shelf-root" 
         ref={scrollRef} 
       >
-
-        {/* ── Nav ── */}
-        <nav className="shelf-nav fade-nav">
-          <ul className="shelf-nav-links">
-            <li><a href="#">Browse</a></li>
-            <li>
-              <a
-                href="/dashboard"
-                onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
-              >
-                My Library
-              </a>
-            </li>
-            <li><a href="#">About</a></li>
-          </ul>
-
-          <span className="shelf-nav-logo">Shelf</span>
-
-          <div className="shelf-nav-right">
-            <button
-              className="shelf-hamburger"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-            </button>
-          </div>
-
-          {mobileMenuOpen && (
-            <div className="shelf-mobile-menu">
-              <a href="#" onClick={() => setMobileMenuOpen(false)}>Browse</a>
-              <a
-                href="/dashboard"
-                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}
-              >
-                My Library
-              </a>
-              <a href="#" onClick={() => setMobileMenuOpen(false)}>About</a>
-            </div>
-          )}
-        </nav>
-
         {/* ── Scroll Container ── */}
         <div className="shelf-hero-scroll-container">
 

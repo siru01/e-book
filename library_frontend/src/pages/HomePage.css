@@ -44,28 +44,8 @@ html, body {
   display: none;
 }
 
-/* ── Nav ──────────────────────────────────────────────────── */
-.shelf-nav {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 40px);
-  max-width: 1200px;
-  z-index: 1000;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: center;
-  height: 60px;
-  padding: 0 24px;
-  border: 1px solid rgba(0,0,0,0.1);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
 
 /* Technical Corner Details for Nav */
-.shelf-nav::before, .shelf-nav::after,
 .shelf-cta-pill::before, .shelf-cta-pill::after {
   content: '';
   position: absolute;
@@ -74,7 +54,7 @@ html, body {
   z-index: 10;
 }
 
-.shelf-nav::before, .shelf-cta-pill::before {
+.shelf-cta-pill::before {
   background:
     linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 0,
     linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 0 0,
@@ -84,7 +64,7 @@ html, body {
   background-size: var(--corner-s) var(--corner-s);
 }
 
-.shelf-nav::after, .shelf-cta-pill::after {
+.shelf-cta-pill::after {
   background:
     linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
     linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
@@ -94,43 +74,6 @@ html, body {
   background-size: var(--corner-s) var(--corner-s);
 }
 
-.shelf-nav-links {
-  display: flex;
-  gap: 40px;
-  list-style: none;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.shelf-nav-links a {
-  color: var(--nav-link);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 6px 0;
-  transition: opacity 0.2s;
-}
-
-.shelf-nav-links a:hover {
-  opacity: 0.6;
-}
-
-.shelf-nav-logo {
-  font-family: "Anton", sans-serif;
-  font-size: 1.3rem;
-  font-weight: 400;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--text);
-  user-select: none;
-  justify-self: center;
-}
-
-.shelf-nav-right {
-  justify-self: end;
-}
 
 /* ── Hero & Scroll Container ── */
 .shelf-hero-scroll-container {

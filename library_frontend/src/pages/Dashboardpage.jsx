@@ -75,62 +75,6 @@ const HERO_CARDS = [
   { key: "previously_read", label: "FINISHED", sub: "Completed", Icon: IconCheck, stat: (c) => `${c.done} DONE` },
 ];
 
-/* ══════════════════════════════════════════════════════════════════
-   Profile Dropdown
- ══════════════════════════════════════════════════════════════════ */
-function ProfileDropdown({ username, email, onLogout, onChangeEmail }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  const initials = username
-    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div className="profile-wrap" ref={ref}>
-      <button
-        className="profile-trigger"
-        onClick={() => setOpen(o => !o)}
-        aria-label="Profile menu"
-      >
-        <span className="avatar-initials">{initials}</span>
-      </button>
-
-      {open && (
-        <div className="profile-dropdown">
-          <div className="profile-dropdown-header">
-            <div className="profile-dropdown-avatar">{initials}</div>
-            <div className="profile-dropdown-info">
-              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
-              <span className="profile-dropdown-email">{email || "—"}</span>
-            </div>
-          </div>
-
-          <div className="profile-dropdown-divider" />
-
-          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onChangeEmail(); }}>
-            <IconMail />
-            Change Email
-          </button>
-
-          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
-            <IconLogout />
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ── Panel Book Row ── */
 function PanelBookRow({ book, extra }) {
   return (
@@ -537,14 +481,6 @@ export default function DashboardPage() {
     setShowLoader(false);
   }, []);
 
-  const resolvedEmail = useMemo(() => {
-    try {
-      const t = sessionStorage.getItem("shelf_token");
-      if (!t) return "";
-      const payload = JSON.parse(atob(t.split(".")[1]));
-      return payload.email || "";
-    } catch { return ""; }
-  }, [token]);
 
   const [activePanel, setActivePanel] = useState("");
   const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
@@ -552,7 +488,6 @@ export default function DashboardPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchAnimationDone, setSearchAnimationDone] = useState(false);
   const [searched, setSearched] = useState(() => !!new URLSearchParams(window.location.search).get("q"));
-  const [phIndex, setPhIndex] = useState(0);
 
   const greeting = useMemo(() => getGreeting(username), [username]);
   const [subtitle] = useState(() => {
@@ -563,12 +498,6 @@ export default function DashboardPage() {
     return picked;
   });
 
-  const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
-
-  useEffect(() => {
-    const t = setInterval(() => setPhIndex(i => (i + 1) % PLACEHOLDER_WORDS.length), 2800);
-    return () => clearInterval(t);
-  }, []);
 
   const { data: summary = {}, isLoading: summaryLoading } = useDashboardSummary(token);
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
@@ -791,38 +720,6 @@ export default function DashboardPage() {
           label="Preparing your library…"
         />
       )}
-      <nav className="dash-navbar">
-        <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</span>
-
-        <div className="dash-nav-links">
-          <span className="dash-nav-link dash-nav-link-active">Library</span>
-          <span className="dash-nav-link">Journal</span>
-          <span className="dash-nav-link" onClick={() => navigate("/insights")} style={{ cursor: "pointer" }}>Insights</span>
-        </div>
-
-        <div className="dash-nav-search">
-          <div className="dash-search-bar">
-            <IconSearch />
-            <input
-              className="dash-search-input"
-              placeholder={`Search for ${PLACEHOLDER_WORDS[phIndex]}…`}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch(searchQuery)}
-            />
-          </div>
-        </div>
-
-        <div className="dash-nav-right">
-          <button className="dash-icon-btn"><IconBell /></button>
-          <ProfileDropdown
-            username={username}
-            email={resolvedEmail}
-            onLogout={handleLogout}
-            onChangeEmail={() => setIsChangeEmailOpen(true)}
-          />
-        </div>
-      </nav>
 
       <main className="dash-main">
         {!searched && (
