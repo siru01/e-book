@@ -278,14 +278,32 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background:
-    radial-gradient(#d1d1d1 1px, transparent 1px),
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
-    linear-gradient(160deg, #fcfaf9 0%, #f0edea 100%);
-  background-size: 24px 24px, 100% 100%, 100% 100%;
-  background-attachment: fixed;
+  background-color: #fcfaf9;
   overflow: hidden;
   pointer-events: none;
+}
+
+.scene-bg-layer {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+.layer-dots {
+  /* Increased dot size to 1.5px and darkened color for visibility */
+  background-image: radial-gradient(#aaa 1px, transparent 1px);
+  background-size: 10px 10px;
+  z-index: 1;
+}
+
+.layer-grid {
+  /* Increased line thickness to 1px and darkened color */
+  background-image: 
+    linear-gradient(#ddd 1px, transparent 1px),
+    linear-gradient(to right, #ddd 1px, transparent 1px);
+  background-size: 35px 35px;
+  z-index: 2;
+  opacity: 0; /* Animated via JS */
 }
 
 .scene-grain {
@@ -294,6 +312,7 @@ html, body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   opacity: 0.5;
   pointer-events: none;
+  z-index: 3;
 }
 
 /* ── Animations ── */
@@ -363,7 +382,8 @@ html, body {
 }
 
 .window-notebook {
-  width: 440px; 
+  border: 1px solid black;
+  width: 500px; 
   height: 460px;
   left: 0; 
   top: 25px; 
@@ -371,21 +391,49 @@ html, body {
 }
  
 .window-chat {
+  border: 1px solid black;
   width: 480px;
   height: 499px;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
   z-index: 3;
-  border: 1px solid rgba(0,0,0,0.12);
+
 }
 
 .window-dashboard {
-  width: 440px;
+  border: 1px solid black;
+  width: 500px;
   height: 460px;
   right: 0;
   top: 25px;
   z-index: 2;
+}
+
+/* ── Interactive Hover Shifts ── */
+.hex-stack {
+  transition: all 0.4s ease;
+}
+
+/* If hovering left window, shift middle window right */
+.hex-stack:has(.window-notebook:hover) .window-chat {
+  transform: translateX(-30%);
+}
+
+/* If hovering right window, shift middle window left */
+.hex-stack:has(.window-dashboard:hover) .window-chat {
+  transform: translateX(-70%);
+}
+
+/* Smooth transition for the middle window */
+.window-chat {
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+/* Disable hover lift for middle screen */
+.window-chat:hover {
+  transform: translateX(-50%) translateY(0);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.04); /* keep default shadow */
 }
 
 /* Window Internals */

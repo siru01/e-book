@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
 /* ── Serene Scene Background ── */
-function SceneBackground() {
+function SceneBackground({ firstBgRef, secondBgRef }) {
   return (
     <div className="shelf-scene">
+      <div className="scene-bg-layer layer-dots" ref={firstBgRef} />
+      <div className="scene-bg-layer layer-grid" ref={secondBgRef} />
       <div className="scene-grain" />
     </div>
   );
@@ -19,6 +21,8 @@ export default function HomePage() {
   const scrollRef   = useRef(null);
   const headlineRef = useRef(null);
   const ctaRef      = useRef(null);
+  const firstBgRef  = useRef(null);
+  const secondBgRef = useRef(null);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -39,6 +43,18 @@ export default function HomePage() {
       if (headlineRef.current) {
         const opacity = Math.max(0, 1 - progress * 2.5);
         headlineRef.current.style.opacity = opacity;
+      }
+
+      // 1.5 Background Fade: transition from dots to grid
+      // Make dots disappear faster (completely gone at 0.8 progress)
+      if (firstBgRef.current) {
+        const dotOpacity = Math.max(0, 1 - progress / 0.8);
+        firstBgRef.current.style.opacity = dotOpacity;
+      }
+      // Make grid appear sooner (fully visible at 0.9 progress)
+      if (secondBgRef.current) {
+        const gridOpacity = Math.min(1, progress / 0.9);
+        secondBgRef.current.style.opacity = gridOpacity;
       }
 
       // 2. CTA Pill: slide from initial 75vh position up to docking position
@@ -97,7 +113,7 @@ export default function HomePage() {
 
   return (
     <div className="shelf-wrapper" data-theme="light">
-      <SceneBackground />
+      <SceneBackground firstBgRef={firstBgRef} secondBgRef={secondBgRef} />
       <div 
         className="shelf-root" 
         ref={scrollRef} 
