@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
-/* ── Serene Scene Background (Pure JSX/CSS) ── */
+/* ── Serene Scene Background ── */
 function SceneBackground() {
   return (
     <div className="shelf-scene">
@@ -16,39 +16,75 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const scrollRef = useRef(null);
-  const heroContentRef = useRef(null);
+  const scrollRef   = useRef(null);
+  const headlineRef = useRef(null);
+  const ctaRef      = useRef(null);
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
+    // Nav: top=20px, height=60px → bottom edge at 80px. Dock pill 10px below → 90px.
+    const DOCKED_TOP = 90; 
+    const PILL_HEIGHT = 65;
+
     const updateScroll = () => {
       const scrolled = container.scrollTop;
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      const progress = maxScroll > 0 ? Math.min(scrolled / maxScroll, 1) : 0;
-      
-      // Simple fade out of the entire hero content as we scroll to the blank page
-      if (heroContentRef.current) {
-        const opacity = Math.max(0, 1 - progress * 2.5);
-        const translateY = -progress * 500;
-        heroContentRef.current.style.opacity = opacity;
-        heroContentRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
+      const vh = window.innerHeight;
+
+      // progress: 0 at top, 1 when scrolled one full viewport height
+      const progress = Math.min(scrolled / vh, 1);
+
+      // 1. Headline: fade out + fly upward
+      if (headlineRef.current) {
+        const opacity = Math.max(0, 1 - progress * 2.2);
+        const translateY = -progress * 250;
+        headlineRef.current.style.opacity = opacity;
+        headlineRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
+      }
+
+      // 2. CTA Pill: slide from initial 85vh position up to docking position
+      if (ctaRef.current) {
+        const scale = 1 - progress * 0.15; // Docks at 85% scale
+        const scaledHeight = PILL_HEIGHT * scale;
+        const targetCenterY = DOCKED_TOP + scaledHeight / 2;
+        
+        // We start at 85vh (matches CSS)
+        const startCenterY = vh * 0.85;
+
+        const currentCenterY = startCenterY + (targetCenterY - startCenterY) * progress;
+
+        ctaRef.current.style.top = `${currentCenterY}px`;
+        ctaRef.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        
+        if (progress > 0.98) {
+          ctaRef.current.classList.add("is-docked");
+        } else {
+          ctaRef.current.classList.remove("is-docked");
+        }
       }
     };
 
-    const handleScroll = () => {
-      window.requestAnimationFrame(updateScroll);
-    };
+    // Initial position
+    updateScroll();
 
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
+    const onScroll = () => requestAnimationFrame(updateScroll);
+    container.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateScroll);
+
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateScroll);
+    };
   }, []);
 
   return (
     <div className="shelf-wrapper" data-theme="light">
       <SceneBackground />
-      <div className="shelf-root" ref={scrollRef}>
+      <div 
+        className="shelf-root" 
+        ref={scrollRef} 
+      >
 
         {/* ── Nav ── */}
         <nav className="shelf-nav fade-nav">
@@ -64,12 +100,12 @@ export default function HomePage() {
             </li>
             <li><a href="#">About</a></li>
           </ul>
-          
+
           <span className="shelf-nav-logo">Shelf</span>
-          
+
           <div className="shelf-nav-right">
-            <button 
-              className="shelf-hamburger" 
+            <button
+              className="shelf-hamburger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -82,8 +118,8 @@ export default function HomePage() {
           {mobileMenuOpen && (
             <div className="shelf-mobile-menu">
               <a href="#" onClick={() => setMobileMenuOpen(false)}>Browse</a>
-              <a 
-                href="/dashboard" 
+              <a
+                href="/dashboard"
                 onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}
               >
                 My Library
@@ -93,40 +129,41 @@ export default function HomePage() {
           )}
         </nav>
 
+        {/* ── Scroll Container ── */}
         <div className="shelf-hero-scroll-container">
+
+          {/* ── Hero (sticky, fades on scroll) ── */}
           <section className="shelf-hero">
-            
-            <div className="shelf-hero-content-reveal" ref={heroContentRef}>
-              {/* ── Hero headlines ── */}
-              <div className="shelf-headline-wrap fade-2">
-                <span className="shelf-headline-line">
-                  Unlock stories
-                </span>
-                <span className="shelf-headline-line">
-                  expand minds
-                </span>
-                <p className="shelf-subtext fade-3">
-                  One digital library for every kind of reader.
-                </p>
-
-                {/* Technical CTA Pill */}
-                <div 
-                  className="shelf-cta-pill fade-3"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  <div className="shelf-glass-inner">
-                    <span className="glass-content">
-                      BROWSE GENRE
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="shelf-headline-wrap fade-2" ref={headlineRef}>
+              <span className="shelf-headline-line">Unlock stories</span>
+              <span className="shelf-headline-line">expand minds</span>
+              <p className="shelf-subtext fade-3">
+                One digital library for every kind of reader.
+              </p>
             </div>
-
           </section>
+
+          {/* ── Second Page ── */}
+          <section className="shelf-second-page">
+            {/* The BROWSE GENRE pill lands here as a heading */}
+          </section>
+
+        </div>
+
+        {/* ── CTA Pill — fixed, animated by JS ──
+            Lives outside the scroll container so it's truly viewport-relative.
+            z-index 999 keeps it below the nav (1000) once docked. ── */}
+        <div
+          className="shelf-cta-pill fade-3"
+          ref={ctaRef}
+          onClick={() => navigate("/dashboard")}
+        >
+          <div className="shelf-glass-inner">
+            <span className="glass-content">BROWSE GENRE</span>
+          </div>
         </div>
 
       </div>
-    </div>        
+    </div>
   );
 }
