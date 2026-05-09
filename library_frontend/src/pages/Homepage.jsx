@@ -35,26 +35,25 @@ export default function HomePage() {
       // progress: 0 at top, 1 when scrolled one full viewport height
       const progress = Math.min(scrolled / vh, 1);
 
-      // 1. Headline: fade out + fly upward
+      // 1. Headline: fade out as it scrolls away
       if (headlineRef.current) {
-        const opacity = Math.max(0, 1 - progress * 2.2);
-        const translateY = -progress * 250;
+        const opacity = Math.max(0, 1 - progress * 2.5);
         headlineRef.current.style.opacity = opacity;
-        headlineRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
       }
 
-      // 2. CTA Pill: slide from initial 85vh position up to docking position
+      // 2. CTA Pill: slide from initial 75vh position up to docking position
       if (ctaRef.current) {
-        const scale = 1 - progress * 0.15; // Docks at 85% scale
+        const scale = 1 - progress * 0.15;
         const scaledHeight = PILL_HEIGHT * scale;
         const targetCenterY = DOCKED_TOP + scaledHeight / 2;
         
-        // We start at 85vh (matches CSS)
-        const startCenterY = vh * 0.85;
+        // Match your latest CSS (75% start)
+        const startCenterY = vh * 0.75;
 
         const currentCenterY = startCenterY + (targetCenterY - startCenterY) * progress;
 
         ctaRef.current.style.top = `${currentCenterY}px`;
+        // Ensure centering is maintained
         ctaRef.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
         
         if (progress > 0.98) {
