@@ -102,15 +102,15 @@ function BookCard({ book }) {
   return (
     <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
       <div className="book-card-cover">
-        {book.cover && (
-          <img 
-            src={book.cover} 
-            alt={book.title} 
-            loading="lazy" 
-            referrerPolicy="no-referrer"
-            onError={handleImgError}
-          />
-        )}
+          {book.cover && (
+            <img 
+              src={book.cover} 
+              alt={book.title} 
+              loading="lazy" 
+              referrerPolicy="no-referrer"
+              onError={handleImgError}
+            />
+          )}
         <div className="book-card-placeholder" style={{ display: book.cover ? 'none' : 'flex' }}>
           <div className="placeholder-content">
             <span className="placeholder-title">{book.title}</span>

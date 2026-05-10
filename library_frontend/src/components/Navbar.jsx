@@ -99,13 +99,38 @@ export default function Navbar() {
     return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
   }, [showInsightsSearch]);
 
+  const [isSearchHidden, setIsSearchHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY <= 10) {
+        setIsSearchHidden(false);
+        return;
+      }
+      
+      if (currentScrollY < lastScrollY.current) {
+        // Scrolling UP
+        setIsSearchHidden(false);
+      } else if (currentScrollY > lastScrollY.current) {
+        // Scrolling DOWN
+        setIsSearchHidden(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const isDashboard = location.pathname === '/dashboard';
   const isInsights = location.pathname === '/insights';
   const isBookOverview = location.pathname.startsWith('/book/');
   const isReader = location.pathname.startsWith('/read/');
   const isDashboardArea = isDashboard || isInsights || isBookOverview || isReader;
   
-  const showSubNav = isDashboard || (isInsights && showInsightsSearch); // Search row only on Dashboard or when toggled on Insights
+  const showSubNav = (isDashboard || (isInsights && showInsightsSearch)); 
 
   const handleSearch = (q) => {
     if (!q || !q.trim()) return;
@@ -230,7 +255,7 @@ export default function Navbar() {
 
       {/* ── Sub-Nav Search Row (Dashboard & Insights Only) ── */}
       {showSubNav && (
-        <div className="shelf-sub-nav">
+        <div className={`shelf-sub-nav ${isSearchHidden ? 'dash-search-hidden' : ''}`}>
           <div className="dash-search-bar">
             <IconSearch />
             <input
