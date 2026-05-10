@@ -130,73 +130,73 @@ const SignUp = () => {
   return (
     <div className="signup-container">
       <div className={`signup-card ${step === 2 ? 'otp-mode' : ''}`}>
-        <div className="logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</div>
         
         {step === 1 && (
           <>
-            <h2>Create Account</h2>
-            <p className="subtitle">Join our community of readers</p>
-
             <form onSubmit={handleSubmit}>
               {error && <p className="error-message">{error}</p>}
               
               <div className="input-group">
                 <label>Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Choose a username"
-                  required
-                  disabled={loading}
-                />
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="ENTER YOUR USERNAME"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="input-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  disabled={loading}
-                />
+                <label>Email Address</label>
+                <div className="input-wrapper">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ENTER YOUR EMAIL"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="input-group">
                 <label>Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
-                  required
-                  disabled={loading}
-                />
+                <div className="input-wrapper">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="CHOOSE A PASSWORD"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="input-group">
-                <label>Re-enter Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                  disabled={loading}
-                />
+                <label>Confirm Password</label>
+                <div className="input-wrapper">
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="RE-ENTER PASSWORD"
+                    required
+                  />
+                </div>
               </div>
 
               <button type="submit" className="btn-black" disabled={loading}>
-                {loading ? 'SENDING OTP...' : 'SIGN UP'}
+                {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
               </button>
             </form>
             
             <div className="login-link">
               <p>
                 Already have an account?{' '}
-                <span onClick={() => navigate('/login')} className="link-text">
+                <span onClick={() => navigate('/login')} className="link-text" style={{ cursor: "pointer", color: "#000", fontWeight: "700" }}>
                   Log in
                 </span>
               </p>

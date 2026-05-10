@@ -5,63 +5,78 @@
   align-items: center;
   justify-content: center;
   background-color: #f5f5f5;
-  background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image: radial-gradient(#d1d1d1 1.2px, transparent 1px);
+  background-size: 10px 10px;
   font-family: 'Inter', sans-serif;
-  padding: 20px;
+  padding: 100px 20px 60px; /* Offset for floating navbar */
 }
 
 /* ── Card ── */
 .signup-card {
+  position: relative;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 0px !important;
   padding: 48px 40px;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  --corner-c: #000000;
+  --corner-t: 2px;
+  --corner-s: 10px;
 }
 
-/* ── Logo ── */
-.signup-card .logo {
-  font-family: 'Anton', sans-serif;
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: 2px;
-  color: #000;
-  margin-bottom: 4px;
+/* Technical Corner Details for Card */
+.signup-card::before, .signup-card::after {
+  content: '';
+  position: absolute;
+  inset: -4px; /* Floating gap */
+  pointer-events: none;
+  z-index: 10;
+}
+
+.signup-card::before {
+  background:
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: var(--corner-s) var(--corner-s);
+}
+
+.signup-card::after {
+  background:
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: var(--corner-s) var(--corner-s);
 }
 
 /* ── Headings ── */
 .signup-card h2 {
-  font-family: 'Anton', sans-serif;
   font-size: 1.8rem;
-  font-weight: 400;
+  font-weight: 700;
   color: #111;
   margin-top: 8px;
+  text-align: center;
 }
 
 .signup-card .subtitle {
   font-size: 0.95rem;
   color: #666;
   margin-bottom: 16px;
-}
-
-/* ── Error Message ── */
-.error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  margin-bottom: 16px;
-  border-left: 3px solid #d32f2f;
+  text-align: center;
 }
 
 /* ── Input Group ── */
 .input-group {
+  font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -69,193 +84,163 @@
 }
 
 .input-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #000;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
 }
 
-.input-group input {
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  --ic-c: #000000;
+  --ic-t: 1px;
+  --ic-s: 8px;
+}
+
+/* Corner marks for individual inputs */
+.input-wrapper::before, .input-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -4px; /* Floating gap */
+  pointer-events: none;
+  z-index: 5;
+}
+
+.input-wrapper::before {
+  background:
+    linear-gradient(to right, var(--ic-c) var(--ic-t), transparent 0) 0 0,
+    linear-gradient(to bottom, var(--ic-c) var(--ic-t), transparent 0) 0 0,
+    linear-gradient(to left, var(--ic-c) var(--ic-t), transparent 0) 100% 0,
+    linear-gradient(to bottom, var(--ic-c) var(--ic-t), transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: var(--ic-s) var(--ic-s);
+}
+
+.input-wrapper::after {
+  background:
+    linear-gradient(to right, var(--ic-c) var(--ic-t), transparent 0) 0 100%,
+    linear-gradient(to top, var(--ic-c) var(--ic-t), transparent 0) 0 100%,
+    linear-gradient(to left, var(--ic-c) var(--ic-t), transparent 0) 100% 100%,
+    linear-gradient(to top, var(--ic-c) var(--ic-t), transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: var(--ic-s) var(--ic-s);
+}
+
+.input-wrapper input {
+  width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid #eee;
+  border-radius: 0px !important;
   font-size: 0.95rem;
   font-family: 'Inter', sans-serif;
   color: #111;
   background: #fafafa;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
   outline: none;
 }
 
 .input-group input:focus {
   border-color: #000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-  background: #fff;
+  background: #ffffff;
 }
 
 .input-group input::placeholder {
   color: #aaa;
-}
-
-.input-group input:disabled {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }
 
 /* ── Submit Button ── */
 .btn-black {
+  position: relative;
   width: 100%;
   padding: 14px;
   background-color: #000;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 0px !important;
   font-size: 0.95rem;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
   margin-top: 8px;
-  font-family: 'Anton', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+  
+  --btn-corner: #ffffff;
+  --btn-s: 8px;
+  --btn-t: 1.5px;
+}
+
+.btn-black::before, .btn-black::after {
+  content: '';
+  position: absolute;
+  inset: -4px; /* Floating gap */
+  pointer-events: none;
+  z-index: 10;
+}
+
+.btn-black::before {
+  background:
+    linear-gradient(to right, var(--btn-corner) var(--btn-t), transparent 0) 0 0,
+    linear-gradient(to bottom, var(--btn-corner) var(--btn-t), transparent 0) 0 0,
+    linear-gradient(to left, var(--btn-corner) var(--btn-t), transparent 0) 100% 0,
+    linear-gradient(to bottom, var(--btn-corner) var(--btn-t), transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: var(--btn-s) var(--btn-s);
+}
+
+.btn-black::after {
+  background:
+    linear-gradient(to right, var(--btn-corner) var(--btn-t), transparent 0) 0 100%,
+    linear-gradient(to top, var(--btn-corner) var(--btn-t), transparent 0) 0 100%,
+    linear-gradient(to left, var(--btn-corner) var(--btn-t), transparent 0) 100% 100%,
+    linear-gradient(to top, var(--btn-corner) var(--btn-t), transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: var(--btn-s) var(--btn-s);
 }
 
 .btn-black:hover:not(:disabled) {
-  background-color: #222;
-}
-
-.btn-black:active:not(:disabled) {
-  transform: scale(0.98);
+  background-color: #333;
 }
 
 .btn-black:disabled {
-  background-color: #555;
-  cursor: not-allowed;
   opacity: 0.7;
-}
-
-/* ── Login Link ── */
-.login-link {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.link-text {
-  color: #000;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-
-.link-text:hover {
-  color: #444;
-}
-
-/* ── Responsive Adjustments ── */
-@media (max-width: 480px) {
-  .signup-card {
-    padding: 32px 24px;
-  }
-  
-  .signup-card h2 {
-    font-size: 1.5rem;
-  }
-  
-  .input-group input {
-    padding: 10px 14px;
-  }
-  
-  .btn-black {
-    padding: 12px;
-  }
-}
-
-/* ── OTP Verification Step ── */
-.otp-mode {
-  align-items: center;
-}
-
-.otp-verification-step {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.otp-verification-step h2 {
-  text-align: center;
-  margin-bottom: 5px;
-}
-
-.otp-verification-step .subtitle {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.otp-inputs-container {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-
-.otp-digit-input {
-  width: 48px;
-  height: 58px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  text-align: center;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  background: #fafafa;
-  transition: all 0.2s ease;
-  color: #111;
-  padding: 0;
-}
-
-.otp-digit-input:focus {
-  border-color: #000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-  background: #fff;
-  outline: none;
-}
-
-.otp-digit-input:disabled {
-  background-color: #f0f0f0;
   cursor: not-allowed;
 }
 
-.btn-verify {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.resend-container {
+/* ── Links ── */
+.signup-card p:last-child {
+  margin-top: 24px;
   font-size: 0.9rem;
   color: #666;
   text-align: center;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
-.back-link {
-  display: inline-block;
-  margin-top: 12px;
+.signup-card p:last-child a {
+  color: #000;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.signup-card p:last-child a:hover {
+  text-decoration: underline;
+}
+
+/* ── OTP Mode ── */
+.signup-card.otp-mode {
+  max-width: 400px;
+}
+
+.error-message {
+  color: #ff0000;
   font-size: 0.85rem;
+  margin-bottom: 16px;
   text-align: center;
-}
-
-.mt-2 {
-  margin-top: 8px;
-}
-
-.success-text {
-  color: #0288d1;
-  background-color: #e1f5fe;
-  border-left-color: #0288d1;
+  font-weight: 500;
 }

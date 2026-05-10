@@ -175,15 +175,19 @@ export default function Navbar() {
               />
             </div>
           ) : (
-            <button
-              className="shelf-hamburger"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-            </button>
+            <div className="landing-nav-actions">
+              <span className="nav-action-link" onClick={() => navigate("/login")}>Log In</span>
+              <button className="nav-action-btn" onClick={() => navigate("/signup")}>Create Account</button>
+              <button
+                className="shelf-hamburger"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+              </button>
+            </div>
           )}
         </div>
 
