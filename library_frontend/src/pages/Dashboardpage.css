@@ -196,7 +196,7 @@
 .dash-main {
   max-width: 1130px;
   margin: 0 auto;
-  padding: 40px 32px 80px;
+  padding: 160px 32px 80px; /* Increased top padding to clear fixed nav + sub-nav */
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -209,7 +209,8 @@
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .dash-greeting {

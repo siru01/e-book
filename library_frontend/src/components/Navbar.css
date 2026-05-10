@@ -120,14 +120,63 @@
   max-width: 500px;
 }
 
+.shelf-sub-nav {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 800px;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .dash-search-bar {
   display: flex; align-items: center; gap: 10px;
   width: 100%;
-  background: #f7f7f7; border-radius: 50px; padding: 10px 18px;
-  border: 1.5px solid #000000;
+  background: #ffffff; 
+  border-radius: 0px; 
+  padding: 12px 20px;
+  border: 1px solid #000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
   transition: all 0.2s;
+  position: relative;
 }
-.dash-search-bar:focus-within { background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+/* Technical corners for search bar */
+.dash-search-bar::before, .dash-search-bar::after {
+  content: ''; position: absolute; inset: -1px; pointer-events: none;
+}
+.dash-search-bar::before {
+  background: 
+    linear-gradient(to right, #000 1.5px, transparent 0) 0 0,
+    linear-gradient(to bottom, #000 1.5px, transparent 0) 0 0,
+    linear-gradient(to left, #000 1.5px, transparent 0) 100% 0,
+    linear-gradient(to bottom, #000 1.5px, transparent 0) 100% 0;
+  background-repeat: no-repeat; background-size: 8px 8px;
+}
+.dash-search-bar::after {
+  background: 
+    linear-gradient(to right, #000 1.5px, transparent 0) 0 100%,
+    linear-gradient(to top, #000 1.5px, transparent 0) 0 100%,
+    linear-gradient(to left, #000 1.5px, transparent 0) 100% 100%,
+    linear-gradient(to top, #000 1.5px, transparent 0) 100% 100%;
+  background-repeat: no-repeat; background-size: 8px 8px;
+}
+
+.dash-search-bar:focus-within { 
+  background: #fff; 
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1); 
+  transform: translateY(-1px); 
+}
 .dash-search-input { flex: 1; border: none; background: none; outline: none; font-size: .85rem; color: #111; font-family: 'Inter', sans-serif; }
 
 .dash-nav-right-inner { display: flex; align-items: center; gap: 16px; }

@@ -105,41 +105,76 @@ export default function Navbar() {
   }, [token]);
 
   return (
-    <nav className="shelf-nav">
-      {/* ── Left Side ── */}
-      <div className="shelf-nav-left">
-        {isDashboardArea ? (
-          <div className="dash-nav-links">
-            <span 
-              className={`dash-nav-link ${isDashboard ? 'dash-nav-link-active' : ''}`}
-              onClick={() => navigate("/dashboard")}
+    <>
+      <nav className="shelf-nav">
+        {/* ── Left Side ── */}
+        <div className="shelf-nav-left">
+          {isDashboardArea ? (
+            <div className="dash-nav-links">
+              <span 
+                className={`dash-nav-link ${isDashboard ? 'dash-nav-link-active' : ''}`}
+                onClick={() => navigate("/dashboard")}
+              >
+                Library
+              </span>
+              <span className="dash-nav-link">Journal</span>
+              <span 
+                className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
+                onClick={() => navigate("/insights")}
+              >
+                Insights
+              </span>
+            </div>
+          ) : (
+            <ul className="shelf-nav-links">
+              <li><a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Browse</a></li>
+              <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
+              <li><a href="#">About</a></li>
+            </ul>
+          )}
+        </div>
+
+        {/* ── Center Logo ── */}
+        {!isDashboardArea && <span className="shelf-nav-logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
+        {isDashboardArea && <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
+
+        {/* ── Right Side ── */}
+        <div className="shelf-nav-right">
+          {isDashboardArea ? (
+            <div className="dash-nav-right-inner">
+              <button className="dash-icon-btn"><IconBell /></button>
+              <ProfileDropdown
+                username={username}
+                email={resolvedEmail}
+                onLogout={handleLogout}
+              />
+            </div>
+          ) : (
+            <button
+              className="shelf-hamburger"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
             >
-              Library
-            </span>
-            <span className="dash-nav-link">Journal</span>
-            <span 
-              className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
-              onClick={() => navigate("/insights")}
-            >
-              Insights
-            </span>
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+              <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+            </button>
+          )}
+        </div>
+
+        {/* ── Mobile Menu (Landing Only) ── */}
+        {!isDashboardArea && mobileMenuOpen && (
+          <div className="shelf-mobile-menu">
+            <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/"); }}>Browse</a>
+            <a href="/dashboard" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}>My Library</a>
+            <a href="#" onClick={() => setMobileMenuOpen(false)}>About</a>
           </div>
-        ) : (
-          <ul className="shelf-nav-links">
-            <li><a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Browse</a></li>
-            <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
-            <li><a href="#">About</a></li>
-          </ul>
         )}
-      </div>
+      </nav>
 
-      {/* ── Center Logo ── */}
-      {!isDashboardArea && <span className="shelf-nav-logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
-      {isDashboardArea && <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
-
-      {/* ── Center Search (Dashboard Only) ── */}
+      {/* ── Sub-Nav Search Row (Dashboard Only) ── */}
       {isDashboardArea && (
-        <div className="dash-nav-search">
+        <div className="shelf-sub-nav">
           <div className="dash-search-bar">
             <IconSearch />
             <input
@@ -152,39 +187,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
-      {/* ── Right Side ── */}
-      <div className="shelf-nav-right">
-        {isDashboardArea ? (
-          <div className="dash-nav-right-inner">
-            <button className="dash-icon-btn"><IconBell /></button>
-            <ProfileDropdown
-              username={username}
-              email={resolvedEmail}
-              onLogout={handleLogout}
-            />
-          </div>
-        ) : (
-          <button
-            className="shelf-hamburger"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-          </button>
-        )}
-      </div>
-
-      {/* ── Mobile Menu (Landing Only) ── */}
-      {!isDashboardArea && mobileMenuOpen && (
-        <div className="shelf-mobile-menu">
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/"); }}>Browse</a>
-          <a href="/dashboard" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}>My Library</a>
-          <a href="#" onClick={() => setMobileMenuOpen(false)}>About</a>
-        </div>
-      )}
-    </nav>
+    </>
   );
 }
