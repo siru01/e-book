@@ -394,7 +394,9 @@ export default function ReaderPage() {
         <div className="pagination-right">
           <div className="jump-to-box">
             <label htmlFor="jumpToInput">JUMP TO</label>
-            <input id="jumpToInput" type="number" min={1} max={totalPages} value={jumpValue} onChange={e => setJumpValue(e.target.value)} onKeyDown={handleJump} placeholder={String(leftPageNum)} />
+            <div className="jump-to-input-wrap">
+              <input id="jumpToInput" type="number" min={1} max={totalPages} value={jumpValue} onChange={e => setJumpValue(e.target.value)} onKeyDown={handleJump} placeholder={String(leftPageNum)} />
+            </div>
           </div>
           <button className={`action-btn-dark ${finishedSaved ? "action-btn-done" : ""}`} onClick={() => {
             const next = !finishedSaved;

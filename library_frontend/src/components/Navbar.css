@@ -27,7 +27,7 @@
 .shelf-nav::before, .shelf-nav::after {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: -4px;
   pointer-events: none;
   z-index: 10;
 }
@@ -153,7 +153,7 @@
 
 /* Technical corners for search bar */
 .dash-search-bar::before, .dash-search-bar::after {
-  content: ''; position: absolute; inset: -1px; pointer-events: none;
+  content: ''; position: absolute; inset: -4px; pointer-events: none;
 }
 .dash-search-bar::before {
   background: 

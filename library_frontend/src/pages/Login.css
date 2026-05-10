@@ -32,7 +32,7 @@
 .login-card::before, .login-card::after {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: -4px;
   pointer-events: none;
   z-index: 10;
 }
@@ -94,7 +94,7 @@
 .input-wrapper::before, .input-wrapper::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -4px;
   pointer-events: none;
   z-index: 5;
 }
@@ -172,7 +172,7 @@
 .btn-black::before, .btn-black::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -4px;
   pointer-events: none;
   z-index: 10;
 }
