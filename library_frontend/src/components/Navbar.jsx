@@ -249,16 +249,6 @@ export default function Navbar() {
             <div className="landing-nav-actions">
               <span className="nav-action-link desktop-only" onClick={() => navigate("/login")}>Log In</span>
               <button className="nav-action-btn desktop-only" onClick={() => navigate("/signup")}>Create Account</button>
-              
-              {/* Mobile Icons for landing if needed, but user specified right side icons for dash/insights etc */}
-              <div className="mobile-only mobile-right-icons">
-                 <button className="dash-icon-btn"><IconBell /></button>
-                 <ProfileDropdown
-                    username={username}
-                    email={resolvedEmail}
-                    onLogout={handleLogout}
-                  />
-              </div>
             </div>
           )}
         </div>
