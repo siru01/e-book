@@ -29,20 +29,21 @@ const Login = () => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>SHELF</div>
         <h2>Welcome Back</h2>
         <p className="subtitle">Log in to continue your journey</p>
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
+            <div className="input-wrapper">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ENTER YOUR EMAIL"
+                required
+              />
+            </div>
           </div>
 
           <div className="input-group">
@@ -53,13 +54,15 @@ const Login = () => {
                 Forgot password?
               </Link>
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
+            <div className="input-wrapper">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="ENTER YOUR PASSWORD"
+                required
+              />
+            </div>
           </div>
 
           {error && <p style={{ color: 'red', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>{error}</p>}
