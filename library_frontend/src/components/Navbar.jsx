@@ -70,6 +70,9 @@ export default function Navbar() {
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [phIndex, setPhIndex] = useState(0);
+  const [showInsightsSearch, setShowInsightsSearch] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
   const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
 
   useEffect(() => {
@@ -81,13 +84,28 @@ export default function Navbar() {
     setSearchQuery(searchParams.get("q") || "");
   }, [searchParams]);
 
+  // Inactivity timer for Insights search
+  const resetSearchTimer = () => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (showInsightsSearch) {
+      searchTimeoutRef.current = setTimeout(() => {
+        setShowInsightsSearch(false);
+      }, 10000); // 10 seconds
+    }
+  };
+
+  useEffect(() => {
+    resetSearchTimer();
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+  }, [showInsightsSearch]);
+
   const isDashboard = location.pathname === '/dashboard';
   const isInsights = location.pathname === '/insights';
   const isBookOverview = location.pathname.startsWith('/book/');
   const isReader = location.pathname.startsWith('/read/');
   const isDashboardArea = isDashboard || isInsights || isBookOverview || isReader;
   
-  const showSubNav = isDashboard || isInsights; // Keep sub-nav only for search-centric pages
+  const showSubNav = isDashboard || (isInsights && showInsightsSearch); // Search row only on Dashboard or when toggled on Insights
 
   const handleSearch = (q) => {
     if (!q || !q.trim()) return;
@@ -157,6 +175,15 @@ export default function Navbar() {
         <div className="shelf-nav-right">
           {isDashboardArea ? (
             <div className="dash-nav-right-inner">
+              {isInsights && (
+                <button 
+                  className={`dash-icon-btn ${showInsightsSearch ? 'active' : ''}`} 
+                  title="Search Books"
+                  onClick={() => setShowInsightsSearch(!showInsightsSearch)}
+                >
+                  <IconSearch />
+                </button>
+              )}
               {isReader ? (
                 <button 
                   className="dash-icon-btn" 
@@ -210,8 +237,15 @@ export default function Navbar() {
               className="dash-search-input"
               placeholder={`Search for ${PLACEHOLDER_WORDS[phIndex]}…`}
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSearch(searchQuery)}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                resetSearchTimer();
+              }}
+              onFocus={resetSearchTimer}
+              onKeyDown={e => {
+                resetSearchTimer();
+                if (e.key === "Enter") handleSearch(searchQuery);
+              }}
             />
           </div>
         </div>
