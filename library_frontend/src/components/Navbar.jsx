@@ -157,39 +157,53 @@ export default function Navbar() {
       <nav className="shelf-nav">
         {/* ── Left Side ── */}
         <div className="shelf-nav-left">
-          {isDashboardArea ? (
-          <div className="dash-nav-links">
-            <span 
-              className={`dash-nav-link ${isDashboard ? 'dash-nav-link-active' : ''}`}
-              onClick={() => navigate("/dashboard")}
-            >
-              Library
-            </span>
-            <span className="dash-nav-link">Journal</span>
-            <span 
-              className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
-              onClick={() => navigate("/insights")}
-            >
-              Insights
-            </span>
+          {/* Mobile Hamburger (Visible on mobile) */}
+          <button
+            className="shelf-hamburger mobile-only"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+            <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
+          </button>
+
+          {/* Desktop Links (Hidden on mobile) */}
+          <div className="desktop-only">
+            {isDashboardArea ? (
+              <div className="dash-nav-links">
+                <span 
+                  className={`dash-nav-link ${isDashboard ? 'dash-nav-link-active' : ''}`}
+                  onClick={() => navigate("/dashboard")}
+                >
+                  Library
+                </span>
+                <span className="dash-nav-link">Journal</span>
+                <span 
+                  className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
+                  onClick={() => navigate("/insights")}
+                >
+                  Insights
+                </span>
+              </div>
+            ) : isReader ? (
+              <ul className="shelf-nav-links">
+                <li><a href="/insights" onClick={(e) => { e.preventDefault(); navigate("/insights"); }}>Insights</a></li>
+                <li>
+                  <a href="#" onClick={(e) => { 
+                    e.preventDefault(); 
+                    window.dispatchEvent(new CustomEvent('shelf-toggle-appearance'));
+                  }}>Appearance</a>
+                </li>
+              </ul>
+            ) : (
+              <ul className="shelf-nav-links">
+                <li><a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Browse</a></li>
+                <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
+                <li><a href="#">About</a></li>
+              </ul>
+            )}
           </div>
-        ) : isReader ? (
-          <ul className="shelf-nav-links">
-            <li><a href="/insights" onClick={(e) => { e.preventDefault(); navigate("/insights"); }}>Insights</a></li>
-            <li>
-              <a href="#" onClick={(e) => { 
-                e.preventDefault(); 
-                window.dispatchEvent(new CustomEvent('shelf-toggle-appearance'));
-              }}>Appearance</a>
-            </li>
-          </ul>
-        ) : (
-          <ul className="shelf-nav-links">
-            <li><a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Browse</a></li>
-            <li><a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>My Library</a></li>
-            <li><a href="#">About</a></li>
-          </ul>
-        )}
         </div>
 
         {/* ── Center Logo ── */}
@@ -207,7 +221,7 @@ export default function Navbar() {
             <div className="dash-nav-right-inner">
               {isInsights && (
                 <button 
-                  className={`dash-icon-btn ${showInsightsSearch ? 'active' : ''}`} 
+                  className={`dash-icon-btn desktop-only ${showInsightsSearch ? 'active' : ''}`} 
                   title="Search Books"
                   onClick={() => setShowInsightsSearch(!showInsightsSearch)}
                 >
@@ -233,27 +247,48 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="landing-nav-actions">
-              <span className="nav-action-link" onClick={() => navigate("/login")}>Log In</span>
-              <button className="nav-action-btn" onClick={() => navigate("/signup")}>Create Account</button>
-              <button
-                className="shelf-hamburger"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label="Toggle menu"
-              >
-                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-                <div className={`ham-bar ${mobileMenuOpen ? 'ham-bar--open' : ''}`} />
-              </button>
+              <span className="nav-action-link desktop-only" onClick={() => navigate("/login")}>Log In</span>
+              <button className="nav-action-btn desktop-only" onClick={() => navigate("/signup")}>Create Account</button>
+              
+              {/* Mobile Icons for landing if needed, but user specified right side icons for dash/insights etc */}
+              <div className="mobile-only mobile-right-icons">
+                 <button className="dash-icon-btn"><IconBell /></button>
+                 <ProfileDropdown
+                    username={username}
+                    email={resolvedEmail}
+                    onLogout={handleLogout}
+                  />
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── Mobile Menu (Landing Only) ── */}
-        {!isDashboardArea && mobileMenuOpen && (
+        {/* ── Mobile Menu ── */}
+        {mobileMenuOpen && (
           <div className="shelf-mobile-menu">
-            <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/"); }}>Browse</a>
-            <a href="/dashboard" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/dashboard"); }}>My Library</a>
-            <a href="#" onClick={() => setMobileMenuOpen(false)}>About</a>
+            <div className="mobile-menu-items">
+              <span 
+                className={`mobile-menu-item ${isDashboard ? 'active' : ''}`}
+                onClick={() => { setMobileMenuOpen(false); navigate("/dashboard"); }}
+              >
+                Library
+              </span>
+              <span className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Journal</span>
+              <span 
+                className={`mobile-menu-item ${isInsights ? 'active' : ''}`}
+                onClick={() => { setMobileMenuOpen(false); navigate("/insights"); }}
+              >
+                Insights
+              </span>
+              <div className="mobile-menu-divider" />
+              <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/"); }}>Browse Home</a>
+              {!token && (
+                <>
+                  <a href="/login" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/login"); }}>Log In</a>
+                  <a href="/signup" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/signup"); }}>Sign Up</a>
+                </>
+              )}
+            </div>
           </div>
         )}
       </nav>

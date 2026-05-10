@@ -63,12 +63,7 @@ html.allow-scroll::-webkit-scrollbar-thumb:hover {
   background: #aaa;
 }
 
-/* Correct background for mobile portrait */
-@media (max-width: 800px) {
-  html, body {
-    background-color: #92ceba !important; /* Mobile sky color match */
-  }
-}
+
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 html::-webkit-scrollbar,

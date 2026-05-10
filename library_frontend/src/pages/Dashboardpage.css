@@ -209,6 +209,13 @@
   min-height: 0;
 }
 
+@media (max-width: 768px) {
+  .dash-main {
+    padding-top: 200px; /* Extra clearance for mobile floating nav and search row */
+  }
+}
+
+
 /* ── Heading Block ── */
 .dash-heading-block {
   text-align: center;
@@ -216,17 +223,18 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 8px;
+  margin-top: 120px;
 }
 
 .dash-greeting {
   font-family: 'Anton', sans-serif;
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: 45px;
   font-weight: 400;
   color: #111;
   line-height: 1.2;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  
+  margin-top: 50px;
   opacity: 0;
   animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
   animation-delay: 0.1s;
@@ -371,7 +379,50 @@
 .dash-shelf:nth-child(2) { animation-delay: 0.9s; }
 .dash-shelf:nth-child(3) { animation-delay: 1.0s; }
 .dash-shelf-header { display: flex; align-items: baseline; justify-content: space-between; }
-.dash-shelf-label { font-family: 'Anton', sans-serif; font-size: 1.6rem; font-weight: 400; letter-spacing: 0.02em; text-transform: uppercase; }
+.dash-shelf-label {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  position: relative;
+  display: inline-block;
+  padding: 4px 12px;
+  outline: 1.5px solid #dcdcdc; /* Light grey border */
+  outline-offset: 2px; /* 2px gap */
+  margin-left: 6px; /* Offset to prevent clipping on the left */
+}
+
+/* Corner technical markers for headings */
+.dash-shelf-label::before,
+.dash-shelf-label::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.dash-shelf-label::before {
+  background:
+    linear-gradient(to right, #000 1.5px, transparent 0) 0 0,
+    linear-gradient(to bottom, #000 1.5px, transparent 0) 0 0,
+    linear-gradient(to left, #000 1.5px, transparent 0) 100% 0,
+    linear-gradient(to bottom, #000 1.5px, transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+}
+
+.dash-shelf-label::after {
+  background:
+    linear-gradient(to right, #000 1.5px, transparent 0) 0 100%,
+    linear-gradient(to top, #000 1.5px, transparent 0) 0 100%,
+    linear-gradient(to left, #000 1.5px, transparent 0) 100% 100%,
+    linear-gradient(to top, #000 1.5px, transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+}
+
 .dash-shelf-all { font-size: .75rem; font-weight: 700; letter-spacing: .08em; color: #999; cursor: pointer; text-transform: uppercase; }
 .dash-shelf-all:hover { color: #111; }
 .dash-shelf-scroll { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; align-items: flex-start; padding: 20px 10px; margin: -20px -10px; }

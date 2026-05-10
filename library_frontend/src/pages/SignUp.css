@@ -8,7 +8,7 @@
   background-image: radial-gradient(#d1d1d1 1.2px, transparent 1px);
   background-size: 10px 10px;
   font-family: 'Inter', sans-serif;
-  padding: 100px 20px 60px; /* Offset for floating navbar */
+  padding: 100px 24px 60px; /* Added horizontal padding for all screen sizes */
 }
 
 /* ── Card ── */

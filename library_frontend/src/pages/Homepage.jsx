@@ -240,7 +240,7 @@ export default function HomePage() {
             Lives outside the scroll container so it's truly viewport-relative.
             z-index 999 keeps it below the nav (1000) once docked. ── */}
         <div
-          className="shelf-cta-pill fade-3"
+          className="shelf-cta-pill fade-center"
           ref={ctaRef}
           onClick={() => navigate("/dashboard")}
         >

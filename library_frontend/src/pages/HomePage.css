@@ -175,8 +175,9 @@ html, body {
 ── */
 .shelf-cta-pill {
   position: fixed;
-  left: 43%; 
+  left: 50%; 
   top: 75%; 
+  transform: translate(-50%, -50%);
   width: 220px;
   height: 65px;
   cursor: pointer;
@@ -273,6 +274,13 @@ html, body {
 
 .fade-2 { animation: fadeUp 0.7s ease both 0.25s; }
 .fade-3 { animation: fadeUp 0.7s ease both 0.4s; }
+
+@keyframes fadeUpCenter {
+  from { opacity: 0; transform: translate(-50%, 28px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.fade-center { animation: fadeUpCenter 0.7s ease both 0.4s; }
+
 
 /* ── Second Page ── */
 .shelf-second-page {
