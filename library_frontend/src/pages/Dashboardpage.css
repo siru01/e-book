@@ -2,7 +2,12 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .dash-root {
-  background: #fff;
+  background-color: #fcfcfc;
+  background-image: 
+    linear-gradient(#f0f0f0 1px, transparent 1px),
+    linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
+  background-size: 25px 25px;
+  background-attachment: fixed;
   font-family: 'Inter', sans-serif;
   color: #111;
   width: 100%;
@@ -42,7 +47,7 @@
   position: sticky; top: 0; z-index: 100;
   display: flex; align-items: center; gap: 24px;
   padding: 0 48px; height: 60px;
-  background: #fff;
+  background: transparent;
 }
 .dash-brand { font-family: 'Anton', sans-serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .15em; color: #111; flex-shrink: 0; text-transform: uppercase; }
 .dash-nav-links { display: flex; gap: 28px; flex-shrink: 0; }
@@ -268,8 +273,8 @@
 .hero-card {
   background: #fafafa;
   border: 2px solid #000000;
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 0px;
+  padding: 24px; 
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -440,16 +445,7 @@
 
 @keyframes dash-spin { to { transform: rotate(360deg); } }
 
-@keyframes cardEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+
 
 .dash-loading-wait-msg {
   font-size: 1.1rem;
@@ -476,7 +472,16 @@
 .dash-results-header button { background: none; border: 1px solid #e0e0e0; border-radius: 20px; padding: 5px 14px; font-size: .8rem; color: #888; cursor: pointer; transition: all .15s; }
 .dash-results-header button:hover { border-color: #111; color: #111; }
 .dash-src-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px; align-content: start; }
-.src-card { display: flex; flex-direction: column; cursor: pointer; border-radius: 12px; overflow: hidden; transition: transform 0.3s cubic-bezier(0.2,0,0,1), box-shadow 0.3s ease; }
+.src-card { 
+  display: flex; 
+  flex-direction: column; 
+  cursor: pointer; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  transition: transform 0.3s cubic-bezier(0.2,0,0,1), box-shadow 0.3s ease; 
+  opacity: 0;
+  animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+}
 .src-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
 .src-card-cover { width: 100%; aspect-ratio: 2/3; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.1); position: relative; }
 .src-card-placeholder {

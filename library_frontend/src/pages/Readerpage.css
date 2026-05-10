@@ -21,10 +21,17 @@
   height: 100vh;
   padding-top: 100px;  /* Clear global navbar */
   padding-bottom: 100px; /* Clear floating footer */
-  background: var(--paper);
+  background-color: #fcfcfc;
+  background-image: 
+    linear-gradient(#f0f0f0 1px, transparent 1px),
+    linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
+  background-size: 40px 40px; /* Larger grid for reader comfort */
+  background-attachment: fixed;
   font-family: 'EB Garamond', Georgia, serif;
   color: var(--ink);
   overflow: hidden;
+  opacity: 0;
+  animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
 
 /* ══════════════════════════════════
@@ -226,10 +233,12 @@
 .reading-content-columns {
   flex: 1;
   display: flex;
-  height: 100%;
+  height: calc(100% -20px); /* Leave room for outlines */
+  margin: 10px auto;
   max-width: 1320px; /* Matched to navbar max-width for consistency */
-  margin: 0 auto;
-}
+  background: transparent; /* Background now handled by columns */
+  position: relative;
+} 
 
 .reading-column {
   flex: 1;
@@ -237,6 +246,11 @@
   flex-direction: column;
   padding: 40px 60px 24px; /* Slightly more spacious padding */
   overflow: hidden;
+  background: var(--paper);
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,0.04);
+  outline: 1.5px solid #5c5c5c; /* Technical border */
+  outline-offset: 1px; /* The 1px gap */
 }
 
 .reading-column--left {

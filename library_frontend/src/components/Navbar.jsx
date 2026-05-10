@@ -193,8 +193,13 @@ export default function Navbar() {
         </div>
 
         {/* ── Center Logo ── */}
-        {!isDashboardArea && <span className="shelf-nav-logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
-        {isDashboardArea && <span className="dash-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Shelf</span>}
+        <span 
+          className={isDashboardArea ? "shelf-nav-logo dash-brand-nav" : "shelf-nav-logo"} 
+          onClick={() => navigate("/")} 
+          style={{ cursor: "pointer" }}
+        >
+          Shelf
+        </span>
 
         {/* ── Right Side ── */}
         <div className="shelf-nav-right">

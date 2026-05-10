@@ -128,7 +128,7 @@ function BookCard({ book }) {
 }
 
 /* ── Search Result Card ── */
-function SearchResultCard({ book }) {
+function SearchResultCard({ book, index }) {
   const navigate = useNavigate();
   const handleImgError = (e) => {
     e.target.style.display = 'none';
@@ -136,7 +136,11 @@ function SearchResultCard({ book }) {
   };
 
   return (
-    <div className="src-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
+    <div 
+      className="src-card" 
+      onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}
+      style={{ animationDelay: `${index * 0.08}s` }}
+    >
       <div className="src-card-cover">
         {book.cover && (
           <img 
@@ -766,7 +770,7 @@ export default function DashboardPage() {
                 />
               )
               : <div className="dash-src-grid">
-                {searchResults.map((b, i) => <SearchResultCard key={i} book={b} />)}
+                {searchResults.map((b, i) => <SearchResultCard key={i} index={i} book={b} />)}
               </div>
             }
           </div>

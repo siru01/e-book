@@ -1,7 +1,12 @@
 /* ─── Root / Page ───────────────────────────────────────────────── */
 .bop-root {
   min-height: 100vh;
-  background: #fff;
+  background-color: #fcfcfc;
+  background-image: 
+    linear-gradient(#f0f0f0 1px, transparent 1px),
+    linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
+  background-size: 25px 25px;
+  background-attachment: fixed;
   color: #1a1815;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -13,6 +18,8 @@
   max-width: 1080px;
   margin: 0 auto;
   padding: 120px 48px 80px; /* Increased top padding to clear global navbar */
+  opacity: 0;
+  animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
 
 /* ─── Two-column hero layout ────────────────────────────────────── */

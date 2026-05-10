@@ -146,16 +146,7 @@
   animation: textReveal 0.8s ease-out forwards;
 }
 
-@keyframes cardEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+
 
 .card-apps { animation-delay: 0.1s; }
 .card-apps h3, .card-apps .launch-btn, .card-apps .app-icon { animation-delay: 0.3s; }

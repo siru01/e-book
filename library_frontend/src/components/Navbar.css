@@ -111,6 +111,7 @@
 .dash-nav-link-active { color: #111; font-weight: 700; }
 
 .dash-brand { font-family: 'Anton', sans-serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .15em; color: #111; flex-shrink: 0; text-transform: uppercase; margin-right: 24px; }
+.dash-brand-nav { margin-right: 0; }
 
 .dash-nav-search {
   flex: 2;
@@ -233,7 +234,7 @@
   border: 1px solid #000;
   padding: 10px 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
   border-radius: 0;
   position: relative;
 }
