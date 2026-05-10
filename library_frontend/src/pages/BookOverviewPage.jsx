@@ -8,60 +8,6 @@ import "./BookOverviewPage.css";
 const capitalizeFirst = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
-const IconLogout = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-    <polyline points="16 17 21 12 16 7"/>
-    <line x1="21" y1="12" x2="9" y2="12"/>
-  </svg>
-);
-
-/* ── Profile Dropdown ────────────────────────────────────────── */
-function ProfileDropdown({ username, email, onLogout }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  const initials = username
-    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div className="profile-wrap" ref={ref}>
-      <button
-        className="profile-trigger"
-        onClick={() => setOpen(o => !o)}
-        aria-label="Profile menu"
-      >
-        <span className="avatar-initials">{initials}</span>
-      </button>
-
-      {open && (
-        <div className="profile-dropdown">
-          <div className="profile-dropdown-header">
-            <div className="profile-dropdown-avatar">{initials}</div>
-            <div className="profile-dropdown-info">
-              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
-              <span className="profile-dropdown-email">{email || "—"}</span>
-            </div>
-          </div>
-          <div className="profile-dropdown-divider" />
-          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
-            <IconLogout />
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function cleanLabel(str = "") {
   return str
@@ -114,15 +60,6 @@ export default function BookOverviewPage() {
   const { bookId: rawBookId } = useParams();
   const navigate              = useNavigate();
   const { token, username, logout } = useAuth();
-
-  const resolvedEmail = useMemo(() => {
-    try {
-      const t = sessionStorage.getItem("shelf_token");
-      if (!t) return "";
-      const payload = JSON.parse(atob(t.split(".")[1]));
-      return payload.email || "";
-    } catch { return ""; }
-  }, [token]);
 
   const handleLogout = useCallback(() => { logout(); navigate("/"); }, [logout, navigate]);
 
@@ -230,36 +167,10 @@ export default function BookOverviewPage() {
     setSaving(false);
   };
 
-  /* ── Shared Nav ── */
-  const Nav = () => (
-    <nav className="bop-nav">
-      <span className="bop-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>SHELF</span>
-      <div className="bop-nav-center">
-        <button className="bop-nav-link bop-nav-active" onClick={() => navigate("/dashboard")}>Browse</button>
-        <button className="bop-nav-link" onClick={() => navigate("/discover")}>Collections</button>
-        <button className="bop-nav-link">Exhibits</button>
-        <button className="bop-nav-link">Archive</button>
-      </div>
-      <div className="bop-nav-right">
-        <button className="bop-icon-btn" aria-label="notifications">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </button>
-        <ProfileDropdown
-          username={username}
-          email={resolvedEmail}
-          onLogout={handleLogout}
-        />
-      </div>
-    </nav>
-  );
 
   /* ── Loading ── */
   if (loading) return (
     <div className="bop-root">
-      <Nav />
       <main className="bop-main">
         <div className="bop-layout">
           <div className="bop-left">
@@ -282,7 +193,6 @@ export default function BookOverviewPage() {
   /* ── Error ── */
   if (error || !book) return (
     <div className="bop-root">
-      <Nav />
       <main className="bop-main bop-error-state">
         <span className="bop-error-emoji">📚</span>
         <h2 className="bop-error-heading">Book not found</h2>
@@ -307,8 +217,6 @@ export default function BookOverviewPage() {
 
   return (
     <div className="bop-root">
-      <Nav />
-
       <main className="bop-main">
 
         {/* ── Hero: Cover + Info ── */}

@@ -71,40 +71,6 @@ const capitalizeFirst = (str) =>
 /* ══════════════════════════════════════════════════════
    Profile Dropdown
    ══════════════════════════════════════════════════════ */
-function ProfileDropdown({ username, email, onLogout }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const initials = username ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "?";
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div className="profile-wrap" ref={ref}>
-      <button className="profile-trigger" onClick={() => setOpen(o => !o)} aria-label="Profile menu">
-        <span className="avatar-initials">{initials}</span>
-      </button>
-      {open && (
-        <div className="profile-dropdown">
-          <div className="profile-dropdown-header">
-            <div className="profile-dropdown-avatar">{initials}</div>
-            <div className="profile-dropdown-info">
-              <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
-              <span className="profile-dropdown-email">{email || "—"}</span>
-            </div>
-          </div>
-          <div className="profile-dropdown-divider" />
-          <button className="profile-dropdown-logout" onClick={() => { setOpen(false); onLogout(); }}>
-            <IconLogout /> Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ── Vertical side label ── */
 function VerticalSideLabel({ text, position }) {
@@ -133,6 +99,12 @@ export default function ReaderPage() {
     } catch { return ""; }
   }, [token]);
 
+  const isDashboard = location.pathname === '/dashboard';
+  const isInsights = location.pathname === '/insights';
+  const isBookOverview = location.pathname.startsWith('/book/');
+  const isReader = location.pathname.startsWith('/read/');
+  const isDashboardArea = isDashboard || isInsights || isBookOverview || isReader;
+  
   const [fontSize,      setFontSize]      = useState(16);
   const [showTypo,      setShowTypo]      = useState(false);
   const [bookMeta,      setBookMeta]      = useState(null);
@@ -145,6 +117,7 @@ export default function ReaderPage() {
   const [finishedSaved, setFinishedSaved] = useState(false);
   const [sliding,       setSliding]       = useState(null);
   const [jumpValue,     setJumpValue]     = useState("");
+  const [hasInitialJump, setHasInitialJump] = useState(false);
 
   const totalPages  = pages.length;
   const step        = isMobile ? 1 : 2;
@@ -196,25 +169,33 @@ export default function ReaderPage() {
           const newPages = splitIntoPages(processedText);
           setPages(newPages);
 
-          // We show the book as soon as we have enough content to start reading (e.g. 5 pages)
-          if (isFirstSet && newPages.length >= 5) {
+          // 1. FAST LOAD: Reveal as soon as we have at least 1 page
+          if (isFirstSet && newPages.length >= 1) {
             setDataIsReady(true);
             isFirstSet = false;
+          }
+
+          // 2. PERSISTENCE: Jump to saved page or progress percentage once enough pages are loaded
+          if (!hasInitialJump && newPages.length > 0) {
+            const savedValue = localStorage.getItem(`shelf_last_page_${bookId}`);
+            const savedPage = savedValue !== null ? parseInt(savedValue, 10) : null;
             
-            if (data.user_progress > 0) {
+            if (savedPage !== null && savedPage > 0 && newPages.length > savedPage) {
+              setSpreadIndex(savedPage % 2 === 0 ? savedPage : savedPage - 1);
+              setHasInitialJump(true);
+            } else if (data.user_progress > 0 && newPages.length > 15) {
+              // Fallback to percentage if no local storage but we have server progress
               const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
-              setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+              if (targetIdx > 0 && newPages.length > targetIdx) {
+                setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
+                setHasInitialJump(true);
+              }
             }
           }
         }
         
         if (isFirstSet) {
           setDataIsReady(true);
-          if (data.user_progress > 0 && splitIntoPages(textBuffer).length > 0) {
-             const newPages = splitIntoPages(textBuffer);
-             const targetIdx = Math.floor((data.user_progress / 100) * newPages.length);
-             setSpreadIndex(targetIdx % 2 === 0 ? targetIdx : Math.max(0, targetIdx - 1));
-          }
         }
 
       } catch (e) {
@@ -253,6 +234,32 @@ export default function ReaderPage() {
   }
 
   useEffect(() => {
+    const toggle = () => setShowTypo(v => !v);
+    const save = async () => {
+      if (!token || !bookMeta) return;
+      try {
+        await saveBookmark(token, { 
+          book_id: bookId, 
+          source, 
+          book_title: bookMeta.title, 
+          book_author: bookMeta.author, 
+          book_cover: bookMeta.cover_url,
+          last_page: leftPageNum // Including the page number as requested
+        });
+        alert(`Bookmarked: ${bookMeta.title} at page ${leftPageNum}`);
+      } catch (e) {
+        console.error("Failed to save bookmark", e);
+      }
+    };
+    window.addEventListener('shelf-toggle-appearance', toggle);
+    window.addEventListener('shelf-save-bookmark', save);
+    return () => {
+      window.removeEventListener('shelf-toggle-appearance', toggle);
+      window.removeEventListener('shelf-save-bookmark', save);
+    };
+  }, [token, bookMeta, bookId, source, leftPageNum]);
+
+  useEffect(() => {
     function onKey(e) {
       if (e.target.tagName === "INPUT") return;
       if (e.key === "ArrowRight") goNext();
@@ -266,7 +273,14 @@ export default function ReaderPage() {
   const progressPct = pages.length > 0 ? Math.min(100, ((spreadIndex + step) / pages.length) * 100) : 0;
   const queryClient = useQueryClient();
 
-  // Debounced progress save
+  // Sync spreadIndex to localStorage immediately for rock-solid reload persistence
+  useEffect(() => {
+    if (bookId && spreadIndex >= 0) {
+      localStorage.setItem(`shelf_last_page_${bookId}`, spreadIndex);
+    }
+  }, [spreadIndex, bookId]);
+
+  // Debounced progress save to server
   useEffect(() => {
     if (!token || !bookMeta || pages.length === 0) return;
 
@@ -283,10 +297,10 @@ export default function ReaderPage() {
         queryClient.invalidateQueries({ queryKey: ["myActivity"] });
         queryClient.invalidateQueries({ queryKey: ["myFinished"] });
       }).catch(() => {});
-    }, 10000); // 10s debounce to avoid spamming the server
+    }, 5000); // 5s debounce for faster server sync
 
     return () => clearTimeout(timeout);
-  }, [spreadIndex, finishedSaved, token, bookId]); // Removed pages.length and progressPct to avoid stream-triggered updates
+  }, [spreadIndex, finishedSaved, token, bookId, pages.length]);
 
   useEffect(() => {
     if (!token) return;
@@ -322,34 +336,16 @@ export default function ReaderPage() {
 
   return (
     <div className="shelf-reader-page">
-      <header className="reader-toolbar">
-        <div className="toolbar-left">
-          <Link to="/dashboard" className="reader-brand">Shelf</Link>
-          <div className="toolbar-divider" />
-          <button className="toolbar-btn" onClick={() => setShowTypo(v => !v)}>
-            <IconAppearance /> Appearance
-          </button>
-          {showTypo && (
-            <div className="typo-popover">
-              <span className="typo-label">Font size</span>
-              <div className="typo-controls">
-                <button onClick={() => setFontSize(s => Math.max(12, s - 2))}>A−</button>
-                <span>{fontSize}px</span>
-                <button onClick={() => setFontSize(s => Math.min(28, s + 2))}>A+</button>
-              </div>
-            </div>
-          )}
+      {showTypo && (
+        <div className="typo-popover">
+          <span className="typo-label">Font size</span>
+          <div className="typo-controls">
+            <button onClick={() => setFontSize(s => Math.max(12, s - 2))}>A−</button>
+            <span>{fontSize}px</span>
+            <button onClick={() => setFontSize(s => Math.min(28, s + 2))}>A+</button>
+          </div>
         </div>
-        <div className="toolbar-right">
-          <button className={`toolbar-icon-btn ${bookmarkSaved ? "toolbar-icon-btn--saved" : ""}`} onClick={async () => {
-             if (!token || !bookMeta) return;
-             await saveBookmark(token, { book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url });
-             setBookmarkSaved(true);
-             setTimeout(() => setBookmarkSaved(false), 2000);
-          }}><IconBookmark /></button>
-          <ProfileDropdown username={username} email={resolvedEmail} onLogout={() => { logout(); navigate("/"); }} />
-        </div>
-      </header>
+      )}
 
       <div className="reader-progress-bar">
         <div className="reader-progress-fill" style={{ width: `${progressPct}%` }} />
