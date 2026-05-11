@@ -220,8 +220,46 @@
   color: #666;
   cursor: pointer;
   transition: color 0.2s;
+  position: relative;       /* Required for pseudo-elements */
+  display: inline-block;    /* Required for pseudo-elements on span */
+  padding: 6px 10px;        /* Give space for the corner markers */
+
 }
+
+/* Top corners — Log In button */
+.nav-action-link::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  z-index: 10;
+  background:
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 0 0,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 0,
+    linear-gradient(to bottom, var(--corner-c) var(--corner-t), transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: var(--corner-s) var(--corner-s);
+}
+
+/* Bottom corners — Log In button */
+.nav-action-link::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  z-index: 10;
+  background:
+    linear-gradient(to right, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 0 100%,
+    linear-gradient(to left, var(--corner-c) var(--corner-t), transparent 0) 100% 100%,
+    linear-gradient(to top, var(--corner-c) var(--corner-t), transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: var(--corner-s) var(--corner-s);
+}
+
 .nav-action-link:hover { color: #000; }
+
 
 .nav-action-btn {
   font-family: 'Inter', sans-serif;
@@ -236,8 +274,8 @@
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
   border-radius: 0;
-  position: relative;
 }
+
 .nav-action-btn:hover { background: #333; border-color: #333; }
 
 /* ── Responsive Display Utilities ── */

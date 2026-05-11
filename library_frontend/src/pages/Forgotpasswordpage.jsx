@@ -133,14 +133,16 @@ const ForgotPasswordPage = () => {
 
               <div className="input-group">
                 <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  autoFocus
-                  required
-                />
+                <div className="input-wrap">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    autoFocus
+                    required
+                  />
+                </div>
               </div>
 
               <button type="submit" className="btn-black" disabled={loading}>
