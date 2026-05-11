@@ -116,7 +116,7 @@ function BookCard({ book }) {
             <span className="placeholder-title">{book.title}</span>
             <span className="placeholder-icon">📖</span>
           </div>
-        </div>
+        </div> 
         <div className="book-card-hover"><span>Read Now</span></div>
       </div>
       <div className="book-card-meta">
