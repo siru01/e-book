@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
 import { useDashboardSummary } from '../hooks/useDashboardData';
@@ -18,13 +18,162 @@ const IconHeart = () => (
   </svg>
 );
 
+const HOLIDAYS_2026 = {
+  "01-01": "New Year's Day",
+  "01-12": "Swami Vivekananda Birthday",
+  "01-23": "Netaji's Birthday",
+  "01-26": "Republic Day",
+  "02-02": "Saraswati Puja",
+  "03-03": "Doljatra",
+  "03-21": "Eid-Ul-Fitr",
+  "03-26": "Ram Navami",
+  "03-31": "Mahavir Jayanti",
+  "04-03": "Good Friday",
+  "04-14": "Ambedkar Jayanti",
+  "04-15": "Bengali New Year (Nababarsha)",
+  "05-01": "May Day / Buddha Purnima",
+  "05-09": "Rabindranath Tagore Birthday",
+  "08-15": "Independence Day",
+  "08-26": "Id-E-Milad",
+  "10-02": "Gandhi Jayanti",
+  "10-16": "Maha Shashthi",
+  "10-17": "Maha Saptami",
+  "10-18": "Maha Ashtami",
+  "10-19": "Maha Navami",
+  "10-20": "Maha Dashami",
+  "10-21": "Vijayadashami",
+  "10-31": "Lakshmi Puja",
+  "11-08": "Kali Puja / Diwali",
+  "11-14": "Children's Day",
+  "12-25": "Christmas",
+};
+
+function CalendarMonth({ sessions = [], monthOffset = 0, setHoverDate }) {
+  const todayObj = new Date();
+  const viewDate = new Date(todayObj.getFullYear(), todayObj.getMonth() + monthOffset, 1);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth(); 
+
+  const todayInKolkata = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const todayStr = `${todayInKolkata.getFullYear()}-${String(todayInKolkata.getMonth() + 1).padStart(2, '0')}-${String(todayInKolkata.getDate()).padStart(2, '0')}`;
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay(); 
+  const startOffset = (firstDay === 0 ? 6 : firstDay - 1);
+
+  const sessMap = {};
+  sessions.forEach(s => sessMap[s.date] = s.minutes_read);
+
+  const getCol = (min) => {
+    if (!min) return "var(--cal-shade-empty)";
+    if (min >= 60) return "var(--cal-shade-4)"; 
+    if (min >= 30) return "var(--cal-shade-3)"; 
+    if (min >= 15) return "var(--cal-shade-2)"; 
+    if (min >= 1) return "var(--cal-shade-1)"; 
+    return "var(--cal-shade-empty)";
+  };
+
+  const formatTime = (total) => {
+    if (!total) return "No reading recorded";
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h > 0) return `${h}h ${m}m read`;
+    return `${m}m read`;
+  };
+
+  const monthName = viewDate.toLocaleString('default', { month: 'long' });
+  const weekDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    const holidayKey = `${mm}-${dd}`;
+    cells.push({ day: d, dateStr, holidayKey, minutes: sessMap[dateStr] || 0 });
+  }
+  while (cells.length < 42) cells.push(null);
+
+  return (
+    <div className="cal-month-item">
+      <div className="cal-monthly-header">
+        <span className="cal-month-title">{monthName} {year}</span>
+      </div>
+
+      <div className="cal-monthly-grid">
+        {weekDays.map(d => <span key={d} className="cal-weekday">{d}</span>)}
+        {cells.map((cell, i) => {
+          const isFuture = cell && cell.dateStr > todayStr;
+          const isHoliday = cell && HOLIDAYS_2026[cell.holidayKey];
+          return !cell ? <div key={`pad-${i}`} className="cal-day-empty" /> : (
+            <div key={i} className="cal-day-cell">
+              <div 
+                className={`cal-day-circle ${isHoliday ? "cal-day-holiday" : ""} ${isFuture ? "cal-day-future" : ""} ${cell.dateStr === todayStr ? "cal-day-today" : ""}`} 
+                style={{ backgroundColor: getCol(cell.minutes) }}
+                onMouseEnter={() => setHoverDate(cell.holidayKey)}
+                onMouseLeave={() => setHoverDate(null)}
+              >
+                {cell.day}
+                {!isFuture && <div className="cal-tooltip">{formatTime(cell.minutes)}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CalendarHeatmap({ sessions = [], setHoverDate }) {
+  // Show last 6 months
+  const months = [0, -1, -2, -3, -4, -5];
+  
+  return (
+    <div className="cal-scroll-container">
+      {months.map(offset => (
+        <CalendarMonth 
+          key={offset} 
+          sessions={sessions} 
+          monthOffset={offset} 
+          setHoverDate={setHoverDate} 
+        />
+      ))}
+    </div>
+  );
+}
+
 const InsightsPage = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const { data: summary } = useDashboardSummary(token);
+  const { data: summary, isLoading } = useDashboardSummary(token);
+  const [hoverDate, setHoverDate] = useState(null);
 
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
   const recentReadings = activity.slice(0, 10);
+  const sessions = Array.isArray(summary?.sessions) ? summary.sessions : [];
+
+  const todayObj = new Date();
+  const todayKey = `${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+  
+  // Find current session data for info display
+  const currentSess = sessions.find(s => {
+    if (!hoverDate) return false;
+    return s.date.endsWith(hoverDate);
+  });
+
+  const currentDisplayDate = hoverDate || todayKey;
+  const currentEvent = HOLIDAYS_2026[currentDisplayDate];
+  const currentMinutes = currentSess ? currentSess.minutes_read : 0;
+
+  const formatTime = (total) => {
+    if (!total) return "No reading recorded";
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h > 0) return `${h}h ${m}m read`;
+    return `${m}m read`;
+  };
 
   return (
     <div className="insights-root">
@@ -36,7 +185,7 @@ const InsightsPage = () => {
             <h3>RECENT READINGS</h3>
           </div>
           <div className="recent-readings-grid">
-            {recentReadings.length > 0 ? (
+            {!isLoading && recentReadings.length > 0 && (
               recentReadings.map((item, i) => (
                 <div 
                   key={i} 
@@ -50,12 +199,9 @@ const InsightsPage = () => {
                   )}
                 </div>
               ))
-            ) : (
-              [1, 2, 3].map((_, i) => (
-                <div key={i} className="recent-book-cover empty">
-                  <div className="cover-placeholder">📖</div>
-                </div>
-              ))
+            )}
+            {!isLoading && recentReadings.length === 0 && (
+              <p className="no-activity-msg">No recent activity</p>
             )}
           </div>
         </div>
@@ -92,18 +238,27 @@ const InsightsPage = () => {
            <h2 className="design-text">DESIGN</h2>
         </div>
 
-        <div className="insight-card card-subscribers">
+        <div className="insight-card card-calendar">
           <div className="card-top">
-             <span className="label">Total Subscribers</span>
-             <span className="trend positive">+7%</span>
+             <span className="label">Activity Calendar</span>
+             <div className="header-event-info">
+               {currentEvent ? (
+                 <>
+                   <span className="event-name">{currentEvent}</span>
+                 </>
+               ) : hoverDate ? (
+                 <span className="event-name">{formatTime(currentMinutes)}</span>
+               ) : HOLIDAYS_2026[todayKey] ? (
+                 <>
+                   <span className="sparkle">✨</span>
+                   <span className="event-name">{HOLIDAYS_2026[todayKey]}</span>
+                 </>
+               ) : (
+                 <span className="event-name opacity-low">Hover dates for info</span>
+               )}
+             </div>
           </div>
-          <div className="subscriber-chart">
-            <svg viewBox="0 0 400 150" className="chart-svg">
-              <path d="M0,100 Q50,90 100,110 T200,80 T300,100 T400,60" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
-              <path d="M0,110 Q50,100 100,120 T200,90 T300,110 T400,70" fill="none" stroke="white" strokeWidth="4" />
-            </svg>
-          </div>
-          <h2 className="stat-value-xl">200K</h2>
+          <CalendarHeatmap sessions={sessions} setHoverDate={setHoverDate} />
         </div>
 
         {/* Row 3 */}
