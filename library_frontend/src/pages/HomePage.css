@@ -544,8 +544,8 @@ html, body {
   .shelf-cta-pill { width: 220px; height: 65px; }
 
   .hex-window {
-    width: calc(100% - 40px) !important;
+    width: calc(100%  - 1px) !important;
     max-width: none !important;
     margin: 0 auto;
   }
-}
+}

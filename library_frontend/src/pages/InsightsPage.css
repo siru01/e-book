@@ -7,7 +7,7 @@
   background-size: 25px 25px;
   color: #1a1a1a;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  padding: 100px 40px 40px;
+  padding: 90px 40px 20px ;
   display: flex;
   flex-direction: column;
   overflow: hidden; /* No scroll effect */
@@ -47,12 +47,12 @@
 
 .insights-container {
   flex: 1;
-  max-width: 1300px;
+  max-width: 1350px;
   width: 100%;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: 1.2fr 1fr 0.8fr;
+  grid-template-rows: repeat(3, 1fr);
   gap: 20px;
   min-height: 0; /* Allow grid to shrink */
 }
@@ -174,57 +174,75 @@
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
-/* Row 1 - Apps Card */
-.card-apps {
+/* Row 1 - Recent Readings Card */
+.card-recent-readings {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   background-color: #ffffff;
+  padding-top: 16px; /* Shifted up */
+  justify-content: flex-start;
 }
 
-.card-apps .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
+.card-recent-readings .card-header {
+  margin-bottom: 8px; /* Reduced gap */
 }
 
-.card-apps h3 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  max-width: 140px;
+.card-recent-readings h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #1a1a1a;
   margin: 0;
-  line-height: 1.4;
+  opacity: 0.6;
 }
 
-.launch-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.recent-readings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); 
+  gap: -20px;
+  width: 100%;
+  margin-top: -5px;
+}
+
+.recent-book-cover {
+  height: 128px;
+  width: 90px;
+  background: #f0f0f0;
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  position: relative;
   cursor: pointer;
-  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.apps-grid {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
+.recent-book-cover:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: #6333ff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
-.app-icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 12px;
+.recent-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.recent-book-cover.empty {
+  cursor: default;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  background: #00b894; /* Green like the image */
+  color: white;
 }
 
 /* Stat Cards */
