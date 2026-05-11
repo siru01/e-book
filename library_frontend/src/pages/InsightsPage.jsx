@@ -94,7 +94,8 @@ function CalendarMonth({ sessions = [], monthOffset = 0, setHoverDate }) {
     const holidayKey = `${mm}-${dd}`;
     cells.push({ day: d, dateStr, holidayKey, minutes: sessMap[dateStr] || 0 });
   }
-  while (cells.length < 42) cells.push(null);
+  while (cells.length % 7 !== 0) cells.push(null); // Only pad to nearest row, not always 42
+
 
   return (
     <div className="cal-month-item">
