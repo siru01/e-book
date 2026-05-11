@@ -179,12 +179,13 @@
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   background-color: #ffffff;
-  padding-top: 16px; /* Shifted up */
-  justify-content: flex-start;
+  overflow: hidden; /* Prevent content from stretching the box */
 }
 
 .card-recent-readings .card-header {
-  margin-bottom: 8px; /* Reduced gap */
+  width: 100%;
+  margin-bottom: 0px;
+  margin-top: -10px;  
 }
 
 .card-recent-readings h3 {
@@ -198,15 +199,25 @@
 }
 
 .recent-readings-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); 
-  gap: -20px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
   width: 100%;
-  margin-top: -5px;
+  margin-top: 8px;
+  overflow-x: auto;
+  overflow-y: hidden; /* Remove vertical scroll */
+  padding-bottom: 0;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+.recent-readings-grid::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .recent-book-cover {
-  height: 128px;
+  flex-shrink: 0;
+  height: 140px;
   width: 90px;
   background: #f0f0f0;
   border: 1px solid rgba(0,0,0,0.08);

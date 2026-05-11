@@ -24,7 +24,7 @@ const InsightsPage = () => {
   const { data: summary } = useDashboardSummary(token);
 
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
-  const recentReadings = activity.slice(0, 3);
+  const recentReadings = activity.slice(0, 10);
 
   return (
     <div className="insights-root">
