@@ -119,9 +119,6 @@ const ForgotPasswordPage = () => {
   return (
     <div className="fp-container">
       <div className="fp-card">
-        <div className="fp-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          SHELF
-        </div>
 
         {/* ── Step 1: Email ── */}
         {step === 1 && (
