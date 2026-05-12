@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
 import { useDashboardSummary, useBookmarks } from '../hooks/useDashboardData';
 import { getCoverUrl } from '../api/shelf';
 import './InsightsPage.css';
+import CounterLoader from "../components/CounterLoader";
 
 const IconArrowRight = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -151,6 +152,9 @@ const InsightsPage = () => {
   const { data: summary, isLoading: isSummaryLoading } = useDashboardSummary(token);
   const { data: bookmarks, isLoading: isBookmarksLoading } = useBookmarks(token);
   const [hoverDate, setHoverDate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
+  const [coversPreloaded, setCoversPreloaded] = useState(false);
 
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
   const recentReadings = activity.slice(0, 6);
@@ -186,8 +190,52 @@ const InsightsPage = () => {
     return `${m}M`;
   };
 
+  // Preload covers for recent readings and bookmarks
+  useEffect(() => {
+    if (isSummaryLoading || isBookmarksLoading) return;
+    
+    const coversToLoad = [
+      ...recentReadings.map(b => b.book_cover),
+      ...(bookmarks ? bookmarks.slice(0, 4).map(b => b.book_cover) : []),
+      lastBook?.book_cover
+    ].filter(Boolean).map(c => getCoverUrl(c));
+
+    if (coversToLoad.length === 0) {
+      setCoversPreloaded(true);
+      return;
+    }
+
+    let loadedCount = 0;
+    coversToLoad.forEach(url => {
+      const img = new Image();
+      img.src = url;
+      img.onload = img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === coversToLoad.length) setCoversPreloaded(true);
+      };
+    });
+  }, [isSummaryLoading, isBookmarksLoading, recentReadings.length, bookmarks?.length, lastBook?.book_id]);
+
+  useEffect(() => {
+    if (!isSummaryLoading && !isBookmarksLoading && coversPreloaded) {
+      setDataReady(true);
+    }
+  }, [isSummaryLoading, isBookmarksLoading, coversPreloaded]);
+
+  const handleLoaderComplete = useCallback(() => {
+    setLoading(false);
+  }, []);
+
   return (
-    <div className="insights-root">
+    <div className={`insights-root ${loading ? 'is-loading' : 'is-ready'}`}>
+      {loading && (
+        <CounterLoader 
+          dataReady={dataReady} 
+          onComplete={handleLoaderComplete} 
+          brand="INSIGHTS"
+          label="Calculating your reading stats…"
+        />
+      )}
 
       <main className="insights-container">
         {/* Row 1 - Box 1: Recent Readings */}

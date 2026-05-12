@@ -16,6 +16,17 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.insights-root.is-ready {
+  opacity: 1;
+}
+
+.insights-root.is-loading {
+  overflow: hidden;
+  height: 100vh;
 }
 
 .insights-nav {
