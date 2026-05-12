@@ -213,7 +213,7 @@ class DashboardSummaryView(APIView):
 
         def get_activities():
             close_old_connections()
-            qs = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:15]
+            qs = ReadingActivity.objects.filter(user=user).order_by('-last_read_at')[:6]
             return ReadingActivitySerializer(qs, many=True).data
 
         def get_finished():
@@ -271,8 +271,10 @@ class MySessionsView(APIView):
 
     def post(self, request):
         minutes = int(request.data.get("minutes", 1))
+        book_id = request.data.get("book_id")
         today   = date_type.today()
 
+        # 1. Update daily heatmap session
         obj, created = ReadingSession.objects.get_or_create(
             user=request.user,
             date=today,
@@ -281,6 +283,14 @@ class MySessionsView(APIView):
         if not created:
             obj.minutes_read += minutes
             obj.save()
+
+        # 2. Update the 'Last Read' timestamp for the specific book
+        # This only happens when recordSession is called (every 1 minute)
+        if book_id:
+            ReadingActivity.objects.filter(
+                user=request.user, 
+                book_id=book_id
+            ).update(last_read_at=timezone.now())
 
         # Invalidate cache
         cache.delete(f"user_summary_{request.user.id}")
@@ -517,14 +527,31 @@ class OpenLibraryImport(APIView):
 # ─────────────────────────────────────────────
 # BOOK TEXT PROXY  — GET /api/books/read/
 # ─────────────────────────────────────────────
+# High-performance in-memory cache for book metadata
+GLOBAL_METADATA_CACHE = {}
+
 class BookReadView(APIView):
     permission_classes     = [AllowAny]
     authentication_classes = []
 
     def get(self, request):
         book_id = request.GET.get("book_id", "").strip()
+        metadata_only = request.GET.get("metadata", "false").lower() == "true"
         if not book_id:
             return Response({"error": "book_id required"}, status=400)
+            
+        # 1. Check Cache (Instant load for already-visited books)
+        if metadata_only and book_id in GLOBAL_METADATA_CACHE:
+            cached_data = GLOBAL_METADATA_CACHE[book_id].copy()
+            # Add user-specific progress/bookmarks to the cached generic metadata
+            user = request.user
+            if user and user.is_authenticated:
+                act = ReadingActivity.objects.filter(user=user, book_id=book_id).first()
+                if act:
+                    cached_data["user_progress"] = act.progress_percent
+                    cached_data["is_finished"] = act.is_finished
+                cached_data["is_bookmarked"] = Bookmarks.objects.filter(user=user, book_id=book_id).exists()
+            return Response(cached_data)
 
         if ":" in book_id:
             source, raw_id = book_id.split(":", 1)
@@ -535,13 +562,13 @@ class BookReadView(APIView):
         try:
             # Fetch metadata & full text
             if source == "gutenberg":
-                resp = self._fetch_gutenberg(raw_id)
+                resp = self._fetch_gutenberg(raw_id, metadata_only)
             elif source == "archive":
-                resp = self._fetch_archive(raw_id)
+                resp = self._fetch_archive(raw_id, metadata_only)
             elif source == "openlibrary":
-                resp = self._fetch_openlibrary(raw_id)
+                resp = self._fetch_openlibrary(raw_id, metadata_only)
             elif source == "google":
-                resp = self._fetch_google(raw_id)
+                resp = self._fetch_google(raw_id, metadata_only)
             else:
                 return Response({"error": f"Unknown source: {source}"}, status=400)
 
@@ -557,15 +584,26 @@ class BookReadView(APIView):
                     is_done = act.is_finished
                 is_faved = Bookmarks.objects.filter(user=user, book_id=book_id).exists()
 
-            resp.data["user_progress"] = user_progress
-            resp.data["is_bookmarked"] = is_faved
-            resp.data["is_finished"]   = is_done
+            if resp.status_code == 200:
+                # 2. Update Cache for future instant loads
+                if metadata_only:
+                    GLOBAL_METADATA_CACHE[book_id] = {
+                        **resp.data,
+                        "user_progress": 0,
+                        "is_bookmarked": False,
+                        "is_finished":   False
+                    }
+                # 3. Add user-specific status for THIS request
+                resp.data["user_progress"] = user_progress
+                resp.data["is_bookmarked"] = is_faved
+                resp.data["is_finished"]   = is_done
+
             return resp
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-    def _fetch_gutenberg(self, gutenberg_id: str):
+    def _fetch_gutenberg(self, gutenberg_id: str, metadata_only: bool = False):
         try:
             meta_r = httpx.get(
                 f"https://gutendex.com/books/{gutenberg_id}",
@@ -594,6 +632,19 @@ class BookReadView(APIView):
             subjects    = []
             bookshelves = []
             text_url    = ""
+
+        if metadata_only:
+            return Response({
+                "title":       title,
+                "author":      author,
+                "cover_url":   cover_url,
+                "source":      "gutenberg",
+                "description": "",
+                "subjects":    subjects,
+                "bookshelves": bookshelves,
+                "year":        None,
+                "text":        None,
+            })
 
         text_urls = list(filter(None, [
             text_url,
@@ -632,7 +683,7 @@ class BookReadView(APIView):
             "text":        text,
         })
 
-    def _fetch_archive(self, identifier):
+    def _fetch_archive(self, identifier, metadata_only: bool = False):
         meta_r = httpx.get(f"https://archive.org/metadata/{identifier}", timeout=15)
         meta_r.raise_for_status()
         meta      = meta_r.json()
@@ -680,6 +731,9 @@ class BookReadView(APIView):
                 "year":        year,
             }
 
+        if metadata_only:
+            return Response(_base())
+
         if not text_file:
             stream_url = f"https://archive.org/stream/{identifier}/{identifier}_djvu.txt"
             try:
@@ -699,7 +753,7 @@ class BookReadView(APIView):
 
         return Response({**_base(), "text": text})
 
-    def _fetch_openlibrary(self, ol_id):
+    def _fetch_openlibrary(self, ol_id, metadata_only: bool = False):
         work_r = httpx.get(f"https://openlibrary.org/works/{ol_id}.json", timeout=15)
         work_r.raise_for_status()
         work      = work_r.json()
@@ -761,6 +815,9 @@ class BookReadView(APIView):
                 "year":        year,
             }
 
+        if metadata_only:
+            return Response(_base())
+
         if not ia_id:
             fallback = (
                 "Full plain-text is not freely available for this edition on Open Library.\n\n"
@@ -774,7 +831,7 @@ class BookReadView(APIView):
         merged["text"] = archive_resp.data.get("text", "")
         return Response(merged)
 
-    def _fetch_google(self, google_id):
+    def _fetch_google(self, google_id, metadata_only: bool = False):
         from django.conf import settings
         params  = {}
         api_key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "")
@@ -810,6 +867,8 @@ class BookReadView(APIView):
                 "bookshelves": [],
                 "year":        year,
             }
+        if metadata_only:
+            return Response(_base())
 
         download_url = (
             access.get("epub", {}).get("downloadLink") or
@@ -856,21 +915,36 @@ class BookStreamTextView(APIView):
                     yield "Content not available for streaming."
                     return
 
-                # 2. Stream from source to client in chunks
-                # We use a small chunk size to ensure the first few pages arrive quickly
-                with httpx.stream("GET", target_url, timeout=30, follow_redirects=True) as r:
-                    if r.status_code != 200:
-                        yield f"Error: Source returned {r.status_code}"
-                        return
-                        
-                    # We iterate by text chunks. 8KB is roughly 3-4 pages of text.
-                    for chunk in r.iter_text(chunk_size=8192):
-                        # Limit to ~500KB to avoid massive memory usage/bandwidth for huge files
-                        # (Still plenty for even the longest novels)
-                        yield chunk
+                # 2. Stream from source to client in chunks with retries
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        with httpx.stream("GET", target_url, timeout=30, follow_redirects=True) as r:
+                            if r.status_code != 200:
+                                yield f"Error: Source returned {r.status_code}"
+                                return
+                                
+                            chunk_count = 0
+                            for chunk in r.iter_text(chunk_size=2048):
+                                chunk_count += 1
+                                yield chunk
+                                if chunk_count > 250: # Limit to ~500KB
+                                    break
+                            
+                            # Success! Exit the retry loop and the generator
+                            return
+
+                    except (httpx.RemoteProtocolError, httpx.ReadError, httpx.ConnectError) as e:
+                        if attempt < max_retries - 1:
+                            import time
+                            time.sleep(1) # Backoff
+                            continue
+                        else:
+                            yield f"\n[Stream Error]: Connection lost. Please try refreshing. ({str(e)})"
+                            return
                         
             except Exception as e:
-                yield f"\n[Stream Error]: {str(e)}"
+                yield f"\n[System Error]: {str(e)}"
 
         response = StreamingHttpResponse(event_stream(), content_type='text/plain; charset=utf-8')
         response['Cache-Control'] = 'no-cache'

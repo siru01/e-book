@@ -1,4 +1,8 @@
 const BASE = "/api";
+const preloadedContent = new Map();
+
+export const setPreloadedContent = (id, text) => preloadedContent.set(id, text);
+export const getPreloadedContent = (id) => preloadedContent.get(id);
 
 // ── Generic authenticated fetch ──────────────────────────────────
 async function apiFetch(path, token, options = {}) {
@@ -117,18 +121,21 @@ export async function fetchShelfRows() {
 }
 
 export async function fetchBookOverview(bookId) {
-  const res  = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}`);
+  const res  = await fetch(`${BASE}/books/read/?book_id=${encodeURIComponent(bookId)}&metadata=true`);
   const data = await res.json();
   return {
-    title      : data.title        || "Untitled",
-    author     : data.author       || "Unknown",
-    cover_url  : data.cover_url    || "",
-    description: data.description  || (data.text ? data.text.slice(0, 700) + "\u2026" : ""),
-    source     : data.source       || bookId.split(":")[0] || "openlibrary",
-    year       : data.year         || null,
-    read_url   : data.read_url     || null,
-    subjects   : data.subjects     || [],
-    bookshelves: data.bookshelves  || [],
+    title         : data.title          || "Untitled",
+    author        : data.author         || "Unknown",
+    cover_url     : data.cover_url      || "",
+    description   : data.description    || (data.text ? data.text.slice(0, 700) + "\u2026" : ""),
+    source        : data.source         || bookId.split(":")[0] || "openlibrary",
+    year          : data.year           || null,
+    read_url      : data.read_url       || null,
+    subjects      : data.subjects       || [],
+    bookshelves   : data.bookshelves    || [],
+    user_progress : data.user_progress  || 0,
+    is_bookmarked : data.is_bookmarked  || false,
+    is_finished   : data.is_finished    || false,
   };
 }
 
@@ -179,10 +186,10 @@ export const saveReadingActivity = (token, activityData) =>
     body:   JSON.stringify(activityData),
   });
 
-export const recordSession = (token, minutes = 1) =>
+export const recordSession = (token, minutes = 1, bookId = null) =>
   apiFetch("/my-sessions/", token, {
     method: "POST",
-    body: JSON.stringify({ minutes }),
+    body: JSON.stringify({ minutes, book_id: bookId }),
   });
 
 

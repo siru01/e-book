@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
-import { saveBookmark, saveReadingActivity, recordSession, fetchBookContent, streamBookContent } from "../api/shelf";
+import { saveBookmark, saveReadingActivity, recordSession, fetchBookOverview, fetchBookContent, streamBookContent, getPreloadedContent } from "../api/shelf";
 import "./Readerpage.css";
 import CounterLoader from "../components/CounterLoader";
 
@@ -141,7 +141,7 @@ export default function ReaderPage() {
 
     (async () => {
       try {
-        const data = await fetchBookContent(bookId);
+        const data = await fetchBookOverview(bookId);
         if (cancelled) return;
         setBookMeta({
           title:     data.title     || "Untitled",
@@ -153,8 +153,15 @@ export default function ReaderPage() {
         setBookmarkSaved(data.is_bookmarked || false);
         setFinishedSaved(data.is_finished   || false);
         
+        const preloaded = getPreloadedContent(bookId);
         let textBuffer = "";
         let isFirstSet = true;
+
+        if (preloaded) {
+          setPages(splitIntoPages(preloaded));
+          setDataIsReady(true);
+          isFirstSet = false;
+        }
 
         for await (const chunk of streamBookContent(bookId)) {
           if (cancelled) return;
@@ -169,13 +176,13 @@ export default function ReaderPage() {
           const newPages = splitIntoPages(processedText);
           setPages(newPages);
 
-          // 1. FAST LOAD: Reveal as soon as we have at least 1 page
+          // 1. Reveal as soon as we have data (or if not already revealed by preloaded)
           if (isFirstSet && newPages.length >= 1) {
             setDataIsReady(true);
             isFirstSet = false;
           }
 
-          // 2. PERSISTENCE: Jump to saved page or progress percentage once enough pages are loaded
+          // 2. PERSISTENCE: Jump logic
           if (!hasInitialJump && newPages.length > 0) {
             const savedValue = localStorage.getItem(`shelf_last_page_${bookId}`);
             const savedPage = savedValue !== null ? parseInt(savedValue, 10) : null;
@@ -303,10 +310,10 @@ export default function ReaderPage() {
   }, [spreadIndex, finishedSaved, token, bookId, pages.length]);
 
   useEffect(() => {
-    if (!token) return;
-    const interval = setInterval(() => { recordSession(token, 1).catch(() => {}); }, 60000);
+    if (!token || !bookId) return;
+    const interval = setInterval(() => { recordSession(token, 1, bookId).catch(() => {}); }, 60000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [token, bookId]);
 
   if (error) {
     return (

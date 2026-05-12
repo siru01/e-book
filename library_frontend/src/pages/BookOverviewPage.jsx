@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import { fetchBookOverview, searchBooks, saveBookmark, getCoverUrl } from "../api/shelf";
+import { fetchBookOverview, searchBooks, saveBookmark, getCoverUrl, streamBookContent, setPreloadedContent } from "../api/shelf";
+import { useBookOverview } from "../hooks/useDashboardData";
+import CounterLoader from "../components/CounterLoader";
 import "./BookOverviewPage.css";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -68,12 +70,35 @@ export default function BookOverviewPage() {
   // Derive source prefix (e.g. "openlibrary", "google", "archive")
   const source = bookId.includes(":") ? bookId.split(":")[0] : "openlibrary";
 
-  const [book,    setBook]    = useState(null);
+  const { data: rawBook, isLoading, error: queryError } = useBookOverview(bookId);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [similar, setSimilar] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
   const [saved,   setSaved]   = useState(false);
   const [saving,  setSaving]  = useState(false);
+
+  // Derived loading state
+  const loading = isLoading || initialLoading;
+
+  const book = useMemo(() => {
+    if (!rawBook) return null;
+    const category = cleanLabel(rawBook.subjects?.[0] || rawBook.bookshelves?.[0] || "Literature");
+    const subCategory = cleanLabel(rawBook.subjects?.[1] || rawBook.bookshelves?.[1] || "");
+    return {
+      id:           bookId,
+      title:        rawBook.title,
+      author:       rawBook.author,
+      coverUrl:     getCoverUrl(rawBook.cover_url),
+      description:  rawBook.description,
+      source:       rawBook.source || source,
+      year:         rawBook.year,
+      category,
+      subCategory,
+      synopsis:     buildSynopsis(rawBook.description, rawBook.title, rawBook.author),
+      readUrl:      rawBook.read_url || null,
+      subjects:     rawBook.subjects || [],
+      bookshelves:  rawBook.bookshelves || [],
+    };
+  }, [rawBook, bookId, source]);
   
   useEffect(() => {
     document.documentElement.classList.add('allow-scroll');
@@ -84,70 +109,57 @@ export default function BookOverviewPage() {
     };
   }, []);
 
+  // Background Pre-loading for instant reading
   useEffect(() => {
-    if (!bookId) return;
-    setLoading(true);
-    setError(null);
-    setBook(null);
-    setSimilar([]);
-
-    fetchBookOverview(bookId)
-      .then((data) => {
-        const category = cleanLabel(
-          (data.subjects?.[0]) ||
-          (data.bookshelves?.[0]) ||
-          "Literature"
-        );
-        const subCategory = cleanLabel(
-          data.subjects?.[1] || data.bookshelves?.[1] || ""
-        );
-
-        setBook({
-          id:           bookId,
-          title:        data.title,
-          author:       data.author,
-          coverUrl:     getCoverUrl(data.cover_url),
-          description:  data.description,
-          source:       data.source || source,
-          year:         data.year,
-          category,
-          subCategory,
-          synopsis:     buildSynopsis(data.description, data.title, data.author),
-          readUrl:      data.read_url || null,
-          subjects:     data.subjects || [],
-          bookshelves:  data.bookshelves || [],
-        });
-
-        // Fetch related books using the first subject keyword
-        const searchTerm =
-          data.subjects?.[0]?.split("·")[0].trim() ||
-          data.bookshelves?.[0] ||
-          data.title?.split(" ")[0] ||
-          "";
-
-        if (searchTerm) {
-          searchBooks(null, searchTerm)
-            .then((d) => {
-              const filtered = (d.results || [])
-                .filter((b) => b.book_id !== bookId && b.cover_url)
-                .slice(0, 3);
-              setSimilar(
-                filtered.map((b, i) => ({
-                  id:     b.book_id,
-                  volume: `VOLUME ${String(i + 1).padStart(2, "0")}`,
-                  title:  b.title.length > 36 ? b.title.slice(0, 34) + "…" : b.title,
-                  author: (b.authors || []).join(", ") || "Unknown",
-                  year:   b.year || "",
-                  cover:  getCoverUrl(b.cover_url),
-                }))
-              );
-            })
-            .catch(() => {});
+    if (!book) return;
+    
+    let count = 0;
+    let buffer = "";
+    const stream = streamBookContent(book.id);
+    
+    (async () => {
+      try {
+        for await (const chunk of stream) {
+          buffer += chunk;
+          count++;
+          if (count >= 10) break; // Pre-load ~80KB (approx 20-30 pages)
         }
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [bookId]);
+        setPreloadedContent(book.id, buffer);
+      } catch (err) {
+        console.warn("Pre-load failed:", err);
+      }
+    })();
+  }, [book]);
+
+  useEffect(() => {
+    if (!book) return;
+    // Fetch related books using the first subject keyword
+    const searchTerm =
+      book.subjects?.[0]?.split("·")[0].trim() ||
+      book.bookshelves?.[0] ||
+      book.title?.split(" ")[0] ||
+      "";
+
+    if (searchTerm) {
+      searchBooks(null, searchTerm)
+        .then((d) => {
+          const filtered = (d.results || [])
+            .filter((b) => b.book_id !== bookId && b.cover_url)
+            .slice(0, 3);
+          setSimilar(
+            filtered.map((b, i) => ({
+              id:     b.book_id,
+              volume: `VOLUME ${String(i + 1).padStart(2, "0")}`,
+              title:  b.title.length > 36 ? b.title.slice(0, 34) + "…" : b.title,
+              author: (b.authors || []).join(", ") || "Unknown",
+              year:   b.year || "",
+              cover:  getCoverUrl(b.cover_url),
+            }))
+          );
+        })
+        .catch(() => {});
+    }
+  }, [book, bookId]);
 
   const handleSave = async () => {
     if (!token) { navigate("/login"); return; }
@@ -169,34 +181,22 @@ export default function BookOverviewPage() {
 
 
   /* ── Loading ── */
-  if (loading) return (
-    <div className="bop-root">
-      <main className="bop-main">
-        <div className="bop-layout">
-          <div className="bop-left">
-            <Skeleton w="220px" h="320px" r="12px" />
-            <Skeleton w="220px" h="48px" r="100px" />
-            <Skeleton w="220px" h="48px" r="100px" />
-          </div>
-          <div className="bop-right">
-            <Skeleton w="200px" h="14px" />
-            <Skeleton w="80%" h="52px" r="4px" />
-            <Skeleton w="220px" h="20px" />
-            <Skeleton w="340px" h="20px" />
-            <Skeleton w="100%" h="130px" r="8px" />
-          </div>
-        </div>
-      </main>
-    </div>
+  if (initialLoading) return (
+    <CounterLoader 
+      dataReady={!isLoading && !!book} 
+      onComplete={() => setInitialLoading(false)} 
+      brand="SHELF" 
+      label="Fetching archival metadata…" 
+    />
   );
 
   /* ── Error ── */
-  if (error || !book) return (
+  if (queryError || (!loading && !book)) return (
     <div className="bop-root">
       <main className="bop-main bop-error-state">
         <span className="bop-error-emoji">📚</span>
         <h2 className="bop-error-heading">Book not found</h2>
-        <p className="bop-error-msg">{error || "This title doesn't exist in the archive."}</p>
+        <p className="bop-error-msg">{queryError?.message || "This title doesn't exist in the archive."}</p>
         <button className="bop-btn-read" onClick={() => navigate(-1)}>← Go Back</button>
       </main>
     </div>

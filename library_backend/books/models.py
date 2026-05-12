@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from users.models import User
 
 
@@ -65,7 +66,7 @@ class ReadingActivity(models.Model):
     book_author      = models.CharField(max_length=300, blank=True, default='')
     book_cover       = models.URLField(blank=True, default='')
     started_at       = models.DateTimeField(auto_now_add=True)
-    last_read_at     = models.DateTimeField(auto_now=True, db_index=True)
+    last_read_at     = models.DateTimeField(default=timezone.now, db_index=True)
     progress_percent = models.FloatField(default=0.0)            # 0.0 – 100.0
     is_finished      = models.BooleanField(default=False)
     finished_at      = models.DateTimeField(null=True, blank=True, db_index=True)

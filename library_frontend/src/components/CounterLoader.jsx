@@ -70,11 +70,11 @@ export default function CounterLoader({
         const remaining = target - currentProgress;
         
         // Boost velocity significantly
-        // The factor 0.15 ensures we snap to 100 in about 500-800ms
-        velocity = Math.max(velocity, remaining * 0.15 * timeFactor);
+        // Snap to 100 in about 200ms once data is ready
+        velocity = Math.max(velocity, remaining * 0.45 * timeFactor);
         
         // Minimum snap speed
-        if (velocity < 0.8 * timeFactor) velocity = 0.8 * timeFactor;
+        if (velocity < 1.5 * timeFactor) velocity = 1.5 * timeFactor;
       }
 
       currentProgress += velocity;

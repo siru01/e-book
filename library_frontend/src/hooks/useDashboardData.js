@@ -3,6 +3,7 @@ import {
   fetchMySummary,
   fetchShelfRows,
   fetchMyBookmarks,
+  fetchBookOverview,
 } from '../api/shelf';
 
 // ── Cache settings ──────────────────────────────────────────────
@@ -37,4 +38,12 @@ export const useBookmarks = (token) =>
     staleTime: 0,
     gcTime: STALE_5_MIN,
     enabled: !!token,
+  });
+
+export const useBookOverview = (bookId) =>
+  useQuery({
+    queryKey: ['bookOverview', bookId],
+    queryFn: () => fetchBookOverview(bookId),
+    staleTime: STALE_5_MIN,
+    enabled: !!bookId,
   });

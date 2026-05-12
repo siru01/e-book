@@ -153,7 +153,7 @@ const InsightsPage = () => {
   const [hoverDate, setHoverDate] = useState(null);
 
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
-  const recentReadings = activity.slice(0, 10);
+  const recentReadings = activity.slice(0, 6);
   const sessions = Array.isArray(summary?.sessions) ? summary.sessions : [];
 
   const todayObj = new Date();
