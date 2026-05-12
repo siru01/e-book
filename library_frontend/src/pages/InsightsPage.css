@@ -87,6 +87,17 @@
   }
 }
 
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .insight-card {
   background-color: #ffffff;
   border: 1.5px solid rgba(0, 0, 0, 0.315);
@@ -319,60 +330,70 @@
   grid-row: 1 / 2;
   background-color: #ffffff;
   display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  padding: 20px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  gap: 0;
 }
 
 .stat-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  min-width: 0;
 }
 
 .section-label {
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-family: 'Anton', sans-serif; 
+  font-size: 1rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0 rem;
   color: #1a1a1a;
-  opacity: 0.5;
-  margin-bottom: 2px;
+  margin-bottom: 24px;
 }
 
 .section-value {
-  font-size: 2.2rem;
-  font-weight: 700;
+  font-size: 3.5rem;
+  font-weight: 400;
   margin: 0;
   line-height: 1;
+  letter-spacing: -0.002em;
 }
 
 .stat-separator {
-  height: 1px;
-  background: rgba(0,0,0,0.08);
-  margin: 4px 0;
+  width: 1.5px;
+  height: 80%;
+  background: #1a1a1a;
+  flex-shrink: 0;
 }
 
 .last-book-mini {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
   align-items: center;
+  gap: 0;
   cursor: pointer;
-  transition: transform 0.2s;
-  padding: 4px 0;
+  transition: transform 0.3s ease;
 }
 
 .last-book-mini:hover {
-  transform: translateX(4px);
+  transform: scale(1.05);
 }
 
 .mini-cover {
-  width: 40px;
-  height: 56px;
-  background: #f5f5f5;
+  width: 90px;
+  height: 130px;
+  background: #f0f0f0;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.08);
   flex-shrink: 0;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .mini-cover img {
@@ -382,19 +403,7 @@
 }
 
 .mini-details {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.mini-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #1a1a1a;
-  margin-bottom: 2px;
+  display: none; /* Only show cover as per design image */
 }
 
 .mini-author {

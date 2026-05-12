@@ -167,6 +167,7 @@ const InsightsPage = () => {
 
   const currentDisplayDate = hoverDate || todayKey;
   const currentEvent = HOLIDAYS_2026[currentDisplayDate];
+  const currentMinutes = currentSess ? currentSess.minutes_read : 0;
   const totalMinutes = sessions.reduce((sum, s) => sum + (s.minutes_read || 0), 0);
   const lastBook = activity[0];
 
@@ -245,7 +246,7 @@ const InsightsPage = () => {
 
         <div className="insight-card card-dual-stat">
           <div className="stat-section total-time">
-            <span className="section-label">TOTAL TIME</span>
+            <span className="section-label">TOTAL TIME READ</span>
             <h2 className="section-value">{formatTotalTime(totalMinutes)}</h2>
           </div>
           <div className="stat-separator" />
