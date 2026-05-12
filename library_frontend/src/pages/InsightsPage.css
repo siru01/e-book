@@ -350,7 +350,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start; /* Align header to top */
-  height: 101%;
+  height: 100%;
   padding: 15px;
   min-width: 0;
 }
@@ -365,8 +365,8 @@
   font-size: 3.5rem;
   font-weight: 500;
   margin: auto 0; /* Center vertically in remaining space */
-  line-height: 1;
   letter-spacing: -0.002em;
+  margin-top: -1px; 
 }
 
 .stat-separator {
@@ -388,12 +388,13 @@
 }
 
 .last-book-mini:hover {
-  transform: translateY(-8px) scale(1.05); 
-}
+  transform: translateY(-18px) scale(1.01); 
 
+}
+ 
 .mini-cover {
-  width: 95px;
-  height: 125px;
+  width: 105px;
+  height: 140px;
   background: #f0f0f0;
   overflow: hidden;
   border: 1px solid rgba(0,0,0,0.08);
@@ -455,7 +456,7 @@
 
 /* Design Card */
 .card-design {
-  background-color: #6333ff;
+  background-color: #3c59ff;
   display: flex;
   align-items: center;
   justify-content: center;
