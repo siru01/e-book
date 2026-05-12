@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchMySummary,
   fetchShelfRows,
+  fetchMyBookmarks,
 } from '../api/shelf';
 
 // ── Cache settings ──────────────────────────────────────────────
@@ -27,4 +28,13 @@ export const useShelfRows = () =>
     refetchOnWindowFocus: false,
     refetchOnReconnect  : false,
     refetchOnMount      : false,
+  });
+
+export const useBookmarks = (token) =>
+  useQuery({
+    queryKey: ['myBookmarks', token],
+    queryFn: () => fetchMyBookmarks(token),
+    staleTime: 0,
+    gcTime: STALE_5_MIN,
+    enabled: !!token,
   });

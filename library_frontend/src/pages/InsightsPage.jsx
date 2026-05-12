@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
-import { useDashboardSummary } from '../hooks/useDashboardData';
+import { useDashboardSummary, useBookmarks } from '../hooks/useDashboardData';
 import { getCoverUrl } from '../api/shelf';
 import './InsightsPage.css';
 
@@ -148,7 +148,8 @@ function CalendarHeatmap({ sessions = [], setHoverDate }) {
 const InsightsPage = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const { data: summary, isLoading } = useDashboardSummary(token);
+  const { data: summary, isLoading: isSummaryLoading } = useDashboardSummary(token);
+  const { data: bookmarks, isLoading: isBookmarksLoading } = useBookmarks(token);
   const [hoverDate, setHoverDate] = useState(null);
 
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
@@ -166,7 +167,8 @@ const InsightsPage = () => {
 
   const currentDisplayDate = hoverDate || todayKey;
   const currentEvent = HOLIDAYS_2026[currentDisplayDate];
-  const currentMinutes = currentSess ? currentSess.minutes_read : 0;
+  const totalMinutes = sessions.reduce((sum, s) => sum + (s.minutes_read || 0), 0);
+  const lastBook = activity[0];
 
   const formatTime = (total) => {
     if (!total) return "No reading recorded";
@@ -174,6 +176,13 @@ const InsightsPage = () => {
     const m = total % 60;
     if (h > 0) return `${h}h ${m}m read`;
     return `${m}m read`;
+  };
+
+  const formatTotalTime = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0) return `${h}H ${m}M`;
+    return `${m}M`;
   };
 
   return (
@@ -186,7 +195,7 @@ const InsightsPage = () => {
             <h3>RECENT READINGS</h3>
           </div>
           <div className="recent-readings-grid">
-            {!isLoading && recentReadings.length > 0 && (
+            {!isSummaryLoading && recentReadings.length > 0 && (
               recentReadings.map((item, i) => (
                 <div 
                   key={i} 
@@ -201,28 +210,61 @@ const InsightsPage = () => {
                 </div>
               ))
             )}
-            {!isLoading && recentReadings.length === 0 && (
+            {!isSummaryLoading && recentReadings.length === 0 && (
               <p className="no-activity-msg">No recent activity</p>
             )}
           </div>
         </div>
 
-        <div className="insight-card card-stat card-likes">
-           <div className="heart-bg">
-             <IconHeart />
-             <IconHeart />
-             <IconHeart />
-           </div>
-           <h2 className="stat-value">25K</h2>
-           <p className="stat-label">Weekly Likes</p>
+        {/* Row 1 - Box 2: Bookmarks */}
+        <div className="insight-card card-bookmarks">
+          <div className="card-header">
+            <h3>BOOKMARKS</h3>
+          </div>
+          <div className="recent-readings-grid">
+            {!isBookmarksLoading && bookmarks && bookmarks.length > 0 && (
+              bookmarks.slice(0, 10).map((item, i) => (
+                <div 
+                  key={i} 
+                  className="recent-book-cover"
+                  onClick={() => navigate(`/book/${encodeURIComponent(item.book_id)}`)}
+                >
+                  {item.book_cover ? (
+                    <img src={getCoverUrl(item.book_cover)} alt={item.book_title} />
+                  ) : (
+                    <div className="cover-placeholder">🔖</div>
+                  )}
+                </div>
+              ))
+            )}
+            {!isBookmarksLoading && (!bookmarks || bookmarks.length === 0) && (
+              <p className="no-activity-msg">No bookmarks saved</p>
+            )}
+          </div>
         </div>
 
-        <div className="insight-card card-stat card-viewers">
-           <div className="live-indicator">
-             <span className="dot"></span> LIVE
-           </div>
-           <h2 className="stat-value">50K</h2>
-           <p className="stat-label">Weekly Viewers</p>
+        <div className="insight-card card-dual-stat">
+          <div className="stat-section total-time">
+            <span className="section-label">TOTAL TIME</span>
+            <h2 className="section-value">{formatTotalTime(totalMinutes)}</h2>
+          </div>
+          <div className="stat-separator" />
+          <div className="stat-section last-book">
+            <span className="section-label">LAST READ</span>
+            {lastBook ? (
+              <div className="last-book-mini" onClick={() => navigate(`/book/${encodeURIComponent(lastBook.book_id)}`)}>
+                <div className="mini-cover">
+                   <img src={getCoverUrl(lastBook.book_cover)} alt={lastBook.book_title} />
+                </div>
+                <div className="mini-details">
+                  <span className="mini-title">{lastBook.book_title}</span>
+                  <span className="mini-author">{lastBook.book_author}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="no-activity-msg">None yet</p>
+            )}
+          </div>
         </div>
 
         {/* Row 2 */}
