@@ -17,7 +17,7 @@
   position: relative;
   z-index: 10;
 }
-
+/* No changes needed in this section. */
 .dash-empty-shelves {
   display: flex;
   flex-direction: column;
