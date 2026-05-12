@@ -185,11 +185,11 @@
   box-shadow: 0 8px 30px rgba(0,0,0,0.1); 
   transform: translateY(-1px); 
 }
-.dash-search-input { flex: 1; border: none; background: none; outline: none; font-size: .85rem; color: #111; font-family: 'Inter', sans-serif; }
+.dash-search-input { flex: 1; border: none; background: none; outline: none; font-size: .85rem; color: #000000; font-family: 'Inter', sans-serif; }
 
 .dash-nav-right-inner { display: flex; align-items: center; gap: 16px; }
-.dash-icon-btn { background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; padding: 6px; border-radius: 50%; transition: background .15s; }
-.dash-icon-btn:hover { background: #f5f5f5; }
+.dash-icon-btn { background: none; border: none; cursor: pointer; color: #000000; display: flex; align-items: center; padding: 6px; border-radius: 50%; transition: background .15s; }
+.dash-icon-btn:hover { background: #a09898; }
 
 /* ── Profile Dropdown ── */
 .profile-wrap { position: relative; }

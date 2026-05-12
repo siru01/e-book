@@ -546,13 +546,74 @@
 }
 
 @media (max-width: 768px) {
+  .insights-root {
+    padding: 80px 20px 40px;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: visible;
+  }
+
   .insights-container {
     grid-template-columns: 1fr;
-    grid-auto-rows: auto;
+    grid-template-rows: auto;
+    gap: 24px;
+    display: flex;
+    flex-direction: column; /* List view */
   }
-  .card-apps, .card-active-users, .card-calendar, .card-learning {
-    grid-column: 1 / 2;
+
+  .insight-card {
+    min-height: 200px;
+    width: 100%;
+  }
+
+  .card-recent-readings, 
+  .card-bookmarks, 
+  .card-dual-stat, 
+  .card-active-users, 
+  .card-design, 
+  .card-calendar, 
+  .card-learning {
+    grid-column: span 1;
     grid-row: auto;
+  }
+
+  .card-dual-stat {
+    flex-direction: column;
+    padding: 20px 0;
+  }
+
+  .stat-separator {
+    width: 80%;
+    height: 1.5px;
+    margin: 20px 0;
+  }
+
+  .section-value {
+    font-size: 2.8rem;
+  }
+
+  .last-book-mini {
+    transform: none;
+    margin-top: 10px;
+  }
+
+  .card-calendar {
+    min-height: 450px;
+  }
+
+  .cal-day-cell, .cal-day-empty {
+    height: 40px;
+    width: 40px;
+  }
+  
+  .cal-day-circle {
+    height: 32px;
+    width: 32px;
+    font-size: 0.6rem;
+  }
+
+  .cal-monthly-grid {
+    gap: 1px;
   }
 }
 

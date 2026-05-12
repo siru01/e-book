@@ -226,6 +226,18 @@ const InsightsPage = () => {
     setLoading(false);
   }, []);
 
+  // Unlock scroll when page is ready
+  useEffect(() => {
+    if (!loading) {
+      document.body.classList.add('allow-scroll');
+      document.documentElement.classList.add('allow-scroll');
+    }
+    return () => {
+      document.body.classList.remove('allow-scroll');
+      document.documentElement.classList.remove('allow-scroll');
+    };
+  }, [loading]);
+
   return (
     <div className={`insights-root ${loading ? 'is-loading' : 'is-ready'}`}>
       {loading && (
