@@ -294,12 +294,12 @@ const InsightsPage = () => {
 
         <div className="insight-card card-dual-stat">
           <div className="stat-section total-time">
-            <span className="section-label">TOTAL TIME READ</span>
+            <div className="card-header"><h3>TOTAL TIME READ</h3></div>
             <h2 className="section-value">{formatTotalTime(totalMinutes)}</h2>
           </div>
           <div className="stat-separator" />
           <div className="stat-section last-book">
-            <span className="section-label">LAST READ</span>
+            <div className="card-header"><h3>LAST READ</h3></div>
             {lastBook ? (
               <div className="last-book-mini" onClick={() => navigate(`/book/${encodeURIComponent(lastBook.book_id)}`)}>
                 <div className="mini-cover">
