@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveBookmark, saveReadingActivity, recordSession, fetchBookOverview, fetchBookContent, streamBookContent, getPreloadedContent } from "../api/shelf";
@@ -99,11 +99,8 @@ export default function ReaderPage() {
     } catch { return ""; }
   }, [token]);
 
-  const isDashboard = location.pathname === '/dashboard';
-  const isInsights = location.pathname === '/insights';
-  const isBookOverview = location.pathname.startsWith('/book/');
-  const isReader = location.pathname.startsWith('/read/');
-  const isDashboardArea = isDashboard || isInsights || isBookOverview || isReader;
+  const queryClient = useQueryClient();
+  const location = useLocation();
   
   const [fontSize,      setFontSize]      = useState(16);
   const [showTypo,      setShowTypo]      = useState(false);
@@ -278,7 +275,6 @@ export default function ReaderPage() {
 
   /* ── Progress ── */
   const progressPct = pages.length > 0 ? Math.min(100, ((spreadIndex + step) / pages.length) * 100) : 0;
-  const queryClient = useQueryClient();
 
   // Sync spreadIndex to localStorage immediately for rock-solid reload persistence
   useEffect(() => {
@@ -370,7 +366,14 @@ export default function ReaderPage() {
               <span className="chapter-label">PROGRESS</span>
             </header>
             <div className="column-body" style={{ fontSize: `${fontSize}px` }}>
-              {leftPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+              {pages.length === 0 ? (
+                <div className="reader-stream-loading">
+                  <div className="spinner-mini"></div>
+                  <span>Fetching text from archive…</span>
+                </div>
+              ) : (
+                leftPage.split("\n\n").map((para, i) => <p key={i}>{para}</p>)
+              )}
             </div>
             <div className="column-footer"><span className="page-num-bottom">{leftPageNum}</span></div>
           </div>

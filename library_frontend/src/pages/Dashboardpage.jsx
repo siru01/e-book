@@ -6,7 +6,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchBooksStream, parseBFFBook, getCoverUrl } from "../api/shelf";
 import "./DashboardPage.css";
 import {
-  useDashboardSummary,
   useShelfRows,
 } from "../hooks/useDashboardData";
 import CounterLoader from "../components/CounterLoader";
@@ -56,40 +55,12 @@ const SUBTITLES = [
 "Preference for current literature?",
 ];
 
-/* ── Icons ── */
-const IconBook = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>;
-const IconBookmark = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>;
-const IconCal = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
-const IconHistory = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-4.5" /></svg>;
-const IconCheck = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
 const IconSearch = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
 const IconBell = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
 const IconLogout = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
 const IconMail = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
 
-const HERO_CARDS = [
-  { key: "recent", label: "RECENT READINGS", sub: "Continue", Icon: IconBook, stat: (c) => `${c.books} BOOKS` },
-  { key: "bookmarks", label: "BOOKMARKS", sub: "Saved", Icon: IconBookmark, stat: (c) => `${c.marks} MARKS` },
-  { key: "calendar", label: "CALENDAR", sub: "Routine", Icon: IconCal, stat: (c) => `STREAK ${c.streak}` },
-  { key: "history", label: "HISTORY", sub: "Journey", Icon: IconHistory, stat: () => "FULL LOG" },
-  { key: "previously_read", label: "FINISHED", sub: "Completed", Icon: IconCheck, stat: (c) => `${c.done} DONE` },
-];
 
-/* ── Panel Book Row ── */
-function PanelBookRow({ book, extra }) {
-  return (
-    <div className="panel-book-row">
-      <div className="panel-book-cover">
-        {book.cover_url ? <img src={book.cover_url} alt="" /> : <span>📚</span>}
-      </div>
-      <div className="panel-book-info">
-        <span className="panel-book-title">{book.title}</span>
-        <span className="panel-book-author">{book.author}</span>
-        {extra}
-      </div>
-    </div>
-  );
-}
 
 /* ── Book Card ── */
 function BookCard({ book }) {
@@ -167,15 +138,6 @@ function SearchResultCard({ book, index }) {
 }
 
 /* ── Skeleton Loaders ── */
-function SkeletonHeroCard() {
-  return (
-    <div className="dash-hero-cards">
-      {[1, 2, 3, 4, 5].map(i => (
-        <div key={i} className="skeleton skeleton-hero" />
-      ))}
-    </div>
-  );
-}
 
 function SkeletonShelf() {
   return (
@@ -192,18 +154,6 @@ function SkeletonShelf() {
       </div>
     </div>
   );
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   HeroCard
- ══════════════════════════════════════════════════════════════════ */
-const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, onCollapse }) {
-  const navigate = useNavigate();
-  const containerRef = useRef(null);
-
-  const [status, setStatus] = useState('idle');
-  const [cardStyle, setCardStyle] = useState({});
-  const [wrapperStyle, setWrapperStyle] = useState({});
 
   const isActive = status !== 'idle';
   const isExpanded = status === 'open' || status === 'closing' || status === 'opening';
@@ -338,7 +288,7 @@ const HeroCard = memo(function HeroCard({ card, counts, panelContent, onExpand, 
       )}
     </div>
   );
-});
+};
 
 /* ── Calendar Heatmap (Holidays Logic) ── */
 const HOLIDAYS_2026 = {
@@ -486,7 +436,6 @@ export default function DashboardPage() {
   }, []);
 
 
-  const [activePanel, setActivePanel] = useState("");
   const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -503,22 +452,12 @@ export default function DashboardPage() {
   });
 
 
-  const { data: summary = {}, isLoading: summaryLoading } = useDashboardSummary(token);
   const { data: shelfRows = [], isLoading: rowsLoading } = useShelfRows();
 
   // Combine loading states for simultaneous rendering
-  const pageLoading = (summaryLoading || rowsLoading) && !searched;
+  const pageLoading = rowsLoading && !searched;
   // Tell the loader when real data has arrived
-  const dataIsReady = !summaryLoading && !rowsLoading;
-
-  const counts = useMemo(() => {
-    return {
-      books: toArray(summary.activity).length,
-      marks: toArray(summary.bookmarks).length,
-      streak: summary.streak || 0,
-      done: toArray(summary.finished).length,
-    };
-  }, [summary]);
+  const dataIsReady = !rowsLoading;
 
   const handleSearch = useCallback((q) => {
     if (!q || !q.trim()) return;
@@ -595,12 +534,11 @@ export default function DashboardPage() {
   const clearSearch = () => { 
     setSearchParams({}, { replace: true });
   };
+
   const handleSearchLoaderComplete = useCallback(() => {
     setSearchAnimationDone(true);
   }, []);
 
-  const handleExpand = useCallback((key) => setActivePanel(key), []);
-  const handleCollapse = useCallback(() => setActivePanel(""), []);
   const handleLogout = useCallback(() => {
     sessionStorage.removeItem("shelf_dashboard_subtitle");
     sessionStorage.removeItem("shelf_dashboard_loaded");
@@ -608,38 +546,6 @@ export default function DashboardPage() {
     logout();
     navigate("/");
   }, [queryClient, logout, navigate]);
-
-  const getPanelContent = useCallback((key) => {
-    const activity = toArray(summary.activity);
-    const finished = toArray(summary.finished);
-    const marks = toArray(summary.bookmarks);
-    const sessions = toArray(summary.sessions);
-
-    switch (key) {
-      case "recent": {
-        const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
-        const filteredRecent = activity.filter(b => new Date(b.last_read_at).getTime() > fortyEightHoursAgo);
-        return filteredRecent.length > 0
-          ? filteredRecent.slice(0, 6).map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra">{b.progress_percent < 100 && <span style={{ color: "#f59e0b", marginLeft: "auto" }}>{parseInt(b.progress_percent)}%</span>}</div>} />)
-          : <p className="panel-empty">No readings in the last 48 hours.</p>;
-      }
-      case "bookmarks":
-        return marks.length > 0
-          ? marks.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span>{b.source}</span></div>} />)
-          : <p className="panel-empty">No bookmarks saved.</p>;
-      case "calendar":
-        return <CalendarHeatmap sessions={sessions} />;
-      case "history":
-        return activity.length > 0
-          ? activity.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span style={{ color: "#999" }}>{timeAgo(b.last_read_at)}</span></div>} />)
-          : <p className="panel-empty">No reading history recorded yet.</p>;
-      case "previously_read":
-        return finished.length > 0
-          ? finished.map((b, i) => <PanelBookRow key={i} book={{ title: b.book_title, author: b.book_author, cover_url: getCoverUrl(b.book_cover) }} extra={<div className="panel-row-extra"><span>COMPLETED</span></div>} />)
-          : <p className="panel-empty">No books finished yet.</p>;
-      default: return null;
-    }
-  }, [summary]);
 
   const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -733,24 +639,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {!searched && (
-          pageLoading ? (
-            <SkeletonHeroCard />
-          ) : (
-            <div className="dash-hero-cards">
-              {HERO_CARDS.map(card => (
-                <HeroCard
-                  key={card.key}
-                  card={card}
-                  counts={counts}
-                  panelContent={getPanelContent(card.key)}
-                  onExpand={() => handleExpand(card.key)}
-                  onCollapse={handleCollapse}
-                />
-              ))}
-            </div>
-          )
-        )}
 
         {searched ? (
           <div className="dash-search-results">

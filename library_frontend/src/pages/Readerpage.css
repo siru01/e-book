@@ -381,6 +381,36 @@
   max-width: 320px;
 }
 
+/* ── Stream Loading ── */
+.reader-stream-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--ink-light);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.spinner-mini {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--rule);
+  border-top-color: var(--ink-mid);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 .reader-error-wrap {
   display: flex;
   flex-direction: column;
@@ -644,4 +674,9 @@
   .toolbar-action-btn {
     display: none;
   }
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

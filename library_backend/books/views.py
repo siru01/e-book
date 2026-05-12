@@ -890,7 +890,6 @@ class BookReadView(APIView):
         )
         return Response({**_base(), "text": preview_text})
 
-from django.http import StreamingHttpResponse
 
 class BookStreamTextView(APIView):
     permission_classes = [AllowAny]
@@ -908,71 +907,76 @@ class BookStreamTextView(APIView):
             raw_id = book_id
 
         def event_stream():
-            try:
-                # 1. Resolve the direct text URL
-                target_url = self._get_text_url(source, raw_id)
-                if not target_url:
-                    yield "Content not available for streaming."
-                    return
-
-                # 2. Stream from source to client in chunks with retries
-                max_retries = 3
-                for attempt in range(max_retries):
-                    try:
-                        with httpx.stream("GET", target_url, timeout=30, follow_redirects=True) as r:
-                            if r.status_code != 200:
-                                yield f"Error: Source returned {r.status_code}"
-                                return
-                                
-                            chunk_count = 0
-                            for chunk in r.iter_text(chunk_size=2048):
-                                chunk_count += 1
-                                yield chunk
-                                if chunk_count > 250: # Limit to ~500KB
-                                    break
-                            
-                            # Success! Exit the retry loop and the generator
-                            return
-
-                    except (httpx.RemoteProtocolError, httpx.ReadError, httpx.ConnectError) as e:
-                        if attempt < max_retries - 1:
-                            import time
-                            time.sleep(1) # Backoff
-                            continue
-                        else:
-                            yield f"\n[Stream Error]: Connection lost. Please try refreshing. ({str(e)})"
-                            return
-                        
-            except Exception as e:
-                yield f"\n[System Error]: {str(e)}"
+            urls = self._get_text_urls(source, raw_id)
+            yield from self._stream_with_retries(urls)
 
         response = StreamingHttpResponse(event_stream(), content_type='text/plain; charset=utf-8')
         response['Cache-Control'] = 'no-cache'
         response['X-Accel-Buffering'] = 'no' # Disable buffering for Nginx
         return response
 
-    def _get_text_url(self, source, raw_id):
-        """Resolves the best available plain-text URL for a given book source."""
+    def _get_text_urls(self, source, raw_id):
+        """Returns a list of potential plain-text URLs, ordered by reliability and mirrors."""
+        urls = []
         if source == "gutenberg":
-            # Priority list for Gutenberg text formats
-            return f"https://www.gutenberg.org/cache/epub/{raw_id}/pg{raw_id}.txt"
-            
+            # 1. Official Cache
+            urls.append(f"https://www.gutenberg.org/cache/epub/{raw_id}/pg{raw_id}.txt")
+            # 2. XMission Mirror (Very fast)
+            urls.append(f"https://mirrors.xmission.com/gutenberg/cache/epub/{raw_id}/pg{raw_id}.txt")
+            # 3. Alternative path
+            urls.append(f"https://www.gutenberg.org/files/{raw_id}/{raw_id}-0.txt")
+            # 4. Standard path
+            urls.append(f"https://www.gutenberg.org/files/{raw_id}/{raw_id}.txt")
         elif source == "archive":
-            return f"https://archive.org/stream/{raw_id}/{raw_id}_djvu.txt"
-            
-        elif source == "openlibrary":
-            # OpenLibrary usually points to an Archive.org ID (ocaid)
-            # For simplicity in the stream view, we'll try to resolve it via metadata first
+            urls.append(f"https://archive.org/stream/{raw_id}/{raw_id}_djvu.txt")
+        return urls
+
+    def _stream_with_retries(self, target_urls):
+        """Tries to stream from a list of URLs with high timeout resilience."""
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/plain",
+        }
+        
+        for url in target_urls:
             try:
-                meta_r = httpx.get(f"https://openlibrary.org/works/{raw_id}.json", timeout=10)
-                if meta_r.status_code == 200:
-                    # We'd ideally fetch editions here, but for streaming speed 
-                    # we often rely on the archive.org fallback.
-                    # As a shortcut, many OL IDs can be mapped if we had the IA ID.
-                    pass
-            except: pass
-            return None # Fallback to standard Read view if streaming isn't simple
-            
+                # Use a smaller connect timeout but longer read timeout
+                with httpx.stream("GET", url, headers=headers, timeout=(10, 60), follow_redirects=True) as r:
+                    if r.status_code == 200:
+                        chunk_count = 0
+                        # Iterate with a slightly larger chunk for better throughput
+                        for chunk in r.iter_text(chunk_size=4096):
+                            if chunk:
+                                yield chunk
+                                chunk_count += 1
+                            if chunk_count > 300: # Limit to ~1.2MB
+                                break
+                        return # Success!
+            except Exception:
+                continue # Try next URL
+        
+        yield "Error: The book archive is currently slow or unresponsive. Please try again in a few moments."
+
+
+from django.http import HttpResponse
+from .models import CachedCover
+
+class CoverProxyView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        url = request.GET.get('url')
+        if not url:
+            return Response({'error': 'url required'}, status=400)
+
+        # Check if already cached
+        cached = CachedCover.objects.filter(source_url=url).first()
+        if cached:
+            response = HttpResponse(cached.image_data, content_type=cached.content_type)
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+        
         return None
 
 
