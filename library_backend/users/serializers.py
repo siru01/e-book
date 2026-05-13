@@ -1,7 +1,8 @@
 # users/serializers.py
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User
+from .models import User, UserSession
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class SendOTPSerializer(serializers.Serializer):
@@ -50,4 +51,34 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         # Validate with email instead of username
         data = super().validate(attrs)
+        
+        # --- SINGLE DEVICE LOGIC ---
+        refresh = RefreshToken(data['refresh'])
+        jti = refresh['jti']
+        
+        # 1. Deactivate all previous sessions for this user
+        UserSession.objects.filter(user=self.user, is_active=True).update(is_active=False)
+        
+        # 2. Create the new session record
+        request = self.context.get('request')
+        device_info = "Unknown Device"
+        ip_address = None
+        
+        if request:
+            device_info = request.META.get('HTTP_USER_AGENT', 'Unknown Device')
+            # Handle potential proxy headers for IP
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip_address = x_forwarded_for.split(',')[0]
+            else:
+                ip_address = request.META.get('REMOTE_ADDR')
+
+        UserSession.objects.create(
+            user=self.user,
+            jti=jti,
+            device_info=device_info,
+            ip_address=ip_address,
+            is_active=True
+        )
+        
         return data
