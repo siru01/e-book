@@ -1,4 +1,4 @@
-const BASE = "/api";
+const BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api`;
 const preloadedContent = new Map();
 
 export const setPreloadedContent = (id, text) => preloadedContent.set(id, text);

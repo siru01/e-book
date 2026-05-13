@@ -1,4 +1,4 @@
-const BASE_URL = '' // Uses Vite proxy in development
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 export async function loginUser(email, password) {
   const response = await fetch(`${BASE_URL}/api/token/`, {
