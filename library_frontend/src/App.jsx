@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/Authcontext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import HomePage           from "./pages/HomePage";
+import HomePage           from "./pages/Homepage";
 import DashboardPage      from "./pages/Dashboardpage";
 
 import ReaderPage         from "./pages/Readerpage";
