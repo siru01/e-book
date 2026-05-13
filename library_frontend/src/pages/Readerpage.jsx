@@ -115,6 +115,7 @@ export default function ReaderPage() {
   const [sliding,       setSliding]       = useState(null);
   const [jumpValue,     setJumpValue]     = useState("");
   const [hasInitialJump, setHasInitialJump] = useState(false);
+  const [showBookmarkToast, setShowBookmarkToast] = useState(false);
 
   const totalPages  = pages.length;
   const step        = isMobile ? 1 : 2;
@@ -250,7 +251,9 @@ export default function ReaderPage() {
           book_cover: bookMeta.cover_url,
           last_page: leftPageNum // Including the page number as requested
         });
-        alert(`Bookmarked: ${bookMeta.title} at page ${leftPageNum}`);
+        setBookmarkSaved(true);
+        setShowBookmarkToast(true);
+        setTimeout(() => setShowBookmarkToast(false), 3000);
       } catch (e) {
         console.error("Failed to save bookmark", e);
       }
@@ -415,6 +418,21 @@ export default function ReaderPage() {
           }}>{finishedSaved ? "✅ Finished!" : "FINISHED"}</button>
         </div>
       </footer>
+
+      {showBookmarkToast && (
+        <div className="bookmark-toast">
+          <div className="bookmark-toast-content">
+            <div className="bookmark-toast-cover">
+              {bookMeta?.cover_url ? (
+                <img src={bookMeta.cover_url} alt="Bookmarked" />
+              ) : (
+                <div className="toast-placeholder">📖</div>
+              )}
+            </div>
+            <span className="bookmark-toast-text">BOOKMARKED</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

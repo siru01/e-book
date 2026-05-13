@@ -763,6 +763,76 @@
   }
 }
 
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+}
+
+.bookmark-toast {
+  position: fixed;
+  top: 90px; /* Below navbar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  animation: slideDownFade 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+.bookmark-toast-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.bookmark-toast-cover {
+  width: 100px;
+  height: 150px;
+  background: #000;
+  border: 2px solid #000;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-toast-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.toast-placeholder {
+  font-size: 40px;
+  color: #fff;
+}
+
+.bookmark-toast-text {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.2em;
+  color: #000;
+  background: #fff;
+  padding: 4px 12px;
+  border: 1px solid #000;
+  text-shadow: none;
+}
+
 @keyframes cardEntrance {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
