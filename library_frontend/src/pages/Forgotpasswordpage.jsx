@@ -138,7 +138,7 @@ const ForgotPasswordPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder="ENTER YOUR REGISTERED EMAIL"
                     autoFocus
                     required
                   />
@@ -173,18 +173,19 @@ const ForgotPasswordPage = () => {
                 <label>Verification code</label>
                 <div className="fp-otp-row" onPaste={handleOtpPaste}>
                   {otp.map((digit, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => (otpRefs.current[i] = el)}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                      className="fp-otp-box"
-                      autoFocus={i === 0}
-                    />
+                    <div key={i} className="fp-otp-wrapper">
+                      <input
+                        ref={(el) => (otpRefs.current[i] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                        className="fp-otp-box"
+                        autoFocus={i === 0}
+                      />
+                    </div>
                   ))}
                 </div>
                 <button type="button" className="fp-resend-btn" onClick={handleResend} disabled={loading}>
@@ -195,12 +196,12 @@ const ForgotPasswordPage = () => {
               {/* New password */}
               <div className="input-group">
                 <label>New password</label>
-                <div className="fp-pw-wrap">
+                <div className="input-wrap">
                   <input
                     type={showNew ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder="ENTER NEW PASSWORD"
                     autoComplete="new-password"
                   />
                   <button type="button" className="fp-eye" onClick={() => setShowNew((v) => !v)} tabIndex={-1}>
@@ -212,12 +213,12 @@ const ForgotPasswordPage = () => {
               {/* Confirm password */}
               <div className="input-group">
                 <label>Confirm new password</label>
-                <div className="fp-pw-wrap">
+                <div className="input-wrap">
                   <input
                     type={showConfirm ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat your new password"
+                    placeholder="REPEAT NEW PASSWORD"
                     autoComplete="new-password"
                   />
                   <button type="button" className="fp-eye" onClick={() => setShowConfirm((v) => !v)} tabIndex={-1}>

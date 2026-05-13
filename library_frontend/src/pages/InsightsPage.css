@@ -187,7 +187,7 @@
 .card-active-users .label, .card-active-users .trend, .card-active-users .stat-value-large { animation-delay: 0.6s; }
 
 .card-design { animation-delay: 0.5s; }
-.card-design .design-text { animation-delay: 0.7s; }
+.card-design .greeting-container { animation-delay: 0.7s; }
 
 .card-subscribers { animation-delay: 0.6s; }
 .card-subscribers .label, .card-subscribers .trend, .card-subscribers .stat-value-xl { animation-delay: 0.8s; }
@@ -219,7 +219,9 @@
 
 .card-recent-readings h3,
 .card-bookmarks h3,
-.card-dual-stat h3 {
+.card-dual-stat h3,
+.card-finished-books h3,
+.card-history h3 {
   font-size: 0.85rem;
   font-weight: 500; 
   text-transform: uppercase;
@@ -420,38 +422,18 @@
   text-overflow: ellipsis;
 }
 
-/* Active Users Card */
-.card-active-users {
+/* Finished Books Card */
+.card-finished-books {
   grid-column: 1 / 2;
   grid-row: 2 / 3;
+  background-color: #ffffff;
+  min-width: 0;
 }
 
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.card-finished-books .card-header {
   width: 100%;
-}
-
-.label {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
-}
-
-.trend {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.trend.positive {
-  color: #4ade80;
-}
-
-.stat-value-large {
-  font-size: 4.2rem;
-  font-weight: 700;
-  margin: 8px 0 0 0;
-  line-height: 1;
+  margin-bottom: 0px;
+  margin-top: -10px;  
 }
 
 /* Design Card */
@@ -471,13 +453,49 @@
   opacity: 0.5;
 }
 
-.design-text {
-  font-size: 2.5rem;
-  font-family: 'Anton', sans-serif; /* Consistent logo font */
-  font-weight: 700;
-  letter-spacing: 2px;
+.greeting-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
+  font-family: 'Anton', 'Inter', sans-serif;
+  font-weight: 700;
   color: white;
+  text-transform: uppercase;
+  margin-left: -80px; /* Pull the content back to the center visually */
+}
+
+.hi-scroll-window {
+  height: 80px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align HI text to the comma */
+  margin-right: 8px;
+  width: 240px; /* Increased to 240px to prevent clipping long words like 'Namaste' */
+}
+
+.hi-scroll-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  height: 100%; /* CRITICAL: Must be 100% of parent for translateY(-100%) to work per-item */
+}
+
+.hi-text {
+  font-size: 55px;
+  height: 80px; 
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.user-text {
+  font-size: 55px;
+  white-space: nowrap;
+  letter-spacing: 2px;
 }
 
 /* Calendar Card */
@@ -499,31 +517,18 @@
   font-weight: 600;
 }
 
-/* Learning Card */
-.card-learning {
+/* History Card */
+.card-history {
   grid-column: 1 / 3;
   grid-row: 3 / 4;
   background-color: #ffffff;
-  justify-content: center;
-  
+  min-width: 0;
 }
 
-.card-learning h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
-  max-width: 400px;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.learning-accent {
-  position: absolute;
-  bottom: -50px;
-  right: -50px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(99, 51, 255, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
+.card-history .card-header {
+  width: 100%;
+  margin-bottom: 0px;
+  margin-top: -10px;  
 }
 
 @keyframes pulse {
@@ -569,10 +574,10 @@
   .card-recent-readings, 
   .card-bookmarks, 
   .card-dual-stat, 
-  .card-active-users, 
+  .card-finished-books, 
   .card-design, 
   .card-calendar, 
-  .card-learning {
+  .card-history {
     grid-column: span 1;
     grid-row: auto;
   }

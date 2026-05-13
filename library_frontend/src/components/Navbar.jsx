@@ -75,10 +75,13 @@ export default function Navbar() {
 
   const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
 
+  // Placeholder words cycling removed for static feel
+  /*
   useEffect(() => {
     const t = setInterval(() => setPhIndex(i => (i + 1) % PLACEHOLDER_WORDS.length), 2800);
     return () => clearInterval(t);
   }, []);
+  */
 
   useEffect(() => {
     setSearchQuery(searchParams.get("q") || "");
@@ -126,9 +129,10 @@ export default function Navbar() {
 
   const isDashboard = location.pathname === '/dashboard';
   const isInsights = location.pathname === '/insights';
+  const isJournal = location.pathname === '/journal';
   const isBookOverview = location.pathname.startsWith('/book/');
   const isReader = location.pathname.startsWith('/read/');
-  const isDashboardArea = isDashboard || isInsights || isBookOverview || isReader;
+  const isDashboardArea = isDashboard || isInsights || isJournal || isBookOverview || isReader;
   
   const showSubNav = (isDashboard || (isInsights && showInsightsSearch)); 
 
@@ -178,7 +182,12 @@ export default function Navbar() {
                 >
                   Library
                 </span>
-                <span className="dash-nav-link">Journal</span>
+                <span 
+                  className={`dash-nav-link ${location.pathname === '/journal' ? 'dash-nav-link-active' : ''}`}
+                  onClick={() => navigate("/journal")}
+                >
+                  Journal
+                </span>
                 <span 
                   className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
                   onClick={() => navigate("/insights")}
@@ -263,7 +272,12 @@ export default function Navbar() {
               >
                 Library
               </span>
-              <span className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Journal</span>
+              <span 
+                className={`mobile-menu-item ${location.pathname === '/journal' ? 'active' : ''}`}
+                onClick={() => { setMobileMenuOpen(false); navigate("/journal"); }}
+              >
+                Journal
+              </span>
               <span 
                 className={`mobile-menu-item ${isInsights ? 'active' : ''}`}
                 onClick={() => { setMobileMenuOpen(false); navigate("/insights"); }}
@@ -290,7 +304,7 @@ export default function Navbar() {
             <IconSearch />
             <input
               className="dash-search-input"
-              placeholder={`Search for ${PLACEHOLDER_WORDS[phIndex]}…`}
+              placeholder="Search for books, authors, genres…"
               value={searchQuery}
               onChange={e => {
                 setSearchQuery(e.target.value);

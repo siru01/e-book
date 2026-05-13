@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
-import { useDashboardSummary, useBookmarks } from '../hooks/useDashboardData';
+import { useDashboardSummary, useBookmarks, useFinishedBooks, useActivityHistory } from '../hooks/useDashboardData';
 import { getCoverUrl } from '../api/shelf';
 import './InsightsPage.css';
 import CounterLoader from "../components/CounterLoader";
@@ -148,10 +148,31 @@ function CalendarHeatmap({ sessions = [], setHoverDate }) {
 
 const InsightsPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { username, token } = useAuth();
   const { data: summary, isLoading: isSummaryLoading } = useDashboardSummary(token);
   const { data: bookmarks, isLoading: isBookmarksLoading } = useBookmarks(token);
+  const { data: finishedBooks, isLoading: isFinishedLoading } = useFinishedBooks(token);
+  const { data: activityHistory, isLoading: isHistoryLoading } = useActivityHistory(token);
   const [hoverDate, setHoverDate] = useState(null);
+  const [langIndex, setLangIndex] = useState(0);
+
+  const languages = useMemo(() => [
+    "HI",          // English
+    "你好",        // Mandarin Chinese
+    "नमस्ते",      // Hindi
+    "HOLA",        // Spanish
+    "SALUT",       // French
+    "أهلاً",       // Modern Arabic
+    "হ্যালো",      // Bengali
+    "OI"           // Portuguese
+  ], []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLangIndex((prev) => (prev + 1) % languages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [languages.length]);
   const [loading, setLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [coversPreloaded, setCoversPreloaded] = useState(false);
@@ -159,6 +180,24 @@ const InsightsPage = () => {
   const activity = Array.isArray(summary?.activity) ? summary.activity : [];
   const recentReadings = activity.slice(0, 6);
   const sessions = Array.isArray(summary?.sessions) ? summary.sessions : [];
+
+  // Combine history, bookmarks, and finished for the comprehensive history section
+  const combinedHistory = useMemo(() => {
+    const all = [
+      ...(activityHistory || []),
+      ...(bookmarks || []),
+      ...(finishedBooks || [])
+    ];
+    const unique = [];
+    const seen = new Set();
+    for (const book of all) {
+      if (book.book_id && !seen.has(book.book_id)) {
+        seen.add(book.book_id);
+        unique.push(book);
+      }
+    }
+    return unique;
+  }, [activityHistory, bookmarks, finishedBooks]);
 
   const todayObj = new Date();
   const todayKey = `${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
@@ -197,6 +236,8 @@ const InsightsPage = () => {
     const coversToLoad = [
       ...recentReadings.map(b => b.book_cover),
       ...(bookmarks ? bookmarks.slice(0, 4).map(b => b.book_cover) : []),
+      ...(finishedBooks ? finishedBooks.slice(0, 4).map(b => b.book_cover) : []),
+      ...(activityHistory ? activityHistory.slice(0, 4).map(b => b.book_cover) : []),
       lastBook?.book_cover
     ].filter(Boolean).map(c => getCoverUrl(c));
 
@@ -217,10 +258,10 @@ const InsightsPage = () => {
   }, [isSummaryLoading, isBookmarksLoading, recentReadings.length, bookmarks?.length, lastBook?.book_id]);
 
   useEffect(() => {
-    if (!isSummaryLoading && !isBookmarksLoading && coversPreloaded) {
+    if (!isSummaryLoading && !isBookmarksLoading && !isFinishedLoading && !isHistoryLoading && coversPreloaded) {
       setDataReady(true);
     }
-  }, [isSummaryLoading, isBookmarksLoading, coversPreloaded]);
+  }, [isSummaryLoading, isBookmarksLoading, isFinishedLoading, isHistoryLoading, coversPreloaded]);
 
   const handleLoaderComplete = useCallback(() => {
     setLoading(false);
@@ -329,17 +370,47 @@ const InsightsPage = () => {
         </div>
 
         {/* Row 2 */}
-        <div className="insight-card card-stat card-active-users">
-          <div className="card-top">
-            <span className="label">Active Users</span>
-            <span className="trend positive">+154</span>
+        <div className="insight-card card-finished-books">
+          <div className="card-header">
+            <h3>BOOKS FINISHED</h3>
           </div>
-          <h2 className="stat-value-large">1,538</h2>
+          <div className="recent-readings-grid">
+            {!isFinishedLoading && finishedBooks && finishedBooks.length > 0 && (
+              finishedBooks.map((item, i) => (
+                <div 
+                  key={i} 
+                  className="recent-book-cover"
+                  onClick={() => navigate(`/book/${encodeURIComponent(item.book_id)}`)}
+                >
+                  {item.book_cover ? (
+                    <img src={getCoverUrl(item.book_cover)} alt={item.book_title} />
+                  ) : (
+                    <div className="cover-placeholder">🏆</div>
+                  )}
+                </div>
+              ))
+            )}
+            {!isFinishedLoading && (!finishedBooks || finishedBooks.length === 0) && (
+              <p className="no-activity-msg">No books finished yet</p>
+            )}
+          </div>
         </div>
 
         <div className="insight-card card-design">
            <div className="design-pattern"></div>
-           <h2 className="design-text">DESIGN</h2>
+           <div className="greeting-container">
+             <div className="hi-scroll-window">
+               <div 
+                 className="hi-scroll-track" 
+                 style={{ transform: `translateY(-${langIndex * 100}%)` }}
+               >
+                 {languages.map((hi, i) => (
+                   <span key={i} className="hi-text">{hi}</span>
+                 ))}
+               </div>
+             </div>
+             <span className="user-text">, {username}</span>
+           </div>
         </div>
 
         <div className="insight-card card-calendar">
@@ -366,9 +437,30 @@ const InsightsPage = () => {
         </div>
 
         {/* Row 3 */}
-        <div className="insight-card card-learning">
-           <h2>A place to learn UI Design & Web Design.</h2>
-           <div className="learning-accent"></div>
+        <div className="insight-card card-history">
+          <div className="card-header">
+            <h3>HISTORY</h3>
+          </div>
+          <div className="recent-readings-grid">
+            {!isHistoryLoading && combinedHistory.length > 0 && (
+              combinedHistory.map((item, i) => (
+                <div 
+                  key={i} 
+                  className="recent-book-cover"
+                  onClick={() => navigate(`/book/${encodeURIComponent(item.book_id)}`)}
+                >
+                  {item.book_cover ? (
+                    <img src={getCoverUrl(item.book_cover)} alt={item.book_title} />
+                  ) : (
+                    <div className="cover-placeholder">📖</div>
+                  )}
+                </div>
+              ))
+            )}
+            {!isHistoryLoading && combinedHistory.length === 0 && (
+              <p className="no-activity-msg">No history found</p>
+            )}
+          </div>
         </div>
       </main>
     </div>

@@ -12,6 +12,7 @@ import "./App.css";
 import ForgotPasswordPage from './pages/Forgotpasswordpage';
 import GlobalMouseEffect from "./components/GlobalMouseEffect";
 import InsightsPage from "./pages/InsightsPage";
+import JournalPage from "./pages/JournalPage";
 import Navbar from "./components/Navbar";
 
 
@@ -63,6 +64,7 @@ function AppRoutes() {
 
       <Route path="/read/:bookId"       element={<ProtectedRoute><ReaderPage /></ProtectedRoute>} />
       <Route path="/insights"           element={<ProtectedRoute><InsightsPage /></ProtectedRoute>} />
+      <Route path="/journal"            element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
 
       {/* Public but requires no auth protection */}
 

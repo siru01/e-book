@@ -214,17 +214,19 @@ const SignUp = () => {
               
               <div className="otp-inputs-container">
                 {otpValues.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    ref={(el) => (inputRefs.current[idx] = el)}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="otp-digit-input"
-                    disabled={otpLoading}
-                  />
+                  <div key={idx} className="otp-digit-wrapper">
+                    <input
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      ref={(el) => (inputRefs.current[idx] = el)}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      className="otp-digit-input"
+                      disabled={otpLoading}
+                      autoFocus={idx === 0}
+                    />
+                  </div>
                 ))}
               </div>
 

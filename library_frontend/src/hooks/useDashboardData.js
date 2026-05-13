@@ -4,6 +4,8 @@ import {
   fetchShelfRows,
   fetchMyBookmarks,
   fetchBookOverview,
+  fetchMyFinished,
+  fetchMyActivity
 } from '../api/shelf';
 
 // ── Cache settings ──────────────────────────────────────────────
@@ -46,4 +48,22 @@ export const useBookOverview = (bookId) =>
     queryFn: () => fetchBookOverview(bookId),
     staleTime: STALE_5_MIN,
     enabled: !!bookId,
+  });
+
+export const useFinishedBooks = (token) =>
+  useQuery({
+    queryKey: ['myFinished', token],
+    queryFn: () => fetchMyFinished(token),
+    staleTime: 0,
+    gcTime: STALE_5_MIN,
+    enabled: !!token,
+  });
+
+export const useActivityHistory = (token) =>
+  useQuery({
+    queryKey: ['myActivity', token],
+    queryFn: () => fetchMyActivity(token),
+    staleTime: 0,
+    gcTime: STALE_5_MIN,
+    enabled: !!token,
   });
