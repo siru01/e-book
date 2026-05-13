@@ -46,7 +46,7 @@ class SendOTPView(generics.GenericAPIView):
             send_mail(
                 subject='Your Registration OTP for Library',
                 message=f'Your One-Time Password is: {otp_code}\n\nThis code is required to complete your registration.',
-                from_email=settings.EMAIL_HOST_USER,
+                from_email=f"SHELF - ACCOUNT VERIFICATION <{settings.EMAIL_HOST_USER}>",
                 recipient_list=[email],
                 html_message=html_content,
                 fail_silently=False,
@@ -165,7 +165,7 @@ class RequestEmailChangeView(generics.GenericAPIView):
             send_mail(
                 subject='Verify your NEW SHELF email address',
                 message=f'Your new email verification code is: {new_otp_code}',
-                from_email=settings.EMAIL_HOST_USER,
+                from_email=f"SHELF - ACCOUNT VERIFICATION <{settings.EMAIL_HOST_USER}>",
                 recipient_list=[new_email],
                 html_message=html_new,
                 fail_silently=False,
@@ -181,7 +181,7 @@ class RequestEmailChangeView(generics.GenericAPIView):
             send_mail(
                 subject='Security Alert: Request to change your SHELF email',
                 message=f'Your current email verification code is: {old_otp_code}',
-                from_email=settings.EMAIL_HOST_USER,
+                from_email=f"SHELF - SECURITY ALERT <{settings.EMAIL_HOST_USER}>",
                 recipient_list=[current_email],
                 html_message=html_old,
                 fail_silently=False,

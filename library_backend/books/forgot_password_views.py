@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 User = get_user_model()
 OTP_TTL = 600  # 10 minutes
@@ -47,7 +48,7 @@ def forgot_password_request(request):
                 f"If you didn't request this, you can safely ignore this email.\n\n"
                 f"— SHELF"
             ),
-            from_email=None,  # uses EMAIL_HOST_USER from settings
+            from_email=f"PASSWORD RESET REQUEST <{settings.EMAIL_HOST_USER}>",
             recipient_list=[email],
             html_message=html_content,
             fail_silently=False,
