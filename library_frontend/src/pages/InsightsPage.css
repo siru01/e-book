@@ -552,7 +552,7 @@
 
 @media (max-width: 768px) {
   .insights-root {
-    padding: 80px 20px 40px;
+    padding: 90px 20px 40px; /* 80px nav + 10px gap */
     height: auto;
     min-height: 100vh;
     overflow-y: visible;

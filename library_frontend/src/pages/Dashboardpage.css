@@ -567,7 +567,7 @@
     padding-left: 20px !important; 
     padding-right: 20px !important; 
     padding-bottom: 60px !important;
-    padding-top: 150px !important; /* Extremely high value to guarantee clearance */
+    padding-top: 160px !important; /* 150px header + 10px gap */
   }
   .dash-nav-links { display: none; }
   .dash-nav-search { margin-right: 0; max-width: none; flex: 1; }

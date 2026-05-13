@@ -71,9 +71,13 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [phIndex, setPhIndex] = useState(0);
   const [showInsightsSearch, setShowInsightsSearch] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [langIndex, setLangIndex] = useState(0);
   const searchTimeoutRef = useRef(null);
+  const languages = useMemo(() => [
+    "HI", "ΓΕΙΑ", "HOI", "OI", "HOLA", "CIAO", "HALLO", "OLA", "AHOJ"
+  ], []);
 
-  const PLACEHOLDER_WORDS = ["literature", "mystery", "sci-fi", "fantasy", "history", "philosophy"];
 
   // Placeholder words cycling removed for static feel
   /*
@@ -133,6 +137,14 @@ export default function Navbar() {
   const isBookOverview = location.pathname.startsWith('/book/');
   const isReader = location.pathname.startsWith('/read/');
   const isDashboardArea = isDashboard || isInsights || isJournal || isBookOverview || isReader;
+
+  useEffect(() => {
+    if (!isInsights || !isMobile) return;
+    const interval = setInterval(() => {
+      setLangIndex(prev => (prev + 1) % languages.length);
+    }, 5000); // 5 seconds interval
+    return () => clearInterval(interval);
+  }, [isInsights, isMobile, languages.length]);
   
   const showSubNav = (isDashboard || (isInsights && showInsightsSearch)); 
 
@@ -221,7 +233,25 @@ export default function Navbar() {
           onClick={() => navigate("/")} 
           style={{ cursor: "pointer" }}
         >
-          Shelf
+          {(isInsights && isMobile && username) ? (
+            <div className="nav-greeting-wrapper">
+              <div className="nav-greeting-scroll">
+                <div 
+                  className="nav-greeting-track" 
+                  style={{ transform: `translateY(-${langIndex * 100}%)` }}
+                >
+                  {languages.map((lang, idx) => (
+                    <div key={idx} className="nav-greeting-item">
+                      {lang}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <span className="nav-greeting-name">, {username.toUpperCase()}</span>
+            </div>
+          ) : (
+            "Shelf"
+          )}
         </span>
 
         {/* ── Right Side ── */}

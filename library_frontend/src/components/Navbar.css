@@ -95,6 +95,9 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  height: 60px;
+  display: flex;
+  align-items: center;
 }
 
 .shelf-nav-right {
@@ -102,6 +105,54 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+}
+
+/* ── Navbar Greeting Scroll ── */
+.nav-greeting-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  line-height: 1;
+}
+
+.nav-greeting-scroll {
+  height: 60px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nav-greeting-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  height: 100%;
+}
+
+.nav-greeting-item {
+  height: 60px;
+  flex-shrink: 0; /* Critical: prevents items from squishing together */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.2rem; 
+  letter-spacing: 0.05em;
+  color: #111;
+  text-transform: uppercase;
+}
+
+.nav-greeting-name {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  color: #111;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ── Dashboard Nav Specifics ── */
