@@ -19,9 +19,10 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   padding-top: 100px;  /* Clear global navbar */
-  padding-bottom: 100px; /* Clear floating footer */
-  background-color: #fcfcfc;
+  padding-bottom: 60px; /* High clearance for extremely lifted footer */
+  background-color: #fcfcfc; 
   background-image: 
     linear-gradient(#f0f0f0 1px, transparent 1px),
     linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
@@ -643,28 +644,114 @@
   .reader-brand { font-size: 15px; }
   .toolbar-btn span { display: none; }
 
-  /* footer — allow wrapping so Mark as Finished is always visible */
+  /* footer — single line layout */
   .reader-pagination {
-    height: auto;
-    min-height: var(--footer-h);
-    flex-wrap: wrap;
-    padding: 10px 14px;
-    gap: 8px;
+    position: fixed;
+    bottom: 25px; /* Highly elevated to clear persistent browser toolbars */
+    left: 15px;
+    right: 15px;
+    transform: none;
+    width: calc(100% - 30px);
+    max-width: none;
+    height: 70px;
+    min-height: 70px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    gap: 12px;
+    background: #ffffff;
+    border: 1.5px solid #eee;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    z-index: 2000;
+  }
+
+  .reader-pagination::before,
+  .reader-pagination::after {
+    display: block; /* Re-enable for floating mobile box */
   }
 
   .pagination-left {
     flex: 1;
+    order: 2; /* Middle */
+    justify-content: center;
+    gap: 4px;
     min-width: 0;
   }
 
+  .pagination-left .nav-arrow-btn {
+    display: none; /* Hide arrows to save space in one-line layout */
+  }
+
   .pagination-right {
-    flex-shrink: 0;
+    display: contents; /* Flattens structure for order to work */
+  }
+
+  .jump-to-input-wrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  .jump-to-input-wrap::before,
+  .jump-to-input-wrap::after {
+    display: block !important;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    top: -4px;
+    left: -4px;
+  }
+
+  .jump-to-box input { 
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    color: #888;
+  }
+  
+  .action-btn-dark {
+    flex: 0 0 auto;
+    order: 3; /* Right */
+    font-size: 14px;
+    padding: 0 1px;
+    height: 40px;
+    background: #000;
+    color: #fff;
+    border: none;
+    margin-left: 25px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-range { 
+    margin-left: 15px;
+    font-size: 14px; 
+    font-weight: 700; 
+    color: #444;
+    white-space: nowrap; 
+  }
+}
+
+  .jump-to-box {
+    flex: 1;
+    justify-content: center;
   }
 
   .jump-to-box label { display: none; }
+  
+  .action-btn-dark {
+    flex: 2;
+    text-align: center;
+  }
 
-  .page-range { font-size: 11px; }
-}
+  .page-range { font-size: 12px; font-weight: 600; }
+
 
 /* extra small phones */
 @media (max-width: 380px) {

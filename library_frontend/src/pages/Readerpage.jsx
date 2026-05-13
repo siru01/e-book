@@ -412,7 +412,7 @@ export default function ReaderPage() {
             const next = !finishedSaved;
             saveReadingActivity(token, { book_id: bookId, source, book_title: bookMeta.title, book_author: bookMeta.author, book_cover: bookMeta.cover_url, progress_percent: next ? 100 : progressPct, is_finished: next });
             setFinishedSaved(next);
-          }}>{finishedSaved ? "✅ Finished!" : "Mark as Finished"}</button>
+          }}>{finishedSaved ? "✅ Finished!" : "FINISHED"}</button>
         </div>
       </footer>
     </div>
