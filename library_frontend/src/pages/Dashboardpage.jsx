@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchBooksStream, parseBFFBook, getCoverUrl } from "../api/shelf";
-import "./DashboardPage.css";
+import "./Dashboardpage.css";
 import {
   useShelfRows,
 } from "../hooks/useDashboardData";
