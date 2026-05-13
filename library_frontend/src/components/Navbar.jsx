@@ -284,8 +284,7 @@ export default function Navbar() {
               >
                 Insights
               </span>
-              <div className="mobile-menu-divider" />
-              <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/"); }}>Browse Home</a>
+              
               {!token && (
                 <>
                   <a href="/login" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate("/login"); }}>Log In</a>

@@ -211,7 +211,7 @@
 
 @media (max-width: 768px) {
   .dash-main {
-    padding-top: 200px; /* Extra clearance for mobile floating nav and search row */
+    padding-top: 240px; /* Increased clearance */
   }
 }
 
@@ -234,7 +234,7 @@
   line-height: 1.2;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  margin-top: 50px;
+  margin-top: 0; /* Changed from 50px */
   opacity: 0;
   animation: cardEntrance 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
   animation-delay: 0.1s;
@@ -259,6 +259,12 @@
   font-weight: 400; color: #111; text-align: center;
   line-height: 1.2; letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+@media (max-width: 768px) {
+  .dash-greeting, .dash-subtitle {
+    margin-top: 35px;
+    font-size: 32px !important;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -557,7 +563,12 @@
 
 @media (max-width: 768px) {
   .dash-navbar { padding: 0 20px; gap: 12px; }
-  .dash-main { padding: 24px 20px 60px; }
+  .dash-main { 
+    padding-left: 20px !important; 
+    padding-right: 20px !important; 
+    padding-bottom: 60px !important;
+    padding-top: 150px !important; /* Extremely high value to guarantee clearance */
+  }
   .dash-nav-links { display: none; }
   .dash-nav-search { margin-right: 0; max-width: none; flex: 1; }
   .book-card { width: 140px; }
