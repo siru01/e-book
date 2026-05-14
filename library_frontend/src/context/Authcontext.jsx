@@ -57,6 +57,9 @@ function loadAuthState() {
 // ── Initialise once at module level ────────────────────────────
 const initialAuth = loadAuthState();
 
+// ── Base URL for API ──────────────────────────────────────────
+const BASE = `${import.meta.env.VITE_API_BASE_URL || ""}/api`;
+
 export function AuthProvider({ children }) {
   const [token,    setToken]    = useState(initialAuth.token);
   const [username, setUsername] = useState(initialAuth.username);
@@ -110,7 +113,7 @@ export function AuthProvider({ children }) {
 
   // ── Login ────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {
-    const response = await fetch("/api/token/", {
+    const response = await fetch(`${BASE}/token/`, {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ email, password }),
@@ -148,7 +151,7 @@ export function AuthProvider({ children }) {
 
   // ── Send OTP ──
   const sendOtp = useCallback(async (email) => {
-    const response = await fetch("/api/send-otp/", {
+    const response = await fetch(`${BASE}/send-otp/`, {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ email }),
@@ -164,7 +167,7 @@ export function AuthProvider({ children }) {
 
   // ── Sign Up ──
   const signup = useCallback(async (username, email, password, otp) => {
-    const response = await fetch("/api/register/", {
+    const response = await fetch(`${BASE}/register/`, {
       method : "POST",
       headers: { "Content-Type": "application/json" },
       body   : JSON.stringify({ 
@@ -188,6 +191,7 @@ export function AuthProvider({ children }) {
 
     return true;
   }, []);
+
 
   return (
     <AuthContext.Provider value={{ token, username, userRole, login, signup, logout, sendOtp }}>

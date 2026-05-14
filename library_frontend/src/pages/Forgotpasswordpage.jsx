@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Forgotpasswordpage.css';
 
-const API_BASE = ''; // Use relative paths to take advantage of Vite proxy
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();

@@ -34,13 +34,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '192.168.1.3',
-    '.vercel.app',  # Allow all vercel subdomains
-    '*',
-]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.vercel.app").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
@@ -50,8 +44,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 
-CSRF_COOKIE_SECURE = False      # False for HTTP (development)
-SESSION_COOKIE_SECURE = False   # False for HTTP (development)
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False     # Allow JavaScript to read CSRF token
