@@ -227,8 +227,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     ),
-    # CHANGE THIS LINE:
-    'UNAUTHENTICATED_USER': 'django.contrib.auth.models.AnonymousUser', 
     
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',

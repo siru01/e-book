@@ -977,29 +977,6 @@ class CoverProxyView(APIView):
             response['Cache-Control'] = 'public, max-age=86400'
             return response
         
-        return None
-
-
-
-from django.http import HttpResponse
-from .models import CachedCover
-
-class CoverProxyView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
-    def get(self, request):
-        url = request.GET.get('url')
-        if not url:
-            return Response({'error': 'url required'}, status=400)
-
-        # Check if already cached
-        cached = CachedCover.objects.filter(source_url=url).first()
-        if cached:
-            response = HttpResponse(cached.image_data, content_type=cached.content_type)
-            response['Cache-Control'] = 'public, max-age=86400'
-            return response
-        
         # Download and save
         try:
             with httpx.Client(timeout=10.0, follow_redirects=True) as client:
