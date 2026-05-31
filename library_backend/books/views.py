@@ -397,7 +397,7 @@ class ShelfRowsView(APIView):
     authentication_classes = []
 
     def get(self, request):
-        cache_key = "shelf:all_rows:v2"
+        cache_key = "shelf:all_rows:v3"
         cached = cache.get(cache_key)
         if cached:
             return Response(cached)

@@ -58,8 +58,8 @@ def fetch_all_shelves(genres_map: list) -> list:
         except Exception:
             return {"label": label, "books": []}
 
-    # Use a small number of workers to avoid 429 Too Many Requests on external APIs
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    # Use enough workers to fetch all shelves in parallel, avoiding sequential timeouts
+    with ThreadPoolExecutor(max_workers=5) as executor:
         # executor.map preserves the order of the genres_map
         results = list(executor.map(_fetch_one, genres_map))
         

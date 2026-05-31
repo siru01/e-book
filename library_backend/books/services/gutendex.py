@@ -116,33 +116,50 @@ def by_category(genre: str, page: int = 1):
     if cached:
         return cached
 
-    for attempt in range(2):
+    # Try both `topic` and `search` as fallback since topic can be slow/unreliable
+    strategies = [
+        {"topic": genre, "page": page},
+        {"search": genre, "page": page, "mime_type": "text/plain"},
+    ]
+
+    for attempt, params in enumerate(strategies):
         try:
-            with httpx.Client(timeout=30, follow_redirects=True) as client:
-                resp = client.get(f"{BASE_URL}/books", params={"topic": genre, "page": page})
-            
-            if resp.status_code == 429 and attempt == 0:
+            with httpx.Client(timeout=60, follow_redirects=True) as client:
+                resp = client.get(f"{BASE_URL}/books", params=params)
+
+            if resp.status_code == 429:
                 import time
-                time.sleep(1) # Back off for 1s
+                time.sleep(1)
                 continue
 
             resp.raise_for_status()
+
+            # Guard against empty responses (Gutendex can return 200 with no body)
+            if not resp.content or not resp.text.strip():
+                print(f"[gutendex] by_category empty response for genre '{genre}', trying fallback")
+                continue
+
             raw_books = resp.json().get("results", [])
-            
-            # Use simple normalize, no DB
+
             results = []
             for b in raw_books:
                 n = _normalize(b)
-                if n: results.append(n)
-                
-            set_cached("category", results, source="gutenberg", genre=genre, page=page)
-            return results
+                if n:
+                    results.append(n)
+
+            if results:
+                set_cached("category", results, source="gutenberg", genre=genre, page=page)
+                return results
+
+            # Got a valid response but no usable books — try the fallback strategy
+            print(f"[gutendex] by_category got 0 usable books for '{genre}' with params {params}, trying fallback")
+
         except Exception as e:
-            if attempt == 1:
-                print(f"[gutendex] by_category failed for genre '{genre}' after retry: {e}")
-                return []
+            print(f"[gutendex] by_category attempt {attempt+1} failed for genre '{genre}': {e}")
             import time
             time.sleep(0.5)
+
+    print(f"[gutendex] by_category: all strategies exhausted for '{genre}'")
     return []
 
 
