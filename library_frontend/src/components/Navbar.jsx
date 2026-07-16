@@ -12,13 +12,12 @@ const IconMail = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="non
 
 const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
-/* ── Profile Dropdown ── */
 function ProfileDropdown({ username, email, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  const initials = username
-    ? username.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+  const initial = username
+    ? username.trim().charAt(0).toLowerCase()
     : "?";
 
   useEffect(() => {
@@ -36,13 +35,13 @@ function ProfileDropdown({ username, email, onLogout }) {
         onClick={() => setOpen(o => !o)}
         aria-label="Profile menu"
       >
-        <span className="avatar-initials">{initials}</span>
+        <span className="avatar-initials">{initial}</span>
       </button>
 
       {open && (
         <div className="profile-dropdown">
           <div className="profile-dropdown-header">
-            <div className="profile-dropdown-avatar">{initials}</div>
+            <div className="profile-dropdown-avatar">{initial}</div>
             <div className="profile-dropdown-info">
               <span className="profile-dropdown-name">{capitalizeFirst(username) || "User"}</span>
               <span className="profile-dropdown-email">{email || "—"}</span>

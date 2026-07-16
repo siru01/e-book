@@ -435,7 +435,7 @@
 
 /* ── Profile Dropdown ── */
 .profile-dropdown-header { display: flex; align-items: center; gap: 12px; padding: 16px; }
-.profile-dropdown-avatar { border-width:2px 36px; height: 36px; border-radius: 0%; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
+.profile-dropdown-avatar { width: 36px; height: 36px; border-radius: 0%; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
 .profile-dropdown-info { display: flex; flex-direction: column; min-width: 0; }
 .profile-dropdown-name { font-size: .85rem; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-dropdown-email { font-size: .7rem; color: #999; overflow: hidden; text-overflow: ellipsis; }
