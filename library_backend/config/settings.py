@@ -110,16 +110,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 # settings.py around line 105
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL", "").replace("channel_binding=require", "channel_binding=disable")
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=0,
-            conn_health_checks=False, # Wakes up Neon if it's sleeping
-            ssl_require=False,        # CRITICAL for Neon
+            conn_max_age=0,            # Fresh connection per request (safest for Neon)
+            conn_health_checks=True,   # Verify connection before reuse
+            ssl_require=False,         # CRITICAL for Neon
         )
     }
+    # Keepalives so dead Neon connections are detected fast instead of hanging
+    DATABASES['default'].setdefault('OPTIONS', {}).update({
+        'keepalives': 1,
+        'keepalives_idle': 10,
+        'keepalives_interval': 5,
+        'keepalives_count': 3,
+    })
 else:
     # Fallback to a local SQLite database for development when DATABASE_URL isn't provided
     DATABASES = {
