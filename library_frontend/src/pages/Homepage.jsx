@@ -172,51 +172,82 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="mock-stats" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                        <div className="stat-card">
-                          <div className="stat-label">Total Time Read</div>
-                          <div className="stat-value">24H 18M</div>
+                        <div className="mock-stat-card">
+                          <div className="mock-stat-label">Total Time Read</div>
+                          <div className="mock-stat-value">24H 18M</div>
                         </div>
-                        <div className="stat-card">
-                          <div className="stat-label">Books Finished</div>
-                          <div className="stat-value">8 Books</div>
+                        <div className="mock-stat-card">
+                          <div className="mock-stat-label">Books Finished</div>
+                          <div className="mock-stat-value">8 Books</div>
                         </div>
-                        <div className="stat-card">
-                          <div className="stat-label">Reading Streak</div>
-                          <div className="stat-value">12 Days</div>
+                        <div className="mock-stat-card">
+                          <div className="mock-stat-label">Reading Streak</div>
+                          <div className="mock-stat-value">12 Days</div>
                         </div>
-                        <div className="stat-card">
-                          <div className="stat-label">Velocity</div>
-                          <div className="stat-value">1.2 PPM</div>
+                        <div className="mock-stat-card">
+                          <div className="mock-stat-label">Velocity</div>
+                          <div className="mock-stat-value">1.2 PPM</div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Center: AI/Chat Window */}
+                {/* Center: Book Overview Window */}
                 <div className="hex-window window-chat">
                   <div className="hex-window-header">
-                    <div className="hex-window-title">NexaCorp product line performance</div>
+                    <div className="hex-window-title">BOOK OVERVIEW</div>
                     <div className="hex-window-actions">
-                      <button className="hex-btn-small">Share</button>
+                      <button className="hex-btn-small">Classic</button>
                     </div>
                   </div>
-                  <div className="hex-window-body">
-                    <div className="hex-main">
-                      <div className="chat-bubble">Can you show me NexaCorp's Q3 sales?</div>
-                      <div className="chat-bubble ai">
-                        I'll help you analyze NexaCorp's revenue. I've pulled data from Q1-Q3.
-                        <div className="mock-chart" style={{height: '100px', marginTop: '12px'}}>
-                           <div className="mock-line" style={{top: '30%', backgroundColor: '#000'}}></div>
+                  <div className="hex-window-body" style={{ overflowY: 'hidden' }}>
+                    <div className="mock-bop-container">
+                      {/* Top: Cover + Quick details */}
+                      <div className="mock-bop-header-row">
+                        <div className="mock-bop-cover">
+                          <span>A</span>
+                        </div>
+                        <div className="mock-bop-meta">
+                          <div className="mock-bop-breadcrumb">
+                            ARCHIVE › LITERATURE › FICTION
+                          </div>
+                          <h2 className="mock-bop-title">Alice's Adventures in Wonderland</h2>
+                          <p className="mock-bop-author">Lewis Carroll, 1865</p>
+                          <div className="mock-bop-rating">
+                            <span className="mock-bop-stars">★★★★★</span>
+                            <span className="mock-bop-num">4.8</span>
+                          </div>
+                          <div className="mock-bop-actions">
+                            <button className="mock-bop-btn-read">Read Now</button>
+                            <button className="mock-bop-btn-save">Save</button>
+                          </div>
                         </div>
                       </div>
-                      <div className="chat-bubble ai">
-                        <strong>NexaCorp revenue trends</strong>
-                        <ul style={{fontSize: '0.75rem', paddingLeft: '16px', marginTop: '8px'}}>
-                          <li>Teleportation pads — $42.3M</li>
-                          <li>Quantum drives — $38.7M</li>
-                          <li>Wormhole initiators — $33.1M</li>
-                        </ul>
+
+                      {/* Bottom: Synopsis and Specs */}
+                      <div className="mock-bop-content">
+                        <div className="mock-bop-section">
+                          <h3 className="mock-bop-label">Synopsis</h3>
+                          <p className="mock-bop-text">
+                            Alice falls down a rabbit hole into a fantasy world populated by peculiar, anthropomorphic creatures. The tale plays with logic, giving the story lasting popularity with adults as well as with children.
+                          </p>
+                        </div>
+
+                        <div className="mock-bop-specs">
+                          <div className="mock-bop-spec">
+                            <span className="mock-spec-l">PUBLISHER</span>
+                            <span className="mock-spec-v">Gutenberg</span>
+                          </div>
+                          <div className="mock-bop-spec">
+                            <span className="mock-spec-l">LANGUAGE</span>
+                            <span className="mock-spec-v">English</span>
+                          </div>
+                          <div className="mock-bop-spec">
+                            <span className="mock-spec-l">SOURCE ID</span>
+                            <span className="mock-spec-v">gutenberg:11</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -234,9 +265,9 @@ export default function HomePage() {
                   <div className="hex-window-body">
                     <div className="hex-main">
                       <div className="mock-stats" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
-                        <div className="stat-card"><div className="stat-label">ARR</div><div className="stat-value">$1.2M</div></div>
-                        <div className="stat-card"><div className="stat-label">Churn</div><div className="stat-value">2.1%</div></div>
-                        <div className="stat-card"><div className="stat-label">Growth</div><div className="stat-value">+14%</div></div>
+                        <div className="mock-stat-card"><div className="mock-stat-label">ARR</div><div className="mock-stat-value">$1.2M</div></div>
+                        <div className="mock-stat-card"><div className="mock-stat-label">Churn</div><div className="mock-stat-value">2.1%</div></div>
+                        <div className="mock-stat-card"><div className="mock-stat-label">Growth</div><div className="mock-stat-value">+14%</div></div>
                       </div>
                       <div className="mock-chart" style={{height: '240px'}}>
                          <div style={{position: 'absolute', bottom: 0, left: '10%', width: '15%', height: '60%', background: '#eee'}}></div>

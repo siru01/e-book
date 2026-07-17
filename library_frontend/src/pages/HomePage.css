@@ -496,29 +496,34 @@ html, body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.mock-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.window-notebook .hex-main {
+  padding: 16px;
   gap: 12px;
 }
 
-.stat-card {
-  padding: 12px;
+.mock-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.mock-stat-card {
+  padding: 8px 10px;
   border: 1px solid rgba(0,0,0,0.05);
   background: #fafafa;
 }
 
-.stat-label { font-size: 0.6rem; color: #999; text-transform: uppercase; }
-.stat-value { font-size: 1.1rem; font-weight: 700; margin-top: 4px; }
+.mock-stat-label { font-size: 0.52rem; color: #999; text-transform: uppercase; letter-spacing: 0.02em; }
+.mock-stat-value { font-size: 0.85rem; font-weight: 700; margin-top: 2px; }
 
 /* Mock Heatmap Insights */
 .mock-heatmap-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   background: #fafafa;
   border: 1px solid rgba(0,0,0,0.05);
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: 4px;
 }
 
@@ -529,7 +534,7 @@ html, body {
 }
 
 .mock-heatmap-label {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   font-weight: 700;
   color: #333;
   text-transform: uppercase;
@@ -537,21 +542,188 @@ html, body {
 }
 
 .mock-heatmap-sub {
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   color: #666;
 }
 
 .mock-heatmap-grid {
   display: grid;
   grid-template-columns: repeat(14, 1fr);
-  gap: 6px;
+  gap: 4px;
   justify-content: space-between;
 }
 
 .mock-heatmap-cell {
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 1.5px;
+}
+
+/* Mock Book Overview Page */
+.mock-bop-container {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.mock-bop-header-row {
+  display: flex;
+  gap: 16px;
+}
+
+.mock-bop-cover {
+  width: 90px;
+  height: 130px;
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
   border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.mock-bop-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.mock-bop-breadcrumb {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mock-bop-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 4px 0 2px 0;
+  color: #111;
+  line-height: 1.25;
+  font-family: 'Inter', sans-serif;
+}
+
+.mock-bop-author {
+  font-size: 0.75rem;
+  color: #555;
+  margin: 0 0 6px 0;
+}
+
+.mock-bop-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  margin-bottom: 8px;
+}
+
+.mock-bop-stars {
+  color: #111;
+}
+
+.mock-bop-num {
+  font-weight: 700;
+  color: #333;
+}
+
+.mock-bop-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mock-bop-btn-read {
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+}
+
+.mock-bop-btn-save {
+  background: transparent;
+  color: #111;
+  border: 1px solid #111;
+  padding: 5px 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+}
+
+.mock-bop-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mock-bop-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mock-bop-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.mock-bop-text {
+  font-size: 0.7rem;
+  color: #444;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.mock-bop-specs {
+  display: flex;
+  gap: 24px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.mock-bop-spec {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mock-spec-l {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mock-spec-v {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #111;
 }
 
 @media (max-width: 1200px) {
