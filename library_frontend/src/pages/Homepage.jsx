@@ -137,12 +137,12 @@ export default function HomePage() {
               
               <div className="hex-stack">
                 
-                {/* Left: Notebook Window */}
+                {/* Left: Insights Window */}
                 <div className="hex-window window-notebook">
                   <div className="hex-window-header">
-                    <div className="hex-window-title">FICTION</div>
+                    <div className="hex-window-title">INSIGHTS</div>
                     <div className="hex-window-actions">
-                      <button className="hex-btn-small">Notebook</button> 
+                      <button className="hex-btn-small">Monthly</button> 
                     </div>
                   </div>
                   <div className="hex-window-body">
@@ -152,23 +152,41 @@ export default function HomePage() {
                       <div className="side-icon" />
                     </div>
                     <div className="hex-main">
-                      <div className="mock-code">
-                        import numpy as np<br/>
-                        df = load_data("revenue_2026")<br/>
-                        df.groupby("sector").sum()
+                      <div className="mock-heatmap-container">
+                        <div className="mock-heatmap-header">
+                          <span className="mock-heatmap-label">Activity Calendar</span>
+                          <span className="mock-heatmap-sub">12 days streak</span>
+                        </div>
+                        <div className="mock-heatmap-grid">
+                          {Array.from({ length: 42 }).map((_, idx) => {
+                            const shades = ['#eee', '#eee', '#c6e48b', '#7bc96f', '#239a3b', '#196127'];
+                            const randomColor = shades[idx % shades.length];
+                            return (
+                              <div 
+                                key={idx} 
+                                className="mock-heatmap-cell" 
+                                style={{ backgroundColor: randomColor }} 
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="mock-chart">
-                        <div className="mock-line" style={{top: '40%', opacity: 0.4}}></div>
-                        <div className="mock-line" style={{top: '60%', opacity: 0.1}}></div>
-                      </div>
-                      <div className="mock-stats">
+                      <div className="mock-stats" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                         <div className="stat-card">
-                          <div className="stat-label">Velocity</div>
-                          <div className="stat-value">84.2%</div>
+                          <div className="stat-label">Total Time Read</div>
+                          <div className="stat-value">24H 18M</div>
                         </div>
                         <div className="stat-card">
-                          <div className="stat-label">Retention</div>
-                          <div className="stat-value">12.4k</div>
+                          <div className="stat-label">Books Finished</div>
+                          <div className="stat-value">8 Books</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-label">Reading Streak</div>
+                          <div className="stat-value">12 Days</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-label">Velocity</div>
+                          <div className="stat-value">1.2 PPM</div>
                         </div>
                       </div>
                     </div>
