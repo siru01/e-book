@@ -1,7 +1,15 @@
 /* JournalPage.css - Newspaper Theme */
 
 .newsletter-wrapper {
-  background-color: #111;
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(0,0,0,0.08) 0%, transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(0,0,0,0.08) 0%, transparent 45%),
+    radial-gradient(circle at 0% 100%, rgba(0,0,0,0.08) 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, rgba(0,0,0,0.08) 0%, transparent 45%),
+    linear-gradient(#eee 1px, transparent 1px),
+    linear-gradient(90deg, #eee 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   min-height: 100vh;
   padding: 80px 20px 40px;
   display: flex;
