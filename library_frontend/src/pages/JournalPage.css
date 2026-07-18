@@ -11,21 +11,24 @@
     linear-gradient(90deg, #eee 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   min-height: 100vh;
-  padding: 80px 20px 40px;
+  padding: 110px 20px 40px;
   display: flex;
-  justify-content: center;
+  justify-content: center; 
   font-family: 'Helvetica Neue', Arial, sans-serif;
   overflow-y: auto;
 }
 
 .np-container {
-  background-color: #dfdcd4;
-  max-width: 900px;
-  width: 100%;
+  background-color: rgba(235, 235, 235, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  max-width: 1300px;
+  width: 95%;
   display: flex;
   padding: 40px;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   color: #111;
+  overflow-y: auto;
 }
 
 /* Left Column */
