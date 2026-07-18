@@ -253,29 +253,39 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Right: Beautiful Apps Window */}
+                {/* Right: Reader Window */}
                 <div className="hex-window window-dashboard">
                   <div className="hex-window-header">
-                    <div className="hex-window-title">Customer Analytics Dashboard</div>
+                    <div className="hex-window-title">READER PAGE</div>
                     <div className="hex-window-actions">
-                      <button className="hex-btn-small">Edit</button>
-                      <button className="hex-btn-small">Share</button>
+                      <button className="hex-btn-small">Aa</button>
                     </div>
                   </div>
-                  <div className="hex-window-body">
-                    <div className="hex-main">
-                      <div className="mock-stats" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
-                        <div className="mock-stat-card"><div className="mock-stat-label">ARR</div><div className="mock-stat-value">$1.2M</div></div>
-                        <div className="mock-stat-card"><div className="mock-stat-label">Churn</div><div className="mock-stat-value">2.1%</div></div>
-                        <div className="mock-stat-card"><div className="mock-stat-label">Growth</div><div className="mock-stat-value">+14%</div></div>
+                  <div className="hex-window-body" style={{ overflowY: 'hidden', display: 'flex', background: '#fff' }}>
+                    
+                    {/* Left Column Mock */}
+                    <div style={{ flex: 1, borderRight: '1px solid #eee', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.55rem', fontWeight: 'bold', color: '#999', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                        PROGRESS
                       </div>
-                      <div className="mock-chart" style={{height: '240px'}}>
-                         <div style={{position: 'absolute', bottom: 0, left: '10%', width: '15%', height: '60%', background: '#eee'}}></div>
-                         <div style={{position: 'absolute', bottom: 0, left: '30%', width: '15%', height: '80%', background: '#ddd'}}></div>
-                         <div style={{position: 'absolute', bottom: 0, left: '50%', width: '15%', height: '40%', background: '#ccc'}}></div>
-                         <div style={{position: 'absolute', bottom: 0, left: '70%', width: '15%', height: '90%', background: '#bbb'}}></div>
+                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: '#444', fontFamily: 'Georgia, serif' }}>
+                        <p style={{ marginBottom: '8px' }}>Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it...</p>
+                      </div>
+                      <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '0.6rem', color: '#999' }}>1</div>
+                    </div>
+
+                    {/* Right Column Mock */}
+                    <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', fontWeight: 'bold', color: '#999', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                        <span>ALICE'S ADVENTURES</span>
+                        <span>2</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: '#444', fontFamily: 'Georgia, serif' }}>
+                        <p style={{ marginBottom: '8px' }}>"And what is the use of a book," thought Alice "without pictures or conversations?"</p>
+                        <p>So she was considering in her own mind (as well as she could, for the hot day made her feel very sleepy and stupid), whether the pleasure of making a daisy-chain would be worth the trouble...</p>
                       </div>
                     </div>
+
                   </div>
                 </div>
 
