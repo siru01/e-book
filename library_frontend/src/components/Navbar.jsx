@@ -197,7 +197,7 @@ export default function Navbar() {
                   className={`dash-nav-link ${location.pathname === '/journal' ? 'dash-nav-link-active' : ''}`}
                   onClick={() => navigate("/journal")}
                 >
-                  Journal
+                  Newsletter
                 </span>
                 <span 
                   className={`dash-nav-link ${isInsights ? 'dash-nav-link-active' : ''}`}
@@ -305,7 +305,7 @@ export default function Navbar() {
                 className={`mobile-menu-item ${location.pathname === '/journal' ? 'active' : ''}`}
                 onClick={() => { setMobileMenuOpen(false); navigate("/journal"); }}
               >
-                Journal
+                Newsletter
               </span>
               <span 
                 className={`mobile-menu-item ${isInsights ? 'active' : ''}`}
