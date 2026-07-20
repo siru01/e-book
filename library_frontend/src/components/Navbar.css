@@ -1,3 +1,9 @@
+@property --nav-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .shelf-nav {
   position: fixed;
   top: 20px;
@@ -11,8 +17,16 @@
   justify-content: space-between;
   height: 60px;
   padding: 0 24px;
-  border: 1.9px solid rgba(0, 0, 0, 0.329);
-  background: rgba(255, 255, 255, 0.95);
+  
+  border: 2px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+    conic-gradient(from var(--nav-angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+  background-size: 100% 100%;
+  animation: spin-nav-border 4s linear infinite;
+
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   
@@ -21,6 +35,11 @@
   --corner-s:          8px;
   --nav-link:          #1a1a1a;
   --text:              #000000;
+}
+
+@keyframes spin-nav-border {
+  0% { --nav-angle: 0deg; }
+  100% { --nav-angle: 360deg; }
 }
 
 /* Technical Corner Details for Nav */
