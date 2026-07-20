@@ -316,6 +316,12 @@ html, body {
 }
 
 
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .hex-window {
   position: absolute;
   background: #ffffff;
@@ -329,15 +335,15 @@ html, body {
   background-origin: padding-box, border-box;
   background-image: 
     linear-gradient(#ffffff, #ffffff),
-    linear-gradient(60deg, #111111, #aaaaaa, #111111, #dddddd, #111111);
-  background-size: 100% 100%, 300% 300%;
-  animation: border-rotate 5s ease infinite alternate;
+    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+  background-size: 100% 100%;
+  animation: spin-border 4s linear infinite;
   box-shadow: 0 30px 60px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.1);
 }
 
-@keyframes border-rotate {
-  0% { background-position: 0% 0%, 0% 50%; }
-  100% { background-position: 0% 0%, 100% 50%; }
+@keyframes spin-border {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
 }
 
 .hex-window:hover {
