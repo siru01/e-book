@@ -18,6 +18,12 @@
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.newsletter-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 .np-container {
@@ -30,7 +36,12 @@
   padding: 40px;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   color: #111;
-  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.np-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* Left Column */
