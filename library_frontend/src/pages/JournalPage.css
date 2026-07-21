@@ -10,12 +10,14 @@
     linear-gradient(#eee 1px, transparent 1px),
     linear-gradient(90deg, #eee 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 30px 30px, 30px 30px;
-  min-height: 100vh;
+  height: 100vh;
   padding: 110px 20px 40px;
   display: flex;
   justify-content: center; 
   font-family: 'Helvetica Neue', Arial, sans-serif;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .np-container {
