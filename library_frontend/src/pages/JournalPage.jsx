@@ -48,14 +48,20 @@ const JournalPage = () => {
         {/* Left Column */}
         <div className="np-left">
           <div className="np-left-story">
-            <h2>{truncate(subArticle1.title, 60)}</h2>
+            <a href={subArticle1.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+              <h2>{truncate(subArticle1.title, 60)}</h2>
+            </a>
             <p>{subArticle1.description}</p>
             <p>{subArticle1.content ? truncate(subArticle1.content, 120) : "Read the full story on our platform..."}</p>
           </div>
           <div className="np-left-story">
-            <h2>{truncate(subArticle2.title, 60)}</h2>
+            <a href={subArticle2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+              <h2>{truncate(subArticle2.title, 60)}</h2>
+            </a>
             <p>{subArticle2.description}</p>
-            <img src={subArticle2.urlToImage || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop"} className="np-left-img" alt="secondary article" />
+            <a href={subArticle2.url} target="_blank" rel="noopener noreferrer">
+              <img src={subArticle2.urlToImage || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop"} className="np-left-img" alt="secondary article" />
+            </a>
           </div>
         </div>
 
@@ -64,16 +70,22 @@ const JournalPage = () => {
           
           <div className="np-issues">
             <div className="np-issue">
-              <h3>Update 1</h3>
-              <p>{truncate(issue1.title, 60)}<br/><br/>{truncate(issue1.description, 80)}</p>
+              <a href={issue1.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <h3>Update 1</h3>
+                <p><strong>{truncate(issue1.title, 60)}</strong><br/><br/>{truncate(issue1.description, 80)}</p>
+              </a>
             </div>
             <div className="np-issue">
-              <h3>Update 2</h3>
-              <p>{truncate(issue2.title, 60)}<br/><br/>{truncate(issue2.description, 80)}</p>
+              <a href={issue2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <h3>Update 2</h3>
+                <p><strong>{truncate(issue2.title, 60)}</strong><br/><br/>{truncate(issue2.description, 80)}</p>
+              </a>
             </div>
             <div className="np-issue">
-              <h3>Update 3</h3>
-              <p>{truncate(issue3.title, 60)}<br/><br/>{truncate(issue3.description, 80)}</p>
+              <a href={issue3.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <h3>Update 3</h3>
+                <p><strong>{truncate(issue3.title, 60)}</strong><br/><br/>{truncate(issue3.description, 80)}</p>
+              </a>
             </div>
           </div>
 
@@ -86,9 +98,13 @@ const JournalPage = () => {
             <div className="np-subtitle-line"></div>
           </div>
 
-          <img src={heroArticle.urlToImage || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'} className="np-hero-img" alt="hero article" />
+          <a href={heroArticle.url} target="_blank" rel="noopener noreferrer">
+            <img src={heroArticle.urlToImage || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'} className="np-hero-img" alt="hero article" />
+          </a>
           
-          <h2 className="np-hero-headline">{heroArticle.title}</h2>
+          <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+            <h2 className="np-hero-headline" style={{ cursor: 'pointer' }}>{heroArticle.title}</h2>
+          </a>
           
           <div className="np-hero-text" style={{ marginTop: '20px' }}>
             <p style={{ fontWeight: 'bold' }}>{heroArticle.description}</p>

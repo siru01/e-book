@@ -265,7 +265,6 @@
   width: 34px; height: 34px; border-radius: 0px; background: #111; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center; transition: transform .15s;
 }
-.profile-trigger:hover { /* transform scale removed */ }
 .avatar-initials { font-size: .7rem; font-weight: 700; color: #fff; letter-spacing: .04em; }
 
 .profile-dropdown {
