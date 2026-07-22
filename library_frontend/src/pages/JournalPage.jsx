@@ -1,118 +1,185 @@
 import React, { useEffect, useState } from 'react';
 import './JournalPage.css';
 
+const FALLBACK_IMGS = [
+  'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1463320726281-696a3cc57e81?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop',
+];
+
+const truncate = (str, n) =>
+  str && str.length > n ? str.substr(0, n - 1) + '…' : str || '';
+
 const JournalPage = () => {
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    // Fetch live data from a free, open News API (no key required)
-    const API_URL = "https://saurav.tech/NewsAPI/top-headlines/category/technology/in.json";
-    
+    const API_URL =
+      'https://saurav.tech/NewsAPI/top-headlines/category/technology/in.json';
     fetch(API_URL)
       .then(res => res.json())
-      .then(data => {
-        setArticles(data.articles || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch news:", err);
-        setArticles([]);
-        setLoading(false);
-      });
+      .then(data => { setArticles(data.articles || []); setLoading(false); })
+      .catch(() => { setArticles([]); setLoading(false); });
   }, []);
 
-  const defaultArticle = {
-    title: "Loading Latest Updates...",
-    description: "Please wait while we fetch today's latest updates from around the globe.",
-    content: "Fetching data...",
-    urlToImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
+  // Auto-advance featured card every 5 s
+  useEffect(() => {
+    if (articles.length < 2) return;
+    const t = setInterval(() => setActiveSlide(s => (s + 1) % Math.min(articles.length, 3)), 5000);
+    return () => clearInterval(t);
+  }, [articles.length]);
+
+  const placeholder = (i) => ({
+    title: 'Loading the latest stories…',
+    description: 'Fetching live news. Please hold on.',
+    urlToImage: FALLBACK_IMGS[i % FALLBACK_IMGS.length],
+    url: '#',
+    source: { name: 'News' },
+    publishedAt: new Date().toISOString(),
+  });
+
+  const get = (i) => articles[i] || placeholder(i);
+
+  const timeAgo = (iso) => {
+    const diff = (Date.now() - new Date(iso)) / 1000;
+    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
   };
 
-  const heroArticle = articles.length > 0 ? articles[0] : defaultArticle;
-  const subArticle1 = articles.length > 1 ? articles[1] : defaultArticle;
-  const subArticle2 = articles.length > 2 ? articles[2] : defaultArticle;
-  const issue1 = articles.length > 3 ? articles[3] : defaultArticle;
-  const issue2 = articles.length > 4 ? articles[4] : defaultArticle;
-  const issue3 = articles.length > 5 ? articles[5] : defaultArticle;
-
-  // Helper to ensure text looks good in columns
-  const truncate = (str, n) => (str && str.length > n) ? str.substr(0, n - 1) + '...' : str;
-
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const featured = get(activeSlide);
+  const smCards  = [get(3), get(4)];
+  const xsCards  = [get(5), get(6), get(7), get(8)];
 
   return (
-    <div className="newsletter-wrapper">
-      <div className="np-container">
-        
-        {/* Left Column */}
-        <div className="np-left">
-          <div className="np-left-story">
-            <a href={subArticle1.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-              <h2>{truncate(subArticle1.title, 60)}</h2>
-            </a>
-            <p>{subArticle1.description}</p>
-            <p>{subArticle1.content ? truncate(subArticle1.content, 120) : "Read the full story on our platform..."}</p>
-          </div>
-          <div className="np-left-story">
-            <a href={subArticle2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-              <h2>{truncate(subArticle2.title, 60)}</h2>
-            </a>
-            <p>{subArticle2.description}</p>
-            <a href={subArticle2.url} target="_blank" rel="noopener noreferrer">
-              <img src={subArticle2.urlToImage || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop"} className="np-left-img" alt="secondary article" />
-            </a>
-          </div>
-        </div>
+    <div className="nl-wrapper">
 
-        {/* Right Column */}
-        <div className="np-right">
-          
-          <div className="np-issues">
-            <div className="np-issue">
-              <a href={issue1.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                <h3>Update 1</h3>
-                <p><strong>{truncate(issue1.title, 60)}</strong><br/><br/>{truncate(issue1.description, 80)}</p>
-              </a>
-            </div>
-            <div className="np-issue">
-              <a href={issue2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                <h3>Update 2</h3>
-                <p><strong>{truncate(issue2.title, 60)}</strong><br/><br/>{truncate(issue2.description, 80)}</p>
-              </a>
-            </div>
-            <div className="np-issue">
-              <a href={issue3.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                <h3>Update 3</h3>
-                <p><strong>{truncate(issue3.title, 60)}</strong><br/><br/>{truncate(issue3.description, 80)}</p>
-              </a>
-            </div>
-          </div>
-
-          <div className="np-thick-divider"></div>
-          
-          <h1 className="np-title">NEWSLETTER</h1>
-          
-          <div className="np-subtitle-row">
-            <span className="np-subtitle">Daily Edition | {today.toUpperCase()}</span>
-            <div className="np-subtitle-line"></div>
-          </div>
-
-          <a href={heroArticle.url} target="_blank" rel="noopener noreferrer">
-            <img src={heroArticle.urlToImage || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'} className="np-hero-img" alt="hero article" />
-          </a>
-          
-          <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-            <h2 className="np-hero-headline" style={{ cursor: 'pointer' }}>{heroArticle.title}</h2>
-          </a>
-          
-          <div className="np-hero-text" style={{ marginTop: '20px' }}>
-            <p style={{ fontWeight: 'bold' }}>{heroArticle.description}</p>
-            <p>{heroArticle.content || "More details unfolding as this story develops..."}</p>
-          </div>
-          
+      {/* ── Header bar ── */}
+      <div className="nl-header">
+        <span className="nl-header-title">NEWSLETTER</span>
+        <div className="nl-header-right">
+          <span className="nl-header-tag">Technology</span>
+          <span className="nl-header-tag">India</span>
+          <span className="nl-live-dot" />
+          <span className="nl-header-live">LIVE</span>
         </div>
       </div>
+
+      {/* ── Main grid ── */}
+      <div className="nl-grid">
+
+        {/* ─── TOP ROW ─────────────────────────────── */}
+        <div className="nl-top-row">
+
+          {/* Featured big card */}
+          <a
+            href={featured.url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nl-card nl-card-featured"
+          >
+            <div
+              className="nl-card-img"
+              style={{ backgroundImage: `url('${featured.urlToImage || FALLBACK_IMGS[0]}')` }}
+            >
+              <div className="nl-card-img-overlay" />
+              <div className="nl-card-source-badge">
+                {featured.source?.name} · {timeAgo(featured.publishedAt)}
+              </div>
+            </div>
+            <div className="nl-card-body">
+              <p className="nl-card-headline">{truncate(featured.title, 100)}</p>
+              <p className="nl-card-desc">{truncate(featured.description, 120)}</p>
+            </div>
+
+            {/* Slide indicators */}
+            <div className="nl-slide-dots">
+              {[0, 1, 2].map(i => (
+                <button
+                  key={i}
+                  className={`nl-slide-dot${activeSlide === i ? ' active' : ''}`}
+                  onClick={e => { e.preventDefault(); setActiveSlide(i); }}
+                />
+              ))}
+            </div>
+
+            {/* Prev / Next arrows */}
+            <button
+              className="nl-arrow nl-arrow-left"
+              onClick={e => { e.preventDefault(); setActiveSlide(s => (s - 1 + 3) % 3); }}
+            >&#8249;</button>
+            <button
+              className="nl-arrow nl-arrow-right"
+              onClick={e => { e.preventDefault(); setActiveSlide(s => (s + 1) % 3); }}
+            >&#8250;</button>
+          </a>
+
+          {/* Right stack of 2 medium cards */}
+          <div className="nl-right-stack">
+            {smCards.map((art, i) => (
+              <a
+                key={i}
+                href={art.url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nl-card nl-card-sm"
+              >
+                <div
+                  className="nl-card-img"
+                  style={{ backgroundImage: `url('${art.urlToImage || FALLBACK_IMGS[i + 1]}')` }}
+                >
+                  <div className="nl-card-img-overlay" />
+                  <div className="nl-card-source-badge">
+                    {art.source?.name} · {timeAgo(art.publishedAt)}
+                  </div>
+                </div>
+                <div className="nl-card-body">
+                  <p className="nl-card-headline">{truncate(art.title, 80)}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── BOTTOM ROW: 4 equal xs cards ─── */}
+        <div className="nl-bottom-row">
+          {xsCards.map((art, i) => (
+            <a
+              key={i}
+              href={art.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nl-card nl-card-xs"
+            >
+              <div
+                className="nl-card-img"
+                style={{ backgroundImage: `url('${art.urlToImage || FALLBACK_IMGS[i + 3]}')` }}
+              >
+                <div className="nl-card-img-overlay" />
+                <div className="nl-card-source-badge">
+                  {art.source?.name} · {timeAgo(art.publishedAt)}
+                </div>
+              </div>
+              <div className="nl-card-body">
+                <p className="nl-card-headline">{truncate(art.title, 70)}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+
+      </div>
+
+      {loading && (
+        <div className="nl-loading-bar">
+          <div className="nl-loading-fill" />
+        </div>
+      )}
     </div>
   );
 };
