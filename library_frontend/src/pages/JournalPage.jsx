@@ -18,14 +18,41 @@ const JournalPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [activeCategory, setActiveCategory] = useState('all');
 
   useEffect(() => {
-    const API_URL =
-      'https://saurav.tech/NewsAPI/top-headlines/category/technology/in.json';
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => { setArticles(data.articles || []); setLoading(false); })
-      .catch(() => { setArticles([]); setLoading(false); });
+    // Fetch India general current affairs + world top headlines in parallel
+    const INDIA_GENERAL = 'https://saurav.tech/NewsAPI/top-headlines/category/general/in.json';
+    const WORLD_TOP     = 'https://saurav.tech/NewsAPI/everything/cnn.json';
+    const INDIA_POLITICS = 'https://saurav.tech/NewsAPI/top-headlines/category/politics/in.json';
+
+    Promise.all([
+      fetch(INDIA_GENERAL).then(r => r.json()).catch(() => ({ articles: [] })),
+      fetch(WORLD_TOP).then(r => r.json()).catch(() => ({ articles: [] })),
+      fetch(INDIA_POLITICS).then(r => r.json()).catch(() => ({ articles: [] })),
+    ]).then(([india, world, politics]) => {
+      // Interleave: India + World articles for a mixed, balanced feed
+      const indiaArts   = (india.articles   || []).slice(0, 15);
+      const worldArts   = (world.articles   || []).slice(0, 10);
+      const politicsArts = (politics.articles || []).slice(0, 8);
+
+      // Merge & deduplicate by title
+      const seen = new Set();
+      const merged = [];
+      const addAll = (arr) => arr.forEach(a => {
+        const key = (a.title || '').trim().toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push(a); }
+      });
+      // interleave india + world
+      const maxLen = Math.max(indiaArts.length, worldArts.length, politicsArts.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (indiaArts[i])    addAll([indiaArts[i]]);
+        if (worldArts[i])    addAll([worldArts[i]]);
+        if (politicsArts[i]) addAll([politicsArts[i]]);
+      }
+      setArticles(merged);
+      setLoading(false);
+    });
   }, []);
 
   // Auto-advance featured card every 5 s
@@ -53,19 +80,41 @@ const JournalPage = () => {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
-  const featured = get(activeSlide);
-  const smCards  = [get(3), get(4)];
-  const xsCards  = [get(5), get(6), get(7), get(8)];
+  // Categorize articles based on keywords in title/description
+  const categorize = (art) => {
+    const text = ((art.title || '') + ' ' + (art.description || '')).toLowerCase();
+    const indiaKeywords = ['india', 'modi', 'delhi', 'mumbai', 'bjp', 'congress', 'rupee', 'isro', 'lok sabha', 'rajya sabha', 'indian'];
+    if (indiaKeywords.some(k => text.includes(k))) return 'india';
+    return 'world';
+  };
+
+  const filteredArticles = activeCategory === 'all'
+    ? articles
+    : articles.filter(a => categorize(a) === activeCategory);
+
+  const featured = filteredArticles[activeSlide] || get(activeSlide);
+  const smCards  = [filteredArticles[3] || get(3), filteredArticles[4] || get(4)];
+  const xsCards  = filteredArticles.slice(5);  // ALL remaining articles as scrollable bottom row
 
   return (
     <div className="nl-wrapper">
 
       {/* ── Header bar ── */}
       <div className="nl-header">
-        <span className="nl-header-title">NEWSLETTER</span>
+        <span className="nl-header-title">CURRENT AFFAIRS</span>
         <div className="nl-header-right">
-          <span className="nl-header-tag">Technology</span>
-          <span className="nl-header-tag">India</span>
+          <button
+            className={`nl-cat-btn${activeCategory === 'all' ? ' active' : ''}`}
+            onClick={() => { setActiveCategory('all'); setActiveSlide(0); }}
+          >All</button>
+          <button
+            className={`nl-cat-btn${activeCategory === 'india' ? ' active' : ''}`}
+            onClick={() => { setActiveCategory('india'); setActiveSlide(0); }}
+          >🇮🇳 India</button>
+          <button
+            className={`nl-cat-btn${activeCategory === 'world' ? ' active' : ''}`}
+            onClick={() => { setActiveCategory('world'); setActiveSlide(0); }}
+          >🌍 World</button>
           <span className="nl-live-dot" />
           <span className="nl-header-live">LIVE</span>
         </div>
@@ -147,8 +196,8 @@ const JournalPage = () => {
           </div>
         </div>
 
-        {/* ─── BOTTOM ROW: 4 equal xs cards ─── */}
-        <div className="nl-bottom-row">
+        {/* ─── BOTTOM ROW: scrollable xs cards ─── */}
+        <div className="nl-bottom-row-scroll">
           {xsCards.map((art, i) => (
             <a
               key={i}
@@ -159,7 +208,7 @@ const JournalPage = () => {
             >
               <div
                 className="nl-card-img"
-                style={{ backgroundImage: `url('${art.urlToImage || FALLBACK_IMGS[i + 3]}')` }}
+                style={{ backgroundImage: `url('${art.urlToImage || FALLBACK_IMGS[(i + 3) % FALLBACK_IMGS.length]}')` }}
               >
                 <div className="nl-card-img-overlay" />
                 <div className="nl-card-source-badge">

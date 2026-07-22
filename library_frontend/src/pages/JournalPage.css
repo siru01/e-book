@@ -40,15 +40,31 @@
   gap: 8px;
 }
 
-.nl-header-tag {
+/* ── Category filter buttons ── */
+.nl-cat-btn {
   font-size: 0.65rem;
   font-weight: 600;
   color: #555;
   background: rgba(0,0,0,0.07);
-  padding: 2px 8px;
-  border-radius: 2px;
+  border: 1px solid transparent;
+  padding: 3px 10px;
+  border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.nl-cat-btn:hover {
+  background: rgba(0,0,0,0.12);
+  color: #111;
+}
+
+.nl-cat-btn.active {
+  background: #111;
+  color: #fff;
+  border-color: #111;
 }
 
 .nl-live-dot {
@@ -103,7 +119,38 @@
   min-height: 0;
 }
 
-/* ── Bottom row: 4 equal cards ── */
+/* ── Bottom row: horizontally scrollable xs cards ── */
+.nl-bottom-row-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  /* Minimum card width so they don't squish */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+}
+
+.nl-bottom-row-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.nl-bottom-row-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nl-bottom-row-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+.nl-bottom-row-scroll .nl-card-xs {
+  flex: 0 0 200px;   /* fixed width → forces horizontal scroll */
+  min-width: 0;
+}
+
+/* Keep the old bottom-row for backward compat if needed */
 .nl-bottom-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -373,6 +420,9 @@
   .nl-bottom-row {
     grid-template-columns: repeat(2, 1fr);
   }
+  .nl-bottom-row-scroll .nl-card-xs {
+    flex: 0 0 170px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -382,5 +432,8 @@
   .nl-right-stack { display: none; }
   .nl-bottom-row {
     grid-template-columns: 1fr 1fr;
+  }
+  .nl-bottom-row-scroll .nl-card-xs {
+    flex: 0 0 150px;
   }
 }
