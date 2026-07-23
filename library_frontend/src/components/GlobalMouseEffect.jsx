@@ -49,10 +49,23 @@ export default function GlobalMouseEffect() {
       }}
     >
       <svg width="32" height="36" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cursor-glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4285F4">
+              <animate attributeName="stop-color" values="#4285F4;#EA4335;#FBBC05;#34A853;#4285F4" dur="4s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="50%" stopColor="#EA4335">
+              <animate attributeName="stop-color" values="#EA4335;#FBBC05;#34A853;#4285F4;#EA4335" dur="4s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="100%" stopColor="#FBBC05">
+              <animate attributeName="stop-color" values="#FBBC05;#34A853;#4285F4;#EA4335;#FBBC05" dur="4s" repeatCount="indefinite" />
+            </stop>
+          </linearGradient>
+        </defs>
         <path
           d="M4 4 L20 12 C22 13 22 15 20 16 L13 18 L10 24 C9 26 7 26 6 24 Z"
           fill="#111"
-          stroke="#fff"
+          stroke="url(#cursor-glow-grad)"
           strokeWidth="2.5"
           strokeLinejoin="round"
           strokeLinecap="round"
