@@ -130,7 +130,7 @@ html, body {
   height: 100%;
   z-index: -1;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 5px transparent;
+  -webkit-text-stroke: 3px transparent;
   background: conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
   -webkit-background-clip: text;
   background-clip: text;
@@ -204,28 +204,44 @@ html, body {
 } 
  
 .shelf-cta-pill:hover .shelf-glass-inner {
-  background: rgba(255, 255, 255, 0.95);
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.97)),
+    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
   box-shadow: 0 8px 32px rgba(0,0,0,0.06);
 }
 
 .shelf-cta-pill.is-docked .shelf-glass-inner {
-  background: rgba(255, 255, 255, 0.98);
-  border-color: rgba(0,0,0,0.12);
+  border: 2px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98)),
+    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+  background-size: 100% 100%;
+  animation: spin-border 4s linear infinite;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
 
 .shelf-glass-inner {
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   transition: background 0.2s;
+
+  /* Animated border style matching the navigation bar (solid white overlay to block color bleeding) */
+  border: 2px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+  background-size: 100% 100%;
+  animation: spin-border 4s linear infinite;
 }
  
 .glass-content {
