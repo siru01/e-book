@@ -130,13 +130,11 @@ html, body {
   height: 100%;
   z-index: -1;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 2px transparent;
+  -webkit-text-stroke: 5px transparent;
   background: conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
   -webkit-background-clip: text;
   background-clip: text;
   animation: spin-border 4s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(66, 133, 244, 0.5))
-          drop-shadow(0 0 20px rgba(234, 67, 53, 0.3));
   pointer-events: none;
 }
 
@@ -205,52 +203,29 @@ html, body {
   z-index: 999; 
 } 
  
-.shelf-cta-pill::before, .shelf-cta-pill::after {
-  display: none; /* Hide old black corner ticks in favor of the animated outline */
-}
-
 .shelf-cta-pill:hover .shelf-glass-inner {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
-    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
-  box-shadow: 
-    0 8px 32px rgba(0,0,0,0.06),
-    0 0 15px rgba(66, 133, 244, 0.3),
-    0 0 25px rgba(234, 67, 53, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
 }
 
 .shelf-cta-pill.is-docked .shelf-glass-inner {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98)),
-    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
-  box-shadow: 
-    0 2px 10px rgba(0,0,0,0.04),
-    0 0 10px rgba(66, 133, 244, 0.2);
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0,0,0,0.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
 
 .shelf-glass-inner {
   width: 100%;
   height: 100%;
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   transition: background 0.2s;
-
-  /* Glowing animated outline */
-  border: 1.5px solid transparent;
-  background-clip: padding-box, border-box;
-  background-origin: padding-box, border-box;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
-    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
-  background-size: 100% 100%;
-  animation: spin-border 4s linear infinite;
-  box-shadow: 
-    0 4px 20px rgba(0,0,0,0.03),
-    0 0 10px rgba(66, 133, 244, 0.2),
-    0 0 20px rgba(234, 67, 53, 0.1);
 }
  
 .glass-content {
