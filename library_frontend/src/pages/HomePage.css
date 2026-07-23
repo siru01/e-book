@@ -108,6 +108,8 @@ html, body {
 }
 
 .shelf-headline-line {
+  position: relative;
+  z-index: 1;
   display: block;
   font-family: "Anton", sans-serif;
   font-size: clamp(3.5rem, 12vw, 9rem);
@@ -117,6 +119,25 @@ html, body {
   white-space: nowrap;
   text-transform: uppercase;
   will-change: transform, opacity;
+}
+
+.shelf-headline-line::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2px transparent;
+  background: conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: spin-border 4s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(66, 133, 244, 0.5))
+          drop-shadow(0 0 20px rgba(234, 67, 53, 0.3));
+  pointer-events: none;
 }
 
 .shelf-subtext {

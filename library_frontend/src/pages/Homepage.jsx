@@ -123,8 +123,8 @@ export default function HomePage() {
           {/* ── Hero (sticky, fades on scroll) ── */}
           <section className="shelf-hero">
             <div className="shelf-headline-wrap fade-2" ref={headlineRef}>
-              <span className="shelf-headline-line">Unlock stories</span>
-              <span className="shelf-headline-line">expand minds</span>
+              <span className="shelf-headline-line" data-text="Unlock stories">Unlock stories</span>
+              <span className="shelf-headline-line" data-text="expand minds">expand minds</span>
               <p className="shelf-subtext fade-3">
                 One digital library for every kind of reader.
               </p>
