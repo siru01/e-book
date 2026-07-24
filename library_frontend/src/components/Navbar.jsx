@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/Authcontext';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 /* ── Icons ── */
@@ -66,6 +67,13 @@ export default function Navbar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token, logout, username } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const [theme, setTheme] = useState(() => localStorage.getItem("shelf_theme") || "light");
+
+  useEffect(() => {
+    localStorage.setItem("shelf_theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [phIndex, setPhIndex] = useState(0);
@@ -285,6 +293,9 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="landing-nav-actions">
+              {location.pathname === '/' && (
+                <ThemeToggle theme={theme} onChange={setTheme} />
+              )}
               <span className="nav-action-link desktop-only" onClick={() => navigate("/login")}>Log In</span>
               <button className="nav-action-btn desktop-only" onClick={() => navigate("/signup")}>Create Account</button>
             </div>

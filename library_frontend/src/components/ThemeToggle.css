@@ -1,0 +1,84 @@
+.theme-toggle-track {
+  position: relative;
+  width: 76px;
+  height: 38px;
+  border-radius: 19px;
+  cursor: pointer;
+  padding: 4px;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+/* Light Mode Track State (Bottom toggle in mock) */
+.theme-toggle-track.light {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03), 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.theme-toggle-track.light:hover {
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03), 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode Track State (Top toggle in mock) */
+.theme-toggle-track.dark {
+  background-color: #2b2d31;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.theme-toggle-track.dark:hover {
+  background-color: #35383c;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Toggle Handle */
+.theme-toggle-handle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+}
+
+/* Handle in Light Mode (Moon active - Right Side) */
+.theme-toggle-track.light .theme-toggle-handle {
+  background-color: #000000;
+  transform: translateX(40px); /* 76px width - 28px handle - 8px padding */
+}
+
+/* Handle in Dark Mode (Sun active - Left Side) */
+.theme-toggle-track.dark .theme-toggle-handle {
+  background-color: #ffffff;
+  transform: translateX(0);
+}
+
+/* SVG Icon Styles */
+.theme-icon {
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle-track:active .theme-icon {
+  transform: scale(0.8);
+}
+
+.theme-icon.sun {
+  color: #000000;
+}
+
+.theme-icon.moon {
+  color: #ffffff;
+}

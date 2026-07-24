@@ -1,3 +1,33 @@
+:root {
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --nav-corner-c: #1a1a1a;
+  --nav-link-color: #1a1a1a;
+  --nav-link-hover: #000000;
+  --text-color: #000000;
+  --nav-action-color: #666666;
+  --nav-action-hover: #000000;
+  --nav-action-bg: #000000;
+  --nav-action-text: #ffffff;
+  --nav-action-border: #000000;
+  --nav-menu-bg: #ffffff;
+  --nav-menu-border: #1a1a1a;
+}
+
+html[data-theme="dark"] {
+  --nav-bg: rgba(15, 15, 17, 0.9);
+  --nav-corner-c: #ffffff;
+  --nav-link-color: #e0e0e0;
+  --nav-link-hover: #ffffff;
+  --text-color: #ffffff;
+  --nav-action-color: #a0a0a0;
+  --nav-action-hover: #ffffff;
+  --nav-action-bg: #ffffff;
+  --nav-action-text: #0f0f11;
+  --nav-action-border: #ffffff;
+  --nav-menu-bg: #1c1c1f;
+  --nav-menu-border: #ffffff;
+}
+
 @property --nav-angle {
   syntax: "<angle>";
   initial-value: 0deg;
