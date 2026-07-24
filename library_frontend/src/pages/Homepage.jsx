@@ -4,11 +4,10 @@ import ThemeToggle from "../components/ThemeToggle";
 import "./HomePage.css";
 
 /* ── Serene Scene Background ── */
-function SceneBackground({ firstBgRef, secondBgRef }) {
+function SceneBackground() {
   return (
     <div className="shelf-scene">
-      <div className="scene-bg-layer layer-dots" ref={firstBgRef} />
-      <div className="scene-bg-layer layer-grid" ref={secondBgRef} />
+      <div className="scene-bg-layer layer-grid" />
       <div className="scene-grain" />
     </div>
   );
@@ -27,8 +26,6 @@ export default function HomePage() {
   const scrollRef   = useRef(null);
   const headlineRef = useRef(null);
   const ctaRef      = useRef(null);
-  const firstBgRef  = useRef(null);
-  const secondBgRef = useRef(null);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -51,17 +48,7 @@ export default function HomePage() {
         headlineRef.current.style.opacity = opacity;
       }
 
-      // 1.5 Background Fade: transition from dots to grid
-      // Make dots disappear faster (completely gone at 0.8 progress)
-      if (firstBgRef.current) {
-        const dotOpacity = Math.max(0, 1 - progress / 0.8);
-        firstBgRef.current.style.opacity = dotOpacity;
-      }
-      // Make grid appear sooner (fully visible at 0.9 progress)
-      if (secondBgRef.current) {
-        const gridOpacity = Math.min(1, progress / 0.9);
-        secondBgRef.current.style.opacity = gridOpacity;
-      }
+      // Background is static grid, no fade needed
 
       // 2. CTA Pill: slide from initial 75vh position up to docking position
       if (ctaRef.current) {
@@ -119,7 +106,7 @@ export default function HomePage() {
 
   return (
     <div className="shelf-wrapper" data-theme={theme}>
-      <SceneBackground firstBgRef={firstBgRef} secondBgRef={secondBgRef} />
+      <SceneBackground />
       
       <div className="homepage-theme-toggle-wrapper">
         <ThemeToggle theme={theme} onChange={setTheme} />

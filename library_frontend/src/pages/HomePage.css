@@ -322,14 +322,6 @@ html, body {
   inset: 0;
   will-change: opacity;
 }
-
-.layer-dots {
-  /* Increased dot size to 1.5px and darkened color for visibility */
-  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
-  background-size: 10px 10px;
-  z-index: 1;
-}
-
 .layer-grid {
   /* Increased line thickness to 1px and darkened color */
   background-image: 
@@ -337,7 +329,7 @@ html, body {
     linear-gradient(to right, var(--grid-color) 1px, transparent 1px);
   background-size: 35px 35px;
   z-index: 2;
-  opacity: 0; /* Animated via JS */
+  opacity: 1; /* Always fully visible */
 }
 
 .scene-grain {
