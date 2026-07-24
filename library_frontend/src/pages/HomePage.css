@@ -19,9 +19,63 @@ html, body {
   --corner-t:          1.5px;
   --corner-s:          8px;
 
+  --dot-color:         #aaa;
+  --grid-color:        #ddd;
+  --window-bg:         #ffffff;
+  --window-text:       #111111;
+  --window-text-muted: #555555;
+  --card-bg:           #fafafa;
+  --card-border:       rgba(0,0,0,0.05);
+  --btn-secondary:     rgba(0,0,0,0.02);
+  --btn-secondary-hover: rgba(0,0,0,0.05);
+  --reader-bg:         #ffffff;
+  --reader-text:       #444444;
+  --reader-border:     #eeeeee;
+  --subtext:           #494949;
+  --angle-gradient: conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+
   width: 100%;
   height: 100%;
   position: relative;
+}
+
+.shelf-wrapper[data-theme="dark"] {
+  --bg:                #0f0f11;
+  --text:              #ffffff;
+  --text-muted:        #a0a0a0;
+  --nav-link:          #e0e0e0;
+  --nav-link-hover:    #ffffff;
+  --nav-border:        rgba(255,255,255,0.15);
+  --corner-c:          #ffffff;
+  
+  --dot-color:         #333336;
+  --grid-color:        #222225;
+  --window-bg:         #1c1c1f;
+  --window-text:       #eeeeee;
+  --window-text-muted: #aaaaaa;
+  --card-bg:           #242428;
+  --card-border:       rgba(255,255,255,0.05);
+  --btn-secondary:     rgba(255,255,255,0.05);
+  --btn-secondary-hover: rgba(255,255,255,0.1);
+  --reader-bg:         #1c1c1f;
+  --reader-text:       #cccccc;
+  --reader-border:     #2c2c30;
+  --subtext:           #bbbbbb;
+}
+
+.homepage-theme-toggle-wrapper {
+  position: fixed;
+  top: 31px;
+  right: 40px;
+  z-index: 1100;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .homepage-theme-toggle-wrapper {
+    top: 31px;
+    right: 20px;
+  }
 }
 
 .shelf-root {
@@ -142,7 +196,7 @@ html, body {
   margin-top: 20px;
   font-size: 1.5rem;
   font-weight: 300; 
-  color: #494949;
+  color: var(--subtext);
   letter-spacing: 0.04em;
   max-width: 700px;
   line-height: 1.6;
@@ -257,7 +311,8 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-color: #fcfaf9;
+  background-color: var(--bg);
+  transition: background-color 0.3s ease;
   overflow: hidden;
   pointer-events: none;
 }
@@ -270,7 +325,7 @@ html, body {
 
 .layer-dots {
   /* Increased dot size to 1.5px and darkened color for visibility */
-  background-image: radial-gradient(#aaa 1px, transparent 1px);
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
   background-size: 10px 10px;
   z-index: 1;
 }
@@ -278,8 +333,8 @@ html, body {
 .layer-grid {
   /* Increased line thickness to 1px and darkened color */
   background-image: 
-    linear-gradient(#ddd 1px, transparent 1px),
-    linear-gradient(to right, #ddd 1px, transparent 1px);
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-color) 1px, transparent 1px);
   background-size: 35px 35px;
   z-index: 2;
   opacity: 0; /* Animated via JS */
@@ -359,18 +414,17 @@ html, body {
 
 .hex-window {
   position: absolute;
-  background: #ffffff;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  transition: transform 0.4s ease, box-shadow 0.4s ease, background-color 0.3s ease;
   /* Animated Border */
   border: 2px solid transparent;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: 
-    linear-gradient(#ffffff, #ffffff),
-    conic-gradient(from var(--angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+    linear-gradient(var(--window-bg), var(--window-bg)),
+    var(--angle-gradient);
   background-size: 100% 100%;
   animation: spin-border 4s linear infinite;
   box-shadow: 0 30px 60px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.1);
@@ -505,7 +559,7 @@ html, body {
 .side-icon {
   width: 18px;
   height: 18px;
-  background: rgba(0,0,0,0.05);
+  background: var(--card-border);
   border-radius: 2px;
 }
 
@@ -522,9 +576,9 @@ html, body {
 .mock-code {
   font-family: "JetBrains Mono", monospace;
   font-size: 0.7rem;
-  color: #666;
+  color: var(--window-text-muted);
   line-height: 1.6;
-  background: #f8f8f8;
+  background: var(--card-bg);
   padding: 12px;
   border-radius: 4px;
 }
@@ -532,8 +586,8 @@ html, body {
 .mock-chart {
   width: 100%;
   height: 140px;
-  background: linear-gradient(to right, #f0f0f0 1px, transparent 1px) 0 0 / 20px 100%,
-              linear-gradient(to bottom, #f0f0f0 1px, transparent 1px) 0 0 / 100% 20px;
+  background: linear-gradient(to right, var(--card-border) 1px, transparent 1px) 0 0 / 20px 100%,
+              linear-gradient(to bottom, var(--card-border) 1px, transparent 1px) 0 0 / 100% 20px;
   position: relative;
   overflow: hidden;
 }
@@ -549,7 +603,8 @@ html, body {
 
 .chat-bubble {
   padding: 12px 16px;
-  background: #f5f5f5;
+  background: var(--card-bg);
+  color: var(--window-text);
   border-radius: 8px;
   font-size: 0.85rem;
   max-width: 85%;
@@ -558,9 +613,10 @@ html, body {
 }
 
 .chat-bubble.ai {
-  background: white;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: var(--window-bg);
+  border: 1px solid var(--card-border);
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  color: var(--window-text);
 }
 
 .window-notebook .hex-main {
@@ -576,20 +632,21 @@ html, body {
 
 .mock-stat-card {
   padding: 8px 10px;
-  border: 1px solid rgba(0,0,0,0.05);
-  background: #fafafa;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--window-text);
 }
 
-.mock-stat-label { font-size: 0.52rem; color: #999; text-transform: uppercase; letter-spacing: 0.02em; }
-.mock-stat-value { font-size: 0.85rem; font-weight: 700; margin-top: 2px; }
+.mock-stat-label { font-size: 0.52rem; color: var(--window-text-muted); text-transform: uppercase; letter-spacing: 0.02em; }
+.mock-stat-value { font-size: 0.85rem; font-weight: 700; margin-top: 2px; color: var(--window-text); }
 
 /* Mock Heatmap Insights */
 .mock-heatmap-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: #fafafa;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   padding: 8px 10px;
   border-radius: 4px;
 }
@@ -603,14 +660,14 @@ html, body {
 .mock-heatmap-label {
   font-size: 0.55rem;
   font-weight: 700;
-  color: #333;
+  color: var(--window-text);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .mock-heatmap-sub {
   font-size: 0.52rem;
-  color: #666;
+  color: var(--window-text-muted);
 }
 
 .mock-heatmap-grid {
@@ -679,14 +736,14 @@ html, body {
   font-size: 1.05rem;
   font-weight: 800;
   margin: 4px 0 2px 0;
-  color: #111;
+  color: var(--window-text);
   line-height: 1.25;
   font-family: 'Inter', sans-serif;
 }
 
 .mock-bop-author {
   font-size: 0.75rem;
-  color: #555;
+  color: var(--window-text-muted);
   margin: 0 0 6px 0;
 }
 
@@ -699,12 +756,12 @@ html, body {
 }
 
 .mock-bop-stars {
-  color: #111;
+  color: #f59e0b; /* nice rating gold */
 }
 
 .mock-bop-num {
   font-weight: 700;
-  color: #333;
+  color: var(--window-text);
 }
 
 .mock-bop-actions {
@@ -713,8 +770,8 @@ html, body {
 }
 
 .mock-bop-btn-read {
-  background: #111;
-  color: #fff;
+  background: var(--text);
+  color: var(--bg);
   border: none;
   padding: 6px 12px;
   font-size: 0.65rem;
@@ -723,12 +780,17 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.mock-bop-btn-read:hover {
+  opacity: 0.9;
 }
 
 .mock-bop-btn-save {
   background: transparent;
-  color: #111;
-  border: 1px solid #111;
+  color: var(--text);
+  border: 1px solid var(--text);
   padding: 5px 12px;
   font-size: 0.65rem;
   font-weight: 700;
@@ -736,6 +798,10 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: 2px;
+}
+
+.mock-bop-btn-save:hover {
+  background: var(--btn-secondary);
 }
 
 .mock-bop-content {
@@ -754,14 +820,14 @@ html, body {
   font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #999;
+  color: var(--window-text-muted);
   letter-spacing: 0.05em;
   margin: 0;
 }
 
 .mock-bop-text {
   font-size: 0.7rem;
-  color: #444;
+  color: var(--window-text-muted);
   line-height: 1.4;
   margin: 0;
 }
@@ -769,7 +835,7 @@ html, body {
 .mock-bop-specs {
   display: flex;
   gap: 24px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--reader-border);
   padding-top: 12px;
 }
 
@@ -782,7 +848,7 @@ html, body {
 .mock-spec-l {
   font-size: 0.5rem;
   font-weight: 700;
-  color: #999;
+  color: var(--window-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -790,7 +856,7 @@ html, body {
 .mock-spec-v {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #111;
+  color: var(--window-text);
 }
 
 @media (max-width: 1200px) {

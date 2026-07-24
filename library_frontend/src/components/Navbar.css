@@ -52,19 +52,20 @@ html[data-theme="dark"] {
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+    linear-gradient(var(--nav-bg), var(--nav-bg)),
     conic-gradient(from var(--nav-angle), #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
   background-size: 100% 100%;
   animation: spin-nav-border 4s linear infinite;
 
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   
-  --corner-c:          #1a1a1a;
+  --corner-c:          var(--nav-corner-c);
   --corner-t:          1.5px;
   --corner-s:          8px;
-  --nav-link:          #1a1a1a;
-  --text:              #000000;
+  --nav-link:          var(--nav-link-color);
+  --text:              var(--text-color);
 }
 
 @keyframes spin-nav-border {
@@ -191,7 +192,7 @@ html[data-theme="dark"] {
   font-family: 'Anton', sans-serif;
   font-size: 1.2rem; 
   letter-spacing: 0.05em;
-  color: #111;
+  color: var(--text);
   text-transform: uppercase;
 }
 
@@ -199,18 +200,18 @@ html[data-theme="dark"] {
   font-family: 'Anton', sans-serif;
   font-size: 1.2rem;
   letter-spacing: 0.05em;
-  color: #111;
+  color: var(--text);
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 /* ── Dashboard Nav Specifics ── */
 .dash-nav-links { display: flex; gap: 28px; flex-shrink: 0; }
-.dash-nav-link { font-size: .88rem; font-weight: 600; color: #888; cursor: pointer; transition: color .15s; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
-.dash-nav-link:hover { color: #111; }
-.dash-nav-link-active { color: #111; font-weight: 700; }
+.dash-nav-link { font-size: .88rem; font-weight: 600; color: var(--nav-action-color); cursor: pointer; transition: color .15s; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
+.dash-nav-link:hover { color: var(--nav-link-hover); }
+.dash-nav-link-active { color: var(--text); font-weight: 700; }
 
-.dash-brand { font-family: 'Anton', sans-serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .15em; color: #111; flex-shrink: 0; text-transform: uppercase; margin-right: 24px; }
+.dash-brand { font-family: 'Anton', sans-serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .15em; color: var(--text); flex-shrink: 0; text-transform: uppercase; margin-right: 24px; }
 .dash-brand-nav { margin-right: 0; }
 
 .dash-nav-search {
@@ -314,13 +315,12 @@ html[data-theme="dark"] {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #666;
+  color: var(--nav-action-color);
   cursor: pointer;
   transition: color 0.2s;
   position: relative;       /* Required for pseudo-elements */
   display: inline-block;    /* Required for pseudo-elements on span */
   padding: 6px 10px;        /* Give space for the corner markers */
-
 }
 
 /* Top corners — Log In button */
@@ -355,7 +355,7 @@ html[data-theme="dark"] {
   background-size: var(--corner-s) var(--corner-s);
 }
 
-.nav-action-link:hover { color: #000; }
+.nav-action-link:hover { color: var(--nav-action-hover); }
 
 
 .nav-action-btn {
@@ -364,16 +364,16 @@ html[data-theme="dark"] {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  background: #000;
-  color: #fff;
-  border: 1px solid #000;
+  background: var(--nav-action-bg);
+  color: var(--nav-action-text);
+  border: 1px solid var(--nav-action-border);
   padding: 10px 20px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
   border-radius: 0;
 }
 
-.nav-action-btn:hover { background: #333; border-color: #333; }
+.nav-action-btn:hover { background: var(--nav-action-hover); border-color: var(--nav-action-hover); color: var(--nav-bg); }
 
 /* ── Responsive Display Utilities ── */
 .mobile-only { display: none; }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import "./HomePage.css";
 
 /* ── Serene Scene Background ── */
@@ -16,6 +17,12 @@ function SceneBackground({ firstBgRef, secondBgRef }) {
 /* ─── Main landing page ─── */
 export default function HomePage() {
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => localStorage.getItem("shelf_theme") || "light");
+
+  useEffect(() => {
+    localStorage.setItem("shelf_theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const scrollRef   = useRef(null);
   const headlineRef = useRef(null);
@@ -111,8 +118,13 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="shelf-wrapper" data-theme="light">
+    <div className="shelf-wrapper" data-theme={theme}>
       <SceneBackground firstBgRef={firstBgRef} secondBgRef={secondBgRef} />
+      
+      <div className="homepage-theme-toggle-wrapper">
+        <ThemeToggle theme={theme} onChange={setTheme} />
+      </div>
+
       <div 
         className="shelf-root" 
         ref={scrollRef} 
@@ -261,26 +273,26 @@ export default function HomePage() {
                       <button className="hex-btn-small">Aa</button>
                     </div>
                   </div>
-                  <div className="hex-window-body" style={{ overflowY: 'hidden', display: 'flex', background: '#fff' }}>
+                  <div className="hex-window-body" style={{ overflowY: 'hidden', display: 'flex', background: 'var(--reader-bg)' }}>
                     
                     {/* Left Column Mock */}
-                    <div style={{ flex: 1, borderRight: '1px solid #eee', padding: '16px', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '0.55rem', fontWeight: 'bold', color: '#999', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                    <div style={{ flex: 1, borderRight: '1px solid var(--reader-border)', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.55rem', fontWeight: 'bold', color: 'var(--window-text-muted)', marginBottom: '12px', letterSpacing: '0.05em' }}>
                         PROGRESS
                       </div>
-                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: '#444', fontFamily: 'Georgia, serif' }}>
+                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: 'var(--reader-text)', fontFamily: 'Georgia, serif' }}>
                         <p style={{ marginBottom: '8px' }}>Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it...</p>
                       </div>
-                      <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '0.6rem', color: '#999' }}>1</div>
+                      <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '0.6rem', color: 'var(--window-text-muted)' }}>1</div>
                     </div>
 
                     {/* Right Column Mock */}
                     <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', fontWeight: 'bold', color: '#999', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', fontWeight: 'bold', color: 'var(--window-text-muted)', marginBottom: '12px', letterSpacing: '0.05em' }}>
                         <span>ALICE'S ADVENTURES</span>
                         <span>2</span>
                       </div>
-                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: '#444', fontFamily: 'Georgia, serif' }}>
+                      <div style={{ fontSize: '0.7rem', lineHeight: '1.6', color: 'var(--reader-text)', fontFamily: 'Georgia, serif' }}>
                         <p style={{ marginBottom: '8px' }}>"And what is the use of a book," thought Alice "without pictures or conversations?"</p>
                         <p>So she was considering in her own mind (as well as she could, for the hot day made her feel very sleepy and stupid), whether the pleasure of making a daisy-chain would be worth the trouble...</p>
                       </div>
