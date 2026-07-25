@@ -329,10 +329,6 @@
   margin-top: -10px;  
 }
 
-.card-bookmarks h3 {
-  /* Inherits from unified style */
-}
-
 /* Dual Stat Card */
 .card-dual-stat {
   grid-column: 3 / 4;

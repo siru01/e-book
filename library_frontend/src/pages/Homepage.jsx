@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import ThemeToggle from "../components/ThemeToggle";
 import "./HomePage.css";
 
 /* ── Serene Scene Background ── */
@@ -16,12 +15,6 @@ function SceneBackground() {
 /* ─── Main landing page ─── */
 export default function HomePage() {
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => localStorage.getItem("shelf_theme") || "light");
-
-  useEffect(() => {
-    localStorage.setItem("shelf_theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
 
   const scrollRef   = useRef(null);
   const headlineRef = useRef(null);
@@ -105,12 +98,8 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="shelf-wrapper" data-theme={theme}>
+    <div className="shelf-wrapper">
       <SceneBackground />
-      
-      <div className="homepage-theme-toggle-wrapper">
-        <ThemeToggle theme={theme} onChange={setTheme} />
-      </div>
 
       <div 
         className="shelf-root" 

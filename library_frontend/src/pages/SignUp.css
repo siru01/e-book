@@ -244,3 +244,82 @@
   text-align: center;
   font-weight: 500;
 }
+
+/* ══════════════════════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════════════════════ */
+html[data-theme="dark"] .signup-container {
+  background-color: #0f0f11;
+  background-image: radial-gradient(#2a2a2e 1.2px, transparent 1px);
+}
+
+html[data-theme="dark"] .signup-card {
+  background: #1a1a1f;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --corner-c: #ffffff;
+}
+
+html[data-theme="dark"] .signup-card h2 {
+  color: #f0f0f0;
+}
+
+html[data-theme="dark"] .signup-card .subtitle {
+  color: #888;
+}
+
+/* Labels */
+html[data-theme="dark"] .input-group label {
+  color: #aaa;
+}
+
+/* Input corner marks */
+html[data-theme="dark"] .input-wrapper {
+  --ic-c: #444;
+}
+
+/* Inputs */
+html[data-theme="dark"] .input-wrapper input {
+  background: #111117;
+  border-color: #2e2e36;
+  color: #f0f0f0;
+}
+
+html[data-theme="dark"] .input-group input:focus {
+  border-color: #ffffff;
+  background: #16161d;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme="dark"] .input-group input::placeholder {
+  color: #444;
+}
+
+/* Submit button inverts in dark: becomes white with black text */
+html[data-theme="dark"] .btn-black {
+  background-color: #ffffff;
+  color: #000000;
+  --btn-corner: #000000;
+}
+
+html[data-theme="dark"] .btn-black:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+html[data-theme="dark"] .btn-black:disabled {
+  background-color: #333;
+  color: #777;
+}
+
+/* Bottom link text */
+html[data-theme="dark"] .signup-card p:last-child {
+  color: #777;
+}
+
+html[data-theme="dark"] .signup-card p:last-child a {
+  color: #ffffff;
+}
+
+/* Error message */
+html[data-theme="dark"] .error-message {
+  color: #ff6b6b;
+}
