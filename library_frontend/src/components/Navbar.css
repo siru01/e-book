@@ -28,6 +28,21 @@ html[data-theme="dark"] {
   --nav-menu-border: #ffffff;
 }
 
+/* ── Global Theme Toggle (fixed top-right, all pages) ── */
+.global-theme-toggle-wrapper {
+  position: fixed;
+  top: 31px;
+  right: 20px;
+  z-index: 1100;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .global-theme-toggle-wrapper {
+    display: none;
+  }
+}
+
 @property --nav-angle {
   syntax: "<angle>";
   initial-value: 0deg;

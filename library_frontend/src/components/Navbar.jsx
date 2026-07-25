@@ -284,7 +284,6 @@ export default function Navbar() {
               ) : (
                 <button className="dash-icon-btn"><IconBell /></button>
               )}
-              <ThemeToggle theme={theme} onChange={setTheme} />
               <ProfileDropdown
                 username={username}
                 email={resolvedEmail}
@@ -293,7 +292,6 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="landing-nav-actions">
-              <ThemeToggle theme={theme} onChange={setTheme} />
               <span className="nav-action-link desktop-only" onClick={() => navigate("/login")}>Log In</span>
               <button className="nav-action-btn desktop-only" onClick={() => navigate("/signup")}>Create Account</button>
             </div>
@@ -333,6 +331,11 @@ export default function Navbar() {
           </div>
         )}
       </nav>
+
+      {/* ── Global Theme Toggle — fixed top-right corner on every page ── */}
+      <div className="global-theme-toggle-wrapper">
+        <ThemeToggle theme={theme} onChange={setTheme} />
+      </div>
 
       {/* ── Sub-Nav Search Row (Dashboard & Insights Only) ── */}
       {showSubNav && (
