@@ -39,6 +39,7 @@ html, body {
   position: relative;
 }
 
+[data-theme="dark"] .shelf-wrapper,
 .shelf-wrapper[data-theme="dark"] {
   --bg:                #0f0f11;
   --text:              #ffffff;
