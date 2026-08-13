@@ -10,6 +10,7 @@ const FALLBACK_IMGS = [
   'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop',
 ];
+//all done
 
 const truncate = (str, n) =>
   str && str.length > n ? str.substr(0, n - 1) + '…' : str || '';
