@@ -79,6 +79,21 @@ html, body {
   }
 }
 
+/* ── Homepage Mobile-only Theme Toggle ── */
+.homepage-mobile-theme-toggle {
+  display: none; /* Hidden on desktop — global toggle handles it */
+}
+
+@media (max-width: 800px) {
+  .homepage-mobile-theme-toggle {
+    display: block;
+    position: fixed;
+    top: 14px; /* vertically centered in 56px mobile nav */
+    right: 16px;
+    z-index: 1100;
+  }
+}
+
 .shelf-root {
   font-family: "Inter", sans-serif;
   width: 100vw;
@@ -890,38 +905,6 @@ html, body {
     margin: 0 auto;
   }
 
-  /* ── Force Light Mode on Mobile ─────────────────────────────────── */
-  /* Override dark theme entirely on mobile — homepage is always light */
-  [data-theme="dark"] .shelf-wrapper,
-  .shelf-wrapper[data-theme="dark"],
-  .shelf-wrapper {
-    --bg:                #fcfaf9;
-    --text:              #000000;
-    --text-muted:        #666666;
-    --nav-link:          #1a1a1a;
-    --nav-link-hover:    #000000;
-    --nav-border:        rgba(0,0,0,0.1);
-    --corner-c:          #1a1a1a;
-    --corner-t:          1.5px;
-    --corner-s:          8px;
 
-    --dot-color:         #aaa;
-    --grid-color:        #ddd;
-    --window-bg:         #ffffff;
-    --window-text:       #111111;
-    --window-text-muted: #555555;
-    --card-bg:           #fafafa;
-    --card-border:       rgba(0,0,0,0.05);
-    --btn-secondary:     rgba(0,0,0,0.02);
-    --btn-secondary-hover: rgba(0,0,0,0.05);
-    --reader-bg:         #ffffff;
-    --reader-text:       #444444;
-    --reader-border:     #eeeeee;
-    --subtext:           #494949;
-  }
-
-  /* Ensure body/scene background is also light on mobile */
-  .shelf-scene {
-    background-color: #fcfaf9 !important;
-  }
 }
+

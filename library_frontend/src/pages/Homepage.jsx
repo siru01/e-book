@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import "./HomePage.css";
 
 /* ── Serene Scene Background ── */
@@ -97,9 +98,25 @@ export default function HomePage() {
     };
   }, []);
 
+  // Sync with the global theme (same localStorage key as Navbar)
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("shelf_theme") || "light"
+  );
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem("shelf_theme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+  };
+
   return (
     <div className="shelf-wrapper">
       <SceneBackground />
+
+      {/* ── Mobile-only theme toggle ── */}
+      <div className="homepage-mobile-theme-toggle">
+        <ThemeToggle theme={theme} onChange={handleThemeChange} />
+      </div>
 
       <div 
         className="shelf-root" 
