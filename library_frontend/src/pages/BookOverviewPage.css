@@ -615,3 +615,39 @@
   .bop-similar-grid { grid-template-columns: 1fr; }
   .bop-cover-frame { width: 100%; max-width: 240px; }
 }
+
+/* ── Dark Mode ── */
+html[data-theme="dark"] .bop-root {
+  background-color: #0f0f11;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  color: #f0f0f0;
+}
+
+html[data-theme="dark"] .bop-title,
+html[data-theme="dark"] .bop-author,
+html[data-theme="dark"] .bop-section-title {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .bop-desc {
+  color: #cccccc;
+}
+
+html[data-theme="dark"] .bop-specs-card,
+html[data-theme="dark"] .bop-note-card,
+html[data-theme="dark"] .bop-card {
+  background: #18181c;
+  border-color: rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .bop-spec-label {
+  color: #a0a0a0;
+}
+
+html[data-theme="dark"] .bop-spec-val {
+  color: #ffffff;
+}
+

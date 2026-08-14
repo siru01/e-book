@@ -24,7 +24,19 @@ html, body {
     linear-gradient(90deg, rgba(229, 229, 229, 0.2) 1px, transparent 1px);
   background-size: 24px 24px, 96px 96px, 96px 96px;
   background-attachment: fixed;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  color: #ffffff;
+  background-color: #0f0f11;
+  background-image: 
+    radial-gradient(#26262a 1.5px, transparent 1.5px),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
 
 /* Helper to unlock scroll for Dashboard/Reader pages */
 body.allow-scroll {

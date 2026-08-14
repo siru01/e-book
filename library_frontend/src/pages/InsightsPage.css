@@ -802,3 +802,43 @@
   cursor: pointer !important;
   pointer-events: auto;
 }
+
+/* ── Dark Mode ── */
+html[data-theme="dark"] .insights-root {
+  background-color: #0f0f11;
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(255,255,255,0.03) 0%, transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(255,255,255,0.03) 0%, transparent 45%),
+    radial-gradient(circle at 0% 100%, rgba(255,255,255,0.03) 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, rgba(255,255,255,0.03) 0%, transparent 45%),
+    linear-gradient(#222226 1px, transparent 1px),
+    linear-gradient(90deg, #222226 1px, transparent 1px);
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .insight-card {
+  background-color: #18181c;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  --corner-c: #ffffff;
+}
+
+html[data-theme="dark"] .insight-card h2,
+html[data-theme="dark"] .insight-card h3 {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .insight-card p {
+  color: #aaaaaa;
+}
+
+html[data-theme="dark"] .cal-day-today {
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .cal-day-future {
+  color: #ffffff !important;
+  background-color: #282830 !important;
+}
+

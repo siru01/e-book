@@ -837,3 +837,28 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Dark Mode ── */
+html[data-theme="dark"] .shelf-reader-page {
+  background-color: #0f0f11;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  --paper: #18181c;
+  --ink: #e6e6e6;
+  --ink-mid: #b0b0b0;
+  --ink-light: #707070;
+  --rule: #333338;
+}
+
+html[data-theme="dark"] .typo-popover {
+  background: #18181c;
+  color: #ffffff;
+  border-color: #333338;
+}
+
+html[data-theme="dark"] .reader-sheet {
+  background: #18181c;
+  color: #e6e6e6;
+  border-color: #333338;
+}

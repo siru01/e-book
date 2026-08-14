@@ -978,3 +978,190 @@
   text-transform: uppercase;
 }
 
+/* ── Dark Mode ── */
+html[data-theme="dark"] .dash-root {
+  background-color: #0f0f11;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  color: #f0f0f0;
+}
+
+html[data-theme="dark"] .dash-greeting,
+html[data-theme="dark"] .dash-subtitle,
+html[data-theme="dark"] .dash-heading,
+html[data-theme="dark"] .dash-brand {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .dash-shelf-label {
+  color: #ffffff;
+  outline-color: #383840;
+}
+
+html[data-theme="dark"] .dash-shelf-label::before {
+  background:
+    linear-gradient(to right, #ffffff 1.5px, transparent 0) 0 0,
+    linear-gradient(to bottom, #ffffff 1.5px, transparent 0) 0 0,
+    linear-gradient(to left, #ffffff 1.5px, transparent 0) 100% 0,
+    linear-gradient(to bottom, #ffffff 1.5px, transparent 0) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+}
+
+html[data-theme="dark"] .dash-shelf-label::after {
+  background:
+    linear-gradient(to right, #ffffff 1.5px, transparent 0) 0 100%,
+    linear-gradient(to top, #ffffff 1.5px, transparent 0) 0 100%,
+    linear-gradient(to left, #ffffff 1.5px, transparent 0) 100% 100%,
+    linear-gradient(to top, #ffffff 1.5px, transparent 0) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+}
+
+html[data-theme="dark"] .dash-search-bar {
+  background: #18181c;
+  border-color: #ffffff;
+}
+
+html[data-theme="dark"] .dash-search-bar::before {
+  background: 
+    linear-gradient(to right, #ffffff 1.5px, transparent 0) 0 0,
+    linear-gradient(to bottom, #ffffff 1.5px, transparent 0) 0 0,
+    linear-gradient(to left, #ffffff 1.5px, transparent 0) 100% 0,
+    linear-gradient(to bottom, #ffffff 1.5px, transparent 0) 100% 0;
+  background-repeat: no-repeat; background-size: 8px 8px;
+}
+
+html[data-theme="dark"] .dash-search-bar::after {
+  background: 
+    linear-gradient(to right, #ffffff 1.5px, transparent 0) 0 100%,
+    linear-gradient(to top, #ffffff 1.5px, transparent 0) 0 100%,
+    linear-gradient(to left, #ffffff 1.5px, transparent 0) 100% 100%,
+    linear-gradient(to top, #ffffff 1.5px, transparent 0) 100% 100%;
+  background-repeat: no-repeat; background-size: 8px 8px;
+}
+
+html[data-theme="dark"] .dash-search-bar:focus-within {
+  background: #222228;
+  border-color: #ffffff;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+html[data-theme="dark"] .dash-search-input {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .dash-search-input::placeholder {
+  color: #777777;
+}
+
+html[data-theme="dark"] .dash-icon-btn {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .dash-icon-btn:hover {
+  background: #282830;
+}
+
+html[data-theme="dark"] .hero-card {
+  background: #18181c;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .hero-card:hover:not(.hero-card--expanded):not(.hero-card--animating) {
+  outline-color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+
+html[data-theme="dark"] .hc-label {
+  color: #a0a0a0;
+}
+
+html[data-theme="dark"] .hc-stat {
+  color: #e0e0e0;
+  background: #282830;
+}
+
+html[data-theme="dark"] .hc-close {
+  background: #282830;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .hc-close:hover {
+  background: #383842;
+}
+
+html[data-theme="dark"] .panel-book-row {
+  background: #1e1e24;
+  border-color: #2e2e38;
+}
+
+html[data-theme="dark"] .panel-book-row:hover {
+  background: #282832;
+}
+
+html[data-theme="dark"] .panel-book-title {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .panel-book-author {
+  color: #aaa;
+}
+
+html[data-theme="dark"] .book-card-cover {
+  border-color: #ffffff;
+  background: #1c1c20;
+}
+
+html[data-theme="dark"] .book-card-placeholder {
+  background: #1c1c20;
+  color: #eeeeee;
+}
+
+html[data-theme="dark"] .book-card-title {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .book-card-author {
+  color: #aaa;
+}
+
+html[data-theme="dark"] .dash-shelf-all {
+  color: #aaa;
+}
+
+html[data-theme="dark"] .dash-shelf-all:hover {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .profile-dropdown {
+  background: #1c1c20;
+  border-color: #333338;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+
+html[data-theme="dark"] .profile-dropdown-name {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .profile-dropdown-email {
+  color: #888888;
+}
+
+html[data-theme="dark"] .profile-dropdown-divider {
+  background: #2a2a30;
+}
+
+html[data-theme="dark"] .profile-dropdown-logout {
+  color: #cccccc;
+}
+
+html[data-theme="dark"] .profile-dropdown-logout:hover {
+  background: #282830;
+  color: #ffffff;
+}
+
+

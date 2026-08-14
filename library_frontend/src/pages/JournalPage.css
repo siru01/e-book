@@ -437,3 +437,46 @@
     flex: 0 0 150px;
   }
 }
+
+/* ── Dark Mode ── */
+html[data-theme="dark"] .nl-wrapper {
+  background: #0f0f11;
+}
+
+html[data-theme="dark"] .nl-header {
+  background: #0f0f11;
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+
+html[data-theme="dark"] .nl-header-title {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .nl-cat-btn {
+  color: #aaa;
+  background: rgba(255,255,255,0.08);
+}
+
+html[data-theme="dark"] .nl-cat-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .nl-cat-btn.active {
+  background: #ffffff;
+  color: #0f0f11;
+  border-color: #ffffff;
+}
+
+html[data-theme="dark"] .nl-card-body {
+  background: #18181c;
+}
+
+html[data-theme="dark"] .nl-card-headline {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .nl-card-desc {
+  color: #aaaaaa;
+}
+
