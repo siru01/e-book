@@ -71,7 +71,7 @@ function BookCard({ book }) {
   };
 
   return (
-    <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}>
+    <div className="book-card" onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`, { state: { book } })}>
       <div className="book-card-cover">
           {book.cover && (
             <img 
@@ -109,7 +109,7 @@ function SearchResultCard({ book, index }) {
   return (
     <div 
       className="src-card" 
-      onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`)}
+      onClick={() => navigate(`/book/${encodeURIComponent(book.bookId)}`, { state: { book } })}
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       <div className="src-card-cover">

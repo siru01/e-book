@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { fetchBookOverview, searchBooks, saveBookmark, getCoverUrl, streamBookContent, setPreloadedContent } from "../api/shelf";
 import { useBookOverview } from "../hooks/useDashboardData";
@@ -61,6 +61,8 @@ function Skeleton({ w = "100%", h = "20px", r = "6px" }) {
 export default function BookOverviewPage() {
   const { bookId: rawBookId } = useParams();
   const navigate              = useNavigate();
+  const location              = useLocation();
+  const stateBook             = location.state?.book;
   const { token, username, logout } = useAuth();
 
   const handleLogout = useCallback(() => { logout(); navigate("/"); }, [logout, navigate]);
@@ -80,25 +82,43 @@ export default function BookOverviewPage() {
   const loading = isLoading || initialLoading;
 
   const book = useMemo(() => {
-    if (!rawBook) return null;
-    const category = cleanLabel(rawBook.subjects?.[0] || rawBook.bookshelves?.[0] || "Literature");
-    const subCategory = cleanLabel(rawBook.subjects?.[1] || rawBook.bookshelves?.[1] || "");
+    if (!rawBook && !stateBook) return null;
+    let title = rawBook?.title;
+    let author = rawBook?.author;
+    let coverUrl = rawBook?.cover_url ? getCoverUrl(rawBook.cover_url) : "";
+
+    // If API returned a generic fallback placeholder ("Project Gutenberg Book #1513" or "Book #1513"), override with stateBook if available
+    if (stateBook?.title && (!title || title.startsWith("Project Gutenberg") || title.startsWith("Book #"))) {
+      title = stateBook.title;
+    }
+    if (stateBook?.author && (!author || author === "Unknown")) {
+      author = stateBook.author;
+    }
+    if (stateBook?.cover && (!coverUrl || coverUrl.includes("placeholder"))) {
+      coverUrl = getCoverUrl(stateBook.cover);
+    }
+
+    if (!title) title = rawBook?.title || stateBook?.title || "Untitled";
+    if (!author) author = rawBook?.author || stateBook?.author || "Unknown";
+
+    const category = cleanLabel(rawBook?.subjects?.[0] || rawBook?.bookshelves?.[0] || stateBook?.category || "Literature");
+    const subCategory = cleanLabel(rawBook?.subjects?.[1] || rawBook?.bookshelves?.[1] || "");
     return {
       id:           bookId,
-      title:        rawBook.title,
-      author:       rawBook.author,
-      coverUrl:     getCoverUrl(rawBook.cover_url),
-      description:  rawBook.description,
-      source:       rawBook.source || source,
-      year:         rawBook.year,
+      title,
+      author,
+      coverUrl:     coverUrl || getCoverUrl(rawBook?.cover_url),
+      description:  rawBook?.description || "",
+      source:       rawBook?.source || source,
+      year:         rawBook?.year || null,
       category,
       subCategory,
-      synopsis:     buildSynopsis(rawBook.description, rawBook.title, rawBook.author),
-      readUrl:      rawBook.read_url || null,
-      subjects:     rawBook.subjects || [],
-      bookshelves:  rawBook.bookshelves || [],
+      synopsis:     buildSynopsis(rawBook?.description, title, author),
+      readUrl:      rawBook?.read_url || null,
+      subjects:     rawBook?.subjects || [],
+      bookshelves:  rawBook?.bookshelves || [],
     };
-  }, [rawBook, bookId, source]);
+  }, [rawBook, stateBook, bookId, source]);
   
   useEffect(() => {
     document.documentElement.classList.add('allow-scroll');

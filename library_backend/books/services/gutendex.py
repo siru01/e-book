@@ -2,6 +2,10 @@ import httpx
 from .cache import get_cached, set_cached
 
 BASE_URL = "https://gutendex.com"
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/html, */*",
+}
 
 
 def _normalize(book: dict) -> dict:
@@ -9,9 +13,17 @@ def _normalize(book: dict) -> dict:
     formats = book.get("formats", {})
     cover_url = formats.get("image/jpeg", "")
     if not cover_url:
-        return None # MUST HAVE COVER
+        cover_url = f"https://www.gutenberg.org/cache/epub/{gid}/pg{gid}.cover.medium.jpg"
     
-    authors   = [a.get("name", "") for a in book.get("authors", [])]
+    raw_authors = [a.get("name", "") for a in book.get("authors", [])]
+    authors = []
+    for a in raw_authors:
+        if a and "," in a and not a.startswith("Various"):
+            p = a.split(",", 1)
+            authors.append(f"{p[1].strip()} {p[0].strip()}")
+        elif a:
+            authors.append(a)
+
     text_url = (
         formats.get("text/plain; charset=utf-8") or
         formats.get("text/plain; charset=us-ascii") or
@@ -45,7 +57,7 @@ def search(query: str, page: int = 1):
         try:
             # Optimized API hit with direct filtering
             # mime_type=text/plain asks Gutendex for Full Text only
-            with httpx.Client(timeout=45, follow_redirects=True) as client:
+            with httpx.Client(timeout=45, headers=DEFAULT_HEADERS, follow_redirects=True) as client:
                 resp = client.get(
                     f"{BASE_URL}/books", 
                     params={"search": query, "page": page, "languages": "en", "mime_type": "text/plain"}
@@ -83,7 +95,7 @@ def trending():
         return cached
     for attempt in range(2):
         try:
-            with httpx.Client(timeout=30, follow_redirects=True) as client:
+            with httpx.Client(timeout=30, headers=DEFAULT_HEADERS, follow_redirects=True) as client:
                 resp = client.get(f"{BASE_URL}/books", params={"sort": "popular", "page": 1})
             
             if resp.status_code == 429 and attempt == 0:
@@ -124,8 +136,9 @@ def by_category(genre: str, page: int = 1):
 
     for attempt, params in enumerate(strategies):
         try:
-            with httpx.Client(timeout=60, follow_redirects=True) as client:
+            with httpx.Client(timeout=60, headers=DEFAULT_HEADERS, follow_redirects=True) as client:
                 resp = client.get(f"{BASE_URL}/books", params=params)
+
 
             if resp.status_code == 429:
                 import time

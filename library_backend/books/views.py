@@ -604,34 +604,107 @@ class BookReadView(APIView):
             return Response({"error": str(e)}, status=500)
 
     def _fetch_gutenberg(self, gutenberg_id: str, metadata_only: bool = False):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/html, */*",
+        }
+        
+        title = None
+        author = "Unknown"
+        cover_url = f"https://www.gutenberg.org/cache/epub/{gutenberg_id}/pg{gutenberg_id}.cover.medium.jpg"
+        subjects = []
+        bookshelves = []
+        text_url = ""
+
+        # Attempt 1: Gutendex API with browser User-Agent header
         try:
             meta_r = httpx.get(
                 f"https://gutendex.com/books/{gutenberg_id}",
-                timeout=30,
+                headers=headers,
+                timeout=12,
                 follow_redirects=True
             )
-            meta_r.raise_for_status()
-            meta        = meta_r.json()
-            title       = meta.get("title", f"Book #{gutenberg_id}")
-            authors     = meta.get("authors", [])
-            author      = authors[0].get("name", "Unknown") if authors else "Unknown"
-            formats     = meta.get("formats", {})
-            cover_url   = formats.get("image/jpeg", "")
-            subjects    = meta.get("subjects",    [])[:8]
-            bookshelves = meta.get("bookshelves", [])[:8]
-            text_url    = (
-                formats.get("text/plain; charset=utf-8") or
-                formats.get("text/plain; charset=us-ascii") or
-                formats.get("text/plain") or
-                ""
-            )
-        except Exception:
-            title       = f"Project Gutenberg Book #{gutenberg_id}"
-            author      = "Unknown"
-            cover_url   = ""
-            subjects    = []
-            bookshelves = []
-            text_url    = ""
+            if meta_r.status_code == 200:
+                meta = meta_r.json()
+                raw_t = meta.get("title", "")
+                if raw_t and not raw_t.startswith("Project Gutenberg"):
+                    title = raw_t
+                authors = meta.get("authors", [])
+                if authors and authors[0].get("name"):
+                    author = authors[0].get("name")
+                formats = meta.get("formats", {})
+                if formats.get("image/jpeg"):
+                    cover_url = formats.get("image/jpeg")
+                subjects = meta.get("subjects", [])[:8]
+                bookshelves = meta.get("bookshelves", [])[:8]
+                text_url = (
+                    formats.get("text/plain; charset=utf-8") or
+                    formats.get("text/plain; charset=us-ascii") or
+                    formats.get("text/plain") or
+                    ""
+                )
+        except Exception as e:
+            print(f"[gutenberg] Gutendex API error for {gutenberg_id}: {e}")
+
+        # Attempt 2: Direct Gutenberg HTML page metadata if title is still missing
+        if not title:
+            try:
+                html_r = httpx.get(
+                    f"https://www.gutenberg.org/ebooks/{gutenberg_id}",
+                    headers=headers,
+                    timeout=10,
+                    follow_redirects=True
+                )
+                if html_r.status_code == 200:
+                    html_text = html_r.text
+                    t_match = re.search(r'<meta\s+name=["\']dcterms\.title["\']\s+content=["\']([^"\'\n]+)["\']', html_text, re.I)
+                    if t_match:
+                        title = t_match.group(1).strip()
+                    else:
+                        t_match2 = re.search(r'<title>(.*?)</title>', html_text, re.I | re.S)
+                        if t_match2:
+                            raw_t = t_match2.group(1).replace("Project Gutenberg", "").replace("ebook", "").strip(" |-")
+                            if " by " in raw_t:
+                                parts = raw_t.split(" by ", 1)
+                                title = parts[0].strip()
+                                if author == "Unknown":
+                                    author = parts[1].strip()
+                            elif raw_t:
+                                title = raw_t
+
+                    a_match = re.search(r'<meta\s+name=["\']dcterms\.creator["\']\s+content=["\']([^"\'\n]+)["\']', html_text, re.I)
+                    if a_match:
+                        author = a_match.group(1).strip()
+            except Exception as e:
+                print(f"[gutenberg] Gutenberg HTML scrape error for {gutenberg_id}: {e}")
+
+        # Attempt 3: OpenLibrary fallback search by gutenberg ID
+        if not title:
+            try:
+                ol_r = httpx.get(
+                    f"https://openlibrary.org/search.json?q=gutenberg:{gutenberg_id}",
+                    headers=headers,
+                    timeout=10,
+                    follow_redirects=True
+                )
+                if ol_r.status_code == 200:
+                    docs = ol_r.json().get("docs", [])
+                    if docs:
+                        d = docs[0]
+                        title = d.get("title")
+                        if d.get("author_name"):
+                            author = d.get("author_name")[0]
+            except Exception:
+                pass
+
+        # Final title fallback if all metadata APIs fail
+        if not title:
+            title = f"Book #{gutenberg_id}"
+
+        # Reformat author "Shakespeare, William" -> "William Shakespeare"
+        if author and "," in author and not author.startswith("Various"):
+            parts = author.split(",", 1)
+            author = f"{parts[1].strip()} {parts[0].strip()}"
 
         if metadata_only:
             return Response({
@@ -656,7 +729,7 @@ class BookReadView(APIView):
         text = None
         for url in text_urls:
             try:
-                t_r = httpx.get(url, timeout=20, follow_redirects=True)
+                t_r = httpx.get(url, headers=headers, timeout=15, follow_redirects=True)
                 if t_r.status_code == 200:
                     text = t_r.text[:300000]
                     break
